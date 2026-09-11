@@ -1,0 +1,34 @@
+<div id="chatBubble" onclick="toggleChat()">💬</div>
+<div id="chatBox">
+  <div class="chat-header">Chat with us</div>
+  <div id="chatLog"></div>
+  <input id="chatName" placeholder="Your name (optional)">
+  <div class="chat-input-row">
+    <input id="chatInput" placeholder="Type a message...">
+    <button onclick="sendChatMsg()">Send</button>
+  </div>
+</div>
+<script>
+let chatId = localStorage.getItem('pw_chat_id') || null;
+function toggleChat() {
+  document.getElementById('chatBox').classList.toggle('open');
+}
+async function sendChatMsg() {
+  const input = document.getElementById('chatInput');
+  const name = document.getElementById('chatName').value;
+  const text = input.value.trim();
+  if (!text) return;
+  const log = document.getElementById('chatLog');
+  log.innerHTML += '<p class="msg visitor"><b>You:</b> ' + text + '</p>';
+  input.value = '';
+  const res = await fetch('/api/chat/send', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ name: name, message: text, chatId: chatId })
+  });
+  const data = await res.json();
+  chatId = data.chatId;
+  localStorage.setItem('pw_chat_id', chatId);
+  log.scrollTop = log.scrollHeight;
+}
+</script>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics — Pulsewire Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="admin-body">
+  <%- include('partials/admin-navbar', { page: 'analytics' }) %>
+
+  <main class="admin-main">
+    <div class="admin-page-header">
+      <div>
+        <h1 class="admin-page-title">Analytics</h1>
+        <p class="admin-page-sub">Traffic and engagement overview</p>
+      </div>
+    </div>
+
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-num"><%= totalViews %></span>
+          <span class="stat-label">Total Page Views</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-num"><%= uniqueVisitors %></span>
+          <span class="stat-label">Unique Visitors</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-num"><%= totalChats %></span>
+          <span class="stat-label">Total Chats</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-grid">
+      <div class="panel">
+        <div class="panel-header"><h2>Top Countries</h2></div>
+        <div class="analytics-list">
+          <% if (topCountries.length === 0) { %>
+            <p class="muted empty-state">No visitor data yet.</p>
+          <% } else { topCountries.forEach(([country, count], i) => { %>
+            <div class="bar-row">
+              <span class="bar-rank">#<%= i+1 %></span>
+              <span class="bar-label"><%= country %></span>
+              <div class="bar-track">
+                <div class="bar-fill" style="width:<%= Math.min(count*8,100) %>%"></div>
+              </div>
+              <span class="bar-count"><%= count %></span>
+            </div>
+          <% }) } %>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h2>Most Viewed Posts</h2></div>
+        <div class="analytics-list">
+          <% if (topPosts.length === 0) { %>
+            <p class="muted empty-state">No post views yet.</p>
+          <% } else { topPosts.forEach((p, i) => { %>
+            <div class="top-post-row">
+              <span class="bar-rank">#<%= i+1 %></span>
+              <a href="/post/<%= p.slug %>" target="_blank" class="top-post-title"><%= p.title %></a>
+              <span class="top-post-count"><%= p.count %> views</span>
+            </div>
+          <% }) } %>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
