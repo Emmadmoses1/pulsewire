@@ -314,30 +314,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         </div>
         <div id="ytPreview" style="margin-top:8px"></div>
 
-        <div style="margin-top:10px;padding:10px;border:1px solid #2a2d3a;border-radius:7px">
-          <div style="font-size:12px;color:#d1d5db;margin-bottom:7px">
-            MP3 Converter — upload media you own or have permission to redistribute.
-          </div>
-
-          <input type="file" id="mp3SourceFile"
-                 accept="audio/*,video/*"
-                 style="width:100%;font-size:12px">
-
-          <button type="button"
-                  class="btn btn-sm btn-dark"
-                  id="convertMp3Btn"
-                  onclick="convertSelectedMedia()"
-                  style="margin-top:8px">
-            🎵 Convert to MP3
-          </button>
-
-          <div class="prog-wrap" id="mp3ConvertProg" style="margin-top:7px">
-            <div class="prog-fill" id="mp3ConvertBar"></div>
-          </div>
-          <div id="mp3ConvertStatus"
-               style="font-size:12px;color:var(--muted);margin-top:7px"></div>
-        </div>
-      </div>
+        
       <button class="btn" onclick="saveSong()">SAVE SONG</button>
       <button class="btn" style="background:#555" onclick="cancelSongEdit()" id="cancelSongBtn" style="display:none">CANCEL</button>
     </div>
@@ -1173,15 +1150,7 @@ async function convertSelectedMedia(){
     Example:
     https://pulsewire-mp3.onrender.com
   */
-  const MP3_SERVICE_URL =
-    localStorage.getItem('pulsewireMp3ServiceUrl') ||
-    'https://https://pulsewire-1.onrender.com';
-
-  if(MP3_SERVICE_URL.includes('https://pulsewire-1.onrender.com')){
-    alert('Set your deployed MP3 service URL first.');
-    return;
-  }
-
+  
   btn.disabled = true;
   btn.textContent = 'Converting...';
   status.textContent = 'Uploading media for conversion...';
@@ -1242,6 +1211,10 @@ async function convertSelectedMedia(){
     btn.disabled = false;
   }
 }
+
+const MP3_SERVICE_URL =
+  localStorage.getItem('pulsewireMp3ServiceUrl') ||
+  'https://pulsewire-1.onrender.com';
 
 async function searchYoutube(){
   const db=await loadDB();
