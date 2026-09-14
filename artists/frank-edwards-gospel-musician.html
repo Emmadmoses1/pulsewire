@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frank Edwards (gospel musician) — Pulsewire</title>
+  <meta name="description" content="Frank Ugochukwu Edwards is a Nigerian musician, record producer, sound engineer, worship singer and songwriter from Enugu State. He is the founder and owner of the record label Rocktown Records, which">
+  <link rel="canonical" href="https://pulsewire.web.app/artists/frank-edwards-gospel-musician.html">
+  <meta property="og:type" content="profile">
+  <meta property="og:title" content="Frank Edwards (gospel musician) — Pulsewire">
+  <meta property="og:description" content="Frank Ugochukwu Edwards is a Nigerian musician, record producer, sound engineer, worship singer and songwriter from Enugu State. He is the founder and owner of the record label Rocktown Records, which">
+  <meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/5/53/Frank_Edwards_Frank_Edwards.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled">
+  <meta property="og:url" content="https://pulsewire.web.app/artists/frank-edwards-gospel-musician.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Frank Edwards (gospel musician) — Pulsewire">
+  <meta name="twitter:description" content="Frank Ugochukwu Edwards is a Nigerian musician, record producer, sound engineer, worship singer and songwriter from Enugu State. He is the founder and owner of the record label Rocktown Records, which">
+  <meta name="twitter:image" content="https://upload.wikimedia.org/wikipedia/commons/5/53/Frank_Edwards_Frank_Edwards.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="ticker-bar">
+  <span class="ticker-live">LIVE</span>
+  <div class="ticker-viewport"><div class="ticker-track" id="tickerTrack"></div></div>
+</div>
+<header class="navbar" id="siteNav">
+  <div class="logo"><a href="/">PULSE<span>WIRE</span></a></div>
+  <nav><a href="/">HOME</a><a href="/artists.html">ARTISTS</a></nav>
+</header>
+
+<div class="article-wrap">
+  <div class="article-inner">
+    <div class="article-breadcrumb"><a href="/">Home</a> / <a href="/artists.html">Artists</a> / <span id="crumbName"></span></div>
+    <div style="display:flex;gap:20px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
+      <img id="artistPhoto" src="" alt="" style="width:120px;height:120px;border-radius:50%;object-fit:cover;background:#222">
+      <div>
+        <span class="article-cat-tag" id="artistGenre"></span>
+        <h1 class="article-title" id="artistName" style="margin-top:8px"></h1>
+      </div>
+    </div>
+    <p class="article-body" id="artistBio"></p>
+
+    <div class="related-section">
+      <h2 class="related-title">Songs &amp; Releases</h2>
+      <div class="related-grid" id="songsGrid"><p class="muted">Loading...</p></div>
+    </div>
+
+    <div class="related-section">
+      <h2 class="related-title">In The News</h2>
+      <div class="related-grid" id="newsGrid"><p class="muted">Loading...</p></div>
+    </div>
+
+    <div class="article-back"><a href="/artists.html" class="back-link">&larr; Back to All Artists</a></div>
+  </div>
+</div>
+
+<footer>&copy; Pulsewire</footer>
+
+<script>
+const BIN_ID='6aa50e3aac6210605ac3c542';
+const BIN_KEY='$2a$10$dsCr1ADyKPDy0pbmzlfCzOnOm9FP8aveuNhIFmktyMa8UvWUoMbUm';
+const BIN_URL='https://api.jsonbin.io/v3/b/'+BIN_ID;
+const artistId='art-1789345522209';
+
+async function init(){
+  const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+  const data=await res.json();
+  const db=data.record||{};
+  const artist=(db.artists||[]).find(a=>a.id===artistId);
+  if(!artist)return;
+  document.getElementById('crumbName').textContent=artist.name;
+  document.getElementById('artistName').textContent=artist.name;
+  document.getElementById('artistGenre').textContent=artist.genre||'';
+  document.getElementById('artistBio').textContent=artist.bio||'';
+  if(artist.photo)document.getElementById('artistPhoto').src=artist.photo;
+
+  const songs=(db.songs||[]).filter(s=>s.artistId===artistId);
+  document.getElementById('songsGrid').innerHTML=songs.length?songs.map(s=>`
+    <a class="related-card" href="/songs/${s.slug}.html">
+      ${s.cover?`<img class="related-thumb" src="${s.cover}">`:'<div class="related-thumb-placeholder"></div>'}
+      <div class="related-card-body"><span class="related-cat">${s.type}</span><h4 class="related-card-title">${s.title}</h4></div>
+    </a>`).join(''):'<p class="muted">No songs added yet.</p>';
+
+  const posts=(db.posts||[]).filter(p=>((p.title||'')+(p.excerpt||'')).toLowerCase().includes(artist.name.toLowerCase()));
+  document.getElementById('newsGrid').innerHTML=posts.length?posts.slice(0,6).map(p=>`
+    <a class="related-card" href="/posts/${p.slug}.html">
+      ${p.coverImage?`<img class="related-thumb" src="${p.coverImage}">`:'<div class="related-thumb-placeholder"></div>'}
+      <div class="related-card-body"><span class="related-cat">${p.category}</span><h4 class="related-card-title">${p.title}</h4></div>
+    </a>`).join(''):'<p class="muted">No news yet.</p>';
+
+  const track=document.getElementById('tickerTrack');
+  [...(db.posts||[]).slice(0,6),...(db.posts||[]).slice(0,6)].forEach(p=>{const s=document.createElement('span');s.textContent=p.title;track.appendChild(s);});
+}
+init();
+window.addEventListener('scroll',()=>{document.getElementById('siteNav').classList.toggle('scrolled',window.scrollY>10);});
+</script>
+</body>
+</html>

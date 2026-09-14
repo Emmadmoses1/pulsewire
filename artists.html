@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All Artists — Pulsewire</title>
+<meta name="description" content="Browse artists on Pulsewire — Afrobeats, Hip-Hop, Gospel and more.">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="ticker-bar">
+  <span class="ticker-live">LIVE</span>
+  <div class="ticker-viewport"><div class="ticker-track" id="tickerTrack"></div></div>
+</div>
+<header class="navbar" id="siteNav">
+  <div class="logo"><a href="/">PULSE<span>WIRE</span></a></div>
+  <nav>
+    <a href="/">HOME</a>
+    <a href="/artists.html" class="active">ARTISTS</a>
+  </nav>
+</header>
+
+<div class="latest-header">
+  <h2>All Artists</h2>
+  <div class="filters" id="genreFilters"></div>
+</div>
+<div class="grid" id="artistsGrid"><p style="padding:20px;color:#888">Loading artists...</p></div>
+
+<footer>&copy; Pulsewire</footer>
+
+<script>
+const BIN_ID='6aa50e3aac6210605ac3c542';
+const BIN_KEY='$2a$10$dsCr1ADyKPDy0pbmzlfCzOnOm9FP8aveuNhIFmktyMa8UvWUoMbUm';
+const BIN_URL='https://api.jsonbin.io/v3/b/'+BIN_ID;
+let allArtists=[];
+
+function render(filter){
+  const grid=document.getElementById('artistsGrid');
+  const list=filter==='ALL'?allArtists:allArtists.filter(a=>a.genre===filter);
+  grid.innerHTML=list.length?list.map(a=>`
+    <a class="card" href="/artists/${a.slug}.html" style="text-decoration:none">
+      <img class="thumb-img" src="${a.photo||''}" onerror="this.style.background='linear-gradient(135deg,#222,#000)'" alt="${a.name}">
+      <div class="card-body">
+        <span class="category">${a.genre}</span>
+        <h3>${a.name}</h3>
+      </div>
+    </a>`).join(''):'<p style="padding:20px;color:#888">No artists in this genre yet.</p>';
+}
+
+async function init(){
+  const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+  const data=await res.json();
+  const db=data.record||{};
+  allArtists=(db.artists||[]).sort((a,b)=>a.name.localeCompare(b.name));
+  const genres=['ALL',...new Set(allArtists.map(a=>a.genre))];
+  document.getElementById('genreFilters').innerHTML=genres.map((g,i)=>`<button class="${i===0?'active':''}" onclick="setFilter('${g}',this)">${g}</button>`).join('');
+  render('ALL');
+
+  const track=document.getElementById('tickerTrack');
+  [...(db.posts||[]).slice(0,6),...(db.posts||[]).slice(0,6)].forEach(p=>{const s=document.createElement('span');s.textContent=p.title;track.appendChild(s);});
+}
+function setFilter(g,el){
+  document.querySelectorAll('#genreFilters button').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  render(g);
+}
+init();
+window.addEventListener('scroll',()=>{document.getElementById('siteNav').classList.toggle('scrolled',window.scrollY>10);});
+</script>
+</body>
+</html>

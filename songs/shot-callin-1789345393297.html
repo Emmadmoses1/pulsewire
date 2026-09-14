@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shot Callin — YoungBoy Never Broke Again | Pulsewire</title>
+  <meta name="description" content="From the release 'Shot Callin - Single' by YoungBoy Never Broke Again (2025).">
+  <link rel="canonical" href="https://pulsewire.web.app/songs/shot-callin-1789345393297.html">
+  <meta property="og:type" content="music.song">
+  <meta property="og:title" content="Shot Callin — YoungBoy Never Broke Again">
+  <meta property="og:description" content="From the release 'Shot Callin - Single' by YoungBoy Never Broke Again (2025).">
+  <meta property="og:image" content="https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/4c/36/0d/4c360dcb-d3eb-f5c7-a73a-a392f9254109/25UMGIM64876.rgb.jpg/1000x1000bb.jpg">
+  <meta property="og:url" content="https://pulsewire.web.app/songs/shot-callin-1789345393297.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Shot Callin — YoungBoy Never Broke Again">
+  <meta name="twitter:description" content="From the release 'Shot Callin - Single' by YoungBoy Never Broke Again (2025).">
+  <meta name="twitter:image" content="https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/4c/36/0d/4c360dcb-d3eb-f5c7-a73a-a392f9254109/25UMGIM64876.rgb.jpg/1000x1000bb.jpg">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="ticker-bar">
+  <span class="ticker-live">LIVE</span>
+  <div class="ticker-viewport"><div class="ticker-track" id="tickerTrack"></div></div>
+</div>
+<header class="navbar" id="siteNav">
+  <div class="logo"><a href="/">PULSE<span>WIRE</span></a></div>
+  <nav><a href="/">HOME</a><a href="/artists.html">ARTISTS</a></nav>
+</header>
+
+<div class="article-wrap">
+  <div class="article-inner">
+    <div class="article-breadcrumb"><a href="/">Home</a> / <a href="/artists.html">Artists</a> / <span id="crumbArtist"></span></div>
+    <span class="article-cat-tag" id="songType"></span>
+    <h1 class="article-title" id="songTitle"></h1>
+    <p style="margin-top:-10px;margin-bottom:20px"><a id="artistLink" style="font-weight:700;color:#e11"></a></p>
+    <img id="songCover" class="article-cover" src="" alt="">
+    <p class="article-body" id="songExcerpt"></p>
+
+    <div class="media-block" id="downloadBlock" style="display:none">
+      <div class="media-label">Download</div>
+      <button class="download-btn" id="downloadMp3Btn" onclick="downloadMp3()" style="border:none;cursor:pointer">⬇ Download MP3</button>
+      <p id="downloadStatus" style="font-size:12px;color:#777;margin-top:8px"></p>
+    </div>
+
+    <div class="media-block" id="videoBlock" style="display:none">
+      <div class="media-label">Music Video</div>
+      <div id="videoEmbed"></div>
+    </div>
+
+    <div class="article-back"><a id="backToArtist" class="back-link">&larr; Back to artist</a></div>
+  </div>
+</div>
+
+<footer>&copy; Pulsewire</footer>
+
+<script>
+const BIN_ID='6aa50e3aac6210605ac3c542';
+const BIN_KEY='$2a$10$dsCr1ADyKPDy0pbmzlfCzOnOm9FP8aveuNhIFmktyMa8UvWUoMbUm';
+const BIN_URL='https://api.jsonbin.io/v3/b/'+BIN_ID;
+const songId='song-1789345393297';
+
+function youtubeId(url){
+  const m=url.match(/(?:youtu\.be\/|v=)([a-zA-Z0-9_-]{11})/);
+  return m?m[1]:null;
+}
+
+async function init(){
+  const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+  const data=await res.json();
+  const db=data.record||{};
+  const song=(db.songs||[]).find(s=>s.id===songId);
+  if(!song)return;
+  const artist=(db.artists||[]).find(a=>a.id===song.artistId);
+
+  document.getElementById('songType').textContent=song.type;
+  document.getElementById('songTitle').textContent=song.title;
+  document.getElementById('songExcerpt').textContent=song.excerpt||'';
+  if(song.cover)document.getElementById('songCover').src=song.cover;
+
+  if(artist){
+    document.getElementById('crumbArtist').textContent=artist.name;
+    const link=document.getElementById('artistLink');
+    link.textContent='by '+artist.name;
+    link.href='/artists/'+artist.slug+'.html';
+    document.getElementById('backToArtist').href='/artists/'+artist.slug+'.html';
+    document.getElementById('backToArtist').innerHTML='&larr; Back to '+artist.name;
+  }
+
+  if(song.downloadUrl){
+    document.getElementById('downloadBlock').style.display='block';
+    window._songData = { audioUrl: song.downloadUrl, artist: artist?artist.name:'Unknown Artist', title: song.title, year: song.year||'', genre: song.genre||artist?.genre||'', coverUrl: song.cover||'' };
+  }
+  if(song.youtubeUrl){
+    const vid=youtubeId(song.youtubeUrl);
+    if(vid){
+      document.getElementById('videoBlock').style.display='block';
+      document.getElementById('videoEmbed').innerHTML=`<iframe width="100%" height="380" style="border-radius:6px;border:none" src="https://www.youtube.com/embed/${vid}" allowfullscreen></iframe>`;
+    }
+  }
+
+  const track=document.getElementById('tickerTrack');
+  [...(db.posts||[]).slice(0,6),...(db.posts||[]).slice(0,6)].forEach(p=>{const s=document.createElement('span');s.textContent=p.title;track.appendChild(s);});
+}
+async function downloadMp3(){
+  const btn=document.getElementById('downloadMp3Btn');
+  const status=document.getElementById('downloadStatus');
+  if(!window._songData){status.textContent='Nothing to download.';return;}
+  btn.disabled=true;btn.textContent='Converting...';status.textContent='Processing audio — this may take a moment for longer tracks.';
+  try{
+    const res=await fetch('https://pulsewire-ai.dakudinamoses.workers.dev/download-mp3',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(window._songData)
+    });
+    if(!res.ok){
+      const err=await res.json().catch(()=>({error:'Download failed'}));
+      throw new Error(err.error||'Download failed');
+    }
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=`${window._songData.artist} - ${window._songData.title}.mp3`.replace(/[\/\\:*?"<>|]/g,'');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    status.textContent='✓ Download started';
+  }catch(e){
+    status.textContent='Error: '+e.message;
+  }
+  btn.disabled=false;btn.textContent='⬇ Download MP3';
+}
+
+init();
+window.addEventListener('scroll',()=>{document.getElementById('siteNav').classList.toggle('scrolled',window.scrollY>10);});
+</script>
+</body>
+</html>
