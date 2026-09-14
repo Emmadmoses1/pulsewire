@@ -432,6 +432,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </div><!-- /adminPage -->
 
 <script>
+const MP3_SERVICE_URL =
+  localStorage.getItem('pulsewireMp3ServiceUrl') ||
+  'https://pulsewire-1.onrender.com';
+
+
 const CLOUD='smg1blzu', PRESET='Pulsewire';
 const ADMIN_PASS='pulsewire2026';
 const BIN_ID='6aa50e3aac6210605ac3c542';
@@ -1125,9 +1130,7 @@ async function searchSong(){
   btn.disabled=false;btn.textContent='🔍 Search';
 }
 
-const MP3_SERVICE_URL =
-  localStorage.getItem('pulsewireMp3ServiceUrl') ||
-  'https://pulsewire-1.onrender.com';
+
 
 async function searchYoutube(){
   const db=await loadDB();
