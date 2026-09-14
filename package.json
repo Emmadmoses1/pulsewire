@@ -1,0 +1,26 @@
+{
+  "name": "pulsewire",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server-app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "firebase-admin": "^14.4.0",
+    "firebase-functions": "^7.3.2",
+    "lowdb": "^7.0.1",
+    "multer": "^2.3.0",
+    "rss-parser": "^3.13.0",
+    "slugify": "^1.6.9"
+  }
+}

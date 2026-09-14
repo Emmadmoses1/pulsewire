@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= post.title %> — Pulsewire</title>
+  <meta name="description" content="<%= post.excerpt %>">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- ── Ticker ─────────────────────────────────────── -->
+<div class="ticker-bar">
+  <span class="ticker-live">LIVE</span>
+  <div class="ticker-track">
+    <span><%= post.title %></span>
+    <span>Pulsewire — Breaking news, culture & entertainment</span>
+    <span><%= post.category %> · <%= post.date %></span>
+    <span><%= post.title %></span>
+    <span>Pulsewire — Breaking news, culture & entertainment</span>
+    <span><%= post.category %> · <%= post.date %></span>
+  </div>
+</div>
+
+<!-- ── Navbar ─────────────────────────────────────── -->
+<header class="navbar" id="siteNav">
+  <div class="logo"><a href="/">PULSE<span>WIRE</span></a></div>
+  <nav>
+    <a href="/">HOME</a>
+    <a href="/?filter=NEWS">NEWS</a>
+    <a href="/?filter=ENTERTAINMENT">ENTERTAINMENT</a>
+    <a href="/?filter=CULTURE">CULTURE</a>
+    <a href="/?filter=TRENDING">TRENDING</a>
+  </nav>
+  <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">&#9776;</button>
+</header>
+<nav class="mobile-nav hidden" id="mobileNav">
+  <a href="/">HOME</a>
+  <a href="/?filter=NEWS">NEWS</a>
+  <a href="/?filter=ENTERTAINMENT">ENTERTAINMENT</a>
+  <a href="/?filter=CULTURE">CULTURE</a>
+  <a href="/?filter=TRENDING">TRENDING</a>
+</nav>
+
+<!-- ── Article ────────────────────────────────────── -->
+<main class="article-wrap">
+  <div class="article-inner">
+
+    <!-- Breadcrumb -->
+    <div class="article-breadcrumb">
+      <a href="/">Home</a>
+      <span>/</span>
+      <a href="/#<%= post.category.toLowerCase() %>"><%= post.category %></a>
+    </div>
+
+    <!-- Category + Title -->
+    <div class="article-cat-tag"><%= post.category %></div>
+    <h1 class="article-title"><%= post.title %></h1>
+
+    <!-- Meta -->
+    <div class="article-meta">
+      <div class="article-author">
+        <div class="author-avatar">PW</div>
+        <div>
+          <span class="author-name">Pulsewire Staff</span>
+          <span class="article-date"><%= post.date %></span>
+        </div>
+      </div>
+      <div class="article-share">
+        <button class="share-btn" onclick="navigator.share ? navigator.share({title: '<%= post.title %>', url: window.location.href}) : copyLink()" title="Share">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share
+        </button>
+      </div>
+    </div>
+
+    <!-- Ad -->
+    <div class="ad-space">AD SPACE · 728×90</div>
+
+    <!-- Cover image -->
+    <% if (post.coverImage) { %>
+      <img src="<%= post.coverImage %>" class="article-cover" alt="<%= post.title %>">
+    <% } %>
+
+    <!-- Video player -->
+    <% if (post.videoFile) { %>
+      <div class="media-block">
+        <div class="media-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Video
+        </div>
+        <video controls class="post-video" preload="metadata">
+          <source src="<%= post.videoFile %>">
+          Your browser does not support video.
+        </video>
+        <a href="/download/<%= post.slug %>/video" class="download-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Video
+        </a>
+      </div>
+    <% } %>
+
+    <!-- Music player -->
+    <% if (post.musicFile) { %>
+      <div class="media-block">
+        <div class="media-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          Audio
+        </div>
+        <audio controls class="post-audio" preload="metadata">
+          <source src="<%= post.musicFile %>">
+          Your browser does not support audio.
+        </audio>
+        <a href="/download/<%= post.slug %>/audio" class="download-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Audio
+        </a>
+      </div>
+    <% } %>
+
+    <!-- Article body -->
+    <div class="article-body">
+      <%- post.content %>
+    </div>
+
+    <!-- Tags / category footer -->
+    <div class="article-footer-meta">
+      <span class="article-tag"><%= post.category %></span>
+      <span class="article-tag">Pulsewire</span>
+    </div>
+
+    <!-- Related posts -->
+    <% if (related && related.length > 0) { %>
+      <div class="related-section">
+        <h3 class="related-title">More from <%= post.category %></h3>
+        <div class="related-grid">
+          <% related.forEach(r => { %>
+            <a href="/post/<%= r.slug %>" class="related-card">
+              <% if (r.coverImage) { %>
+                <img src="<%= r.coverImage %>" alt="<%= r.title %>" class="related-thumb" loading="lazy">
+              <% } else { %>
+                <div class="related-thumb-placeholder"></div>
+              <% } %>
+              <div class="related-card-body">
+                <span class="related-cat"><%= r.category %></span>
+                <p class="related-card-title"><%= r.title %></p>
+                <small class="related-date"><%= r.date %></small>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Back link -->
+    <div class="article-back">
+      <a href="/" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to all stories
+      </a>
+    </div>
+
+  </div>
+</main>
+
+<!-- ── Newsletter ──────────────────────────────────── -->
+<div class="newsletter">
+  <h2>NEVER MISS A HEADLINE</h2>
+  <p>One email a day. The stories everyone's talking about, none of the noise.</p>
+  <form method="POST" action="/subscribe" id="subForm">
+    <input type="email" name="email" id="subEmail" placeholder="you@email.com" required>
+    <button type="submit" id="subBtn">SUBSCRIBE</button>
+  </form>
+</div>
+
+<!-- ── Footer ─────────────────────────────────────── -->
+<footer>
+  <div>&copy; <%= new Date().getFullYear() %> Pulsewire. All rights reserved.</div>
+  <div style="margin-top:6px;">
+    <a href="/">Home</a>
+    <a href="/?filter=NEWS">News</a>
+    <a href="/?filter=ENTERTAINMENT">Entertainment</a>
+    <a href="/?filter=CULTURE">Culture</a>
+  </div>
+</footer>
+
+<button id="backToTop" aria-label="Back to top">&#8593;</button>
+
+<%- include('partials-chat-widget') %>
+
+<script>
+  // Sticky nav
+  const nav = document.getElementById('siteNav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 10);
+    document.getElementById('backToTop').classList.toggle('visible', window.scrollY > 400);
+  });
+
+  // Back to top
+  document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  // Mobile nav toggle
+  document.getElementById('mobileNavToggle').addEventListener('click', () => {
+    document.getElementById('mobileNav').classList.toggle('hidden');
+  });
+
+  // Copy link fallback for share
+  function copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => alert('Link copied!'));
+  }
+
+  // Newsletter
+  document.getElementById('subForm').addEventListener('submit', function(e) {
+    const email = document.getElementById('subEmail').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { e.preventDefault(); alert('Enter a valid email'); return; }
+    const btn = document.getElementById('subBtn');
+    btn.disabled = true; btn.textContent = 'SUBSCRIBING...';
+  });
+</script>
+</body>
+</html>
