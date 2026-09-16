@@ -125,7 +125,7 @@ app.post('/convert',async(req,res)=>{
 
     await run('yt-dlp',[
       '--no-playlist',
-      '--no-warnings',
+      '--verbose',
       '--restrict-filenames',
       '--extractor-args','youtubepot-bgutilhttp:base_url=http://127.0.0.1:4416',
       '-f','bestaudio',
