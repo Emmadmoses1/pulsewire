@@ -128,6 +128,7 @@ app.post('/convert',async(req,res)=>{
       '--verbose',
       '--restrict-filenames',
       '--extractor-args','youtubepot-bgutilhttp:base_url=http://127.0.0.1:4416',
+      '--js-runtimes','node',
       '-f','bestaudio',
       '-o',source,
       url
