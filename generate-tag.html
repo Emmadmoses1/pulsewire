@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Generate PulseWire Tag</title>
+<style>
+body{font-family:sans-serif;padding:20px;background:#111;color:#fff;text-align:center}
+button{padding:14px 28px;font-size:16px;border:none;border-radius:8px;cursor:pointer;margin:10px}
+#status{margin-top:20px;font-size:14px;color:#aaa}
+#result{margin-top:20px;word-break:break-all;color:#22c55e;font-size:13px}
+</style>
+</head>
+<body>
+<h2>PulseWire Tag Generator</h2>
+<p style="color:#aaa;font-size:13px">Generates voice clip and uploads to Cloudinary</p>
+<button onclick="generate()">🎙️ Generate & Upload Tag</button>
+<div id="status"></div>
+<div id="result"></div>
+
+<script>
+const CLOUD='smg1blzu';
+const PRESET='Pulsewire';
+const TEXT='Download more music at Pulsewire dot web dot app';
+
+async function generate(){
+  const status=document.getElementById('status');
+  const result=document.getElementById('result');
+  status.textContent='Recording voice clip...';
+  result.textContent='';
+
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const recorder=new MediaRecorder(stream);
+    const chunks=[];
+
+    recorder.ondataavailable=e=>chunks.push(e.data);
+
+    recorder.onstop=async()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      status.textContent='Processing...';
+      const blob=new Blob(chunks,{type:'audio/webm'});
+      const file=new File([blob],'pulsewire-tag.mp3',{type:'audio/mpeg'});
+
+      status.textContent='Uploading to Cloudinary...';
+      const fd=new FormData();
+      fd.append('file',file);
+      fd.append('upload_preset',PRESET);
+      fd.append('public_id','pulsewire-tag');
+
+      const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/auto/upload`,{method:'POST',body:fd});
+      const d=await res.json();
+
+      if(d.secure_url){
+        status.textContent='✓ Done!';
+        result.innerHTML='Tag URL (copy this):<br><strong>'+d.secure_url+'</strong>';
+      } else {
+        status.textContent='Upload failed';
+        result.textContent=JSON.stringify(d);
+      }
+    };
+
+    // Start speech then record
+    recorder.start();
+    status.textContent='Speaking...';
+
+    const utter=new SpeechSynthesisUtterance(TEXT);
+    utter.rate=0.9;
+    utter.pitch=1;
+    utter.volume=1;
+
+    utter.onend=()=>{
+      setTimeout(()=>recorder.stop(),500);
+    };
+
+    speechSynthesis.speak(utter);
+
+  }catch(err){
+    status.textContent='Error: '+err.message;
+  }
+}
+</script>
+</body>
+</html>

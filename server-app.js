@@ -9,10 +9,14 @@ const fs = require('fs');
 const { Low } = require('lowdb');
 const { JSONFile } = require('lowdb/node');
 
+const STORAGE_DIR = process.env.STORAGE_DIR || path.join(__dirname, 'storage');
+const DATA_DIR = path.join(STORAGE_DIR, 'data');
+const UPLOADS_DIR = path.join(STORAGE_DIR, 'uploads');
+
 const UPLOAD_DIRS = {
-  images: path.join(__dirname, 'public/uploads/images'),
-  music:  path.join(__dirname, 'public/uploads/music'),
-  videos: path.join(__dirname, 'public/uploads/videos'),
+  images: path.join(UPLOADS_DIR, 'images'),
+  music:  path.join(UPLOADS_DIR, 'music'),
+  videos: path.join(UPLOADS_DIR, 'videos'),
 };
 Object.values(UPLOAD_DIRS).forEach(d => fs.mkdirSync(d, { recursive: true }));
 
@@ -45,7 +49,8 @@ const postFields = postUpload.fields([
   { name: 'videoFile',  maxCount: 1 },
 ]);
 
-const adapter = new JSONFile(path.join(__dirname, 'data/db.json'));
+fs.mkdirSync(DATA_DIR, { recursive: true });
+const adapter = new JSONFile(path.join(DATA_DIR, 'db.json'));
 const db = new Low(adapter, { posts: [], articles: [], admin: { username: 'admin', password: 'changeme123' } });
 
 async function initDB() {
@@ -62,11 +67,12 @@ initDB();
 const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+app.use('/uploads', express.static(UPLOADS_DIR));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'pulsewire-secret-key',
+  secret: process.env.SESSION_SECRET || 'change-this-session-secret-locally',
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 1000 * 60 * 60 * 8 }
@@ -259,7 +265,10 @@ app.get('/download/:slug/:type', async (req, res) => {
   if (!file) return res.status(400).send('Invalid type');
   post.downloadCount = (post.downloadCount || 0) + 1;
   await db.write();
-  const filePath = path.join(__dirname, 'public', file);
+  const filePath = path.join(STORAGE_DIR, file.replace(/^\/uploads\//, 'uploads/'));
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('File not found');
+  }
   res.download(filePath, path.basename(filePath));
 });
 
@@ -282,7 +291,7 @@ app.post('/admin/create-article', requireAdmin, async (req, res) => {
   db.data.articles = db.data.articles || [];
   db.data.articles.push({
     title, slug, category, body,
-    author: author || 'Pulsewire Staff',
+    author: author || 'WAVZO Staff',
     date: new Date().toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }),
     createdAt: Date.now()
   });

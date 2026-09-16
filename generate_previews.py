@@ -27,14 +27,14 @@ for post in posts:
     slug = post.get('slug', '')
     if not slug:
         continue
-    title = post.get('title', 'Pulsewire')
+    title = post.get('title', 'WAVZO')
     excerpt = (post.get('excerpt') or '')[:200].replace('"', "'")
-    image = post.get('coverImage', '') or 'https://pulsewire.web.app/images/default-cover.jpg'
-    url = f'https://pulsewire.web.app/posts/{slug}.html'
+    image = post.get('coverImage', '') or 'https://wavzo.com.ng/images/default-cover.jpg'
+    url = f'https://wavzo.com.ng/posts/{slug}.html'
 
     page = template.replace(
-        '<title>Pulsewire</title>',
-        f'''<title>{title} — Pulsewire</title>
+        '<title>WAVZO</title>',
+        f'''<title>{title} — WAVZO</title>
   <meta name="description" content="{excerpt}">
   <link rel="canonical" href="{url}">
   <meta property="og:type" content="article">
@@ -72,21 +72,21 @@ if os.path.exists('artist.html'):
             continue
         name = artist.get('name', 'Artist')
         bio = (artist.get('bio') or '')[:200].replace('"', "'")
-        photo = artist.get('photo', '') or 'https://pulsewire.web.app/images/default-cover.jpg'
-        url = f'https://pulsewire.web.app/artists/{slug}.html'
+        photo = artist.get('photo', '') or 'https://wavzo.com.ng/images/default-cover.jpg'
+        url = f'https://wavzo.com.ng/artists/{slug}.html'
 
         page = artist_template.replace(
-            '<title>Pulsewire</title>',
-            f'''<title>{name} — Pulsewire</title>
+            '<title>WAVZO</title>',
+            f'''<title>{name} — WAVZO</title>
   <meta name="description" content="{bio}">
   <link rel="canonical" href="{url}">
   <meta property="og:type" content="profile">
-  <meta property="og:title" content="{name} — Pulsewire">
+  <meta property="og:title" content="{name} — WAVZO">
   <meta property="og:description" content="{bio}">
   <meta property="og:image" content="{photo}">
   <meta property="og:url" content="{url}">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{name} — Pulsewire">
+  <meta name="twitter:title" content="{name} — WAVZO">
   <meta name="twitter:description" content="{bio}">
   <meta name="twitter:image" content="{photo}">'''
         )
@@ -109,14 +109,14 @@ if os.path.exists('song.html'):
             continue
         title = song.get('title', 'Song')
         artist = artists_by_id.get(song.get('artistId'), {})
-        artist_name = artist.get('name', 'Pulsewire')
+        artist_name = artist.get('name', 'WAVZO')
         excerpt = (song.get('excerpt') or f'{title} by {artist_name}')[:200].replace('"', "'")
-        cover = song.get('cover', '') or 'https://pulsewire.web.app/images/default-cover.jpg'
-        url = f'https://pulsewire.web.app/songs/{slug}.html'
+        cover = song.get('cover', '') or 'https://wavzo.com.ng/images/default-cover.jpg'
+        url = f'https://wavzo.com.ng/songs/{slug}.html'
 
         page = song_template.replace(
-            '<title>Pulsewire</title>',
-            f'''<title>{title} — {artist_name} | Pulsewire</title>
+            '<title>WAVZO</title>',
+            f'''<title>{title} — {artist_name} | WAVZO</title>
   <meta name="description" content="{excerpt}">
   <link rel="canonical" href="{url}">
   <meta property="og:type" content="music.song">

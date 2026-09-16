@@ -1,2 +1,13 @@
 node_modules/
 .env
+.env.*
+!.env.example
+
+storage/
+migration-backup-wavzo/
+.firebase/
+*.bak
+*.backup
+.DS_Store
+npm-debug.log*
+*.log

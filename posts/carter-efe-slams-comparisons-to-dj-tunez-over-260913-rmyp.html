@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Carter Efe Slams Comparisons To DJ Tunez Over Hygiene Allegations — Pulsewire</title>
+  <title>Carter Efe Slams Comparisons To DJ Tunez Over Hygiene Allegations — WAVZO</title>
   <meta name="description" content="Carter Efe criticizes DJ Tunez during a livestream, warning fans against making comparisons.The post Carter Efe Slams Comparisons To DJ Tunez Over Hygiene Allegations appeared first on tooXclusive.">
-  <link rel="canonical" href="https://pulsewire.web.app/posts/carter-efe-slams-comparisons-to-dj-tunez-over-260913-rmyp.html">
+  <link rel="canonical" href="https://wavzo.com.ng/posts/carter-efe-slams-comparisons-to-dj-tunez-over-260913-rmyp.html">
   <meta property="og:type" content="article">
   <meta property="og:title" content="Carter Efe Slams Comparisons To DJ Tunez Over Hygiene Allegations">
   <meta property="og:description" content="Carter Efe criticizes DJ Tunez during a livestream, warning fans against making comparisons.The post Carter Efe Slams Comparisons To DJ Tunez Over Hygiene Allegations appeared first on tooXclusive.">
   <meta property="og:image" content="https://hub.tooxclusive.com/wp-content/uploads/2025/11/wizkid.jpg">
-  <meta property="og:url" content="https://pulsewire.web.app/posts/carter-efe-slams-comparisons-to-dj-tunez-over-260913-rmyp.html">
+  <meta property="og:url" content="https://wavzo.com.ng/posts/carter-efe-slams-comparisons-to-dj-tunez-over-260913-rmyp.html">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Carter Efe Slams Comparisons To DJ Tunez Over Hygiene Allegations">
   <meta name="twitter:description" content="Carter Efe criticizes DJ Tunez during a livestream, warning fans against making comparisons.The post Carter Efe Slams Comparisons To DJ Tunez Over Hygiene Allegations appeared first on tooXclusive.">
@@ -60,13 +60,18 @@
     .reaction-btn.active{background:#e63946;border-color:#e63946;color:#fff}
   </style>
   <meta name="google-site-verification" content="N_Ld3rdWv_kQf6zgorjRoJk663yRqeXNBFN9JysrIPk" />
+  <meta property="og:image" content="https://res.cloudinary.com/smg1blzu/image/upload/v1789369120/pulsewire-og-image.jpg">
+  <meta property="og:image:width" content="2048">
+  <meta property="og:image:height" content="2048">
+  <meta name="twitter:image" content="https://res.cloudinary.com/smg1blzu/image/upload/v1789369120/pulsewire-og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
 
 <div class="ticker-bar">
   <span class="ticker-live">LIVE</span>
   <div class="ticker-viewport"><div class="ticker-track" id="tickerTrack">
-    <span>Pulsewire — Breaking news, culture &amp; entertainment</span>
+    <span>WAVZO — Breaking news, culture &amp; entertainment</span>
   </div></div>
 </div>
 
@@ -89,7 +94,7 @@
 </div>
 
 <footer>
-  <div>&copy; 2026 Pulsewire. All rights reserved.</div>
+  <div>&copy; 2026 WAVZO. All rights reserved.</div>
 </footer>
 
 <button id="backToTop">&uarr;</button>
@@ -169,11 +174,14 @@ function startDownload(url,type,slug){
 }
 
 function sharePost(platform){
-  const url=encodeURIComponent(window.location.href);
+  const params=new URLSearchParams(window.location.search);
+  const slug=params.get('id')||params.get('slug')||'';
+  const workerUrl='https://pulsewire-og.dakudinamoses.workers.dev/post.html?id='+slug;
+  const shareUrl=encodeURIComponent(workerUrl);
   const title=encodeURIComponent(document.title);
-  if(platform==='whatsapp')window.open('https://wa.me/?text='+title+'%20'+url);
-  else if(platform==='twitter')window.open('https://twitter.com/intent/tweet?text='+title+'&url='+url);
-  else if(platform==='copy'){navigator.clipboard.writeText(window.location.href);alert('Link copied!');}
+  if(platform==='whatsapp')window.open('https://wa.me/?text='+title+'%20'+shareUrl);
+  else if(platform==='twitter')window.open('https://twitter.com/intent/tweet?text='+title+'&url='+shareUrl);
+  else if(platform==='copy'){navigator.clipboard.writeText(workerUrl);alert('Link copied!');}
 }
 
 function escapeHtml(str){
@@ -333,7 +341,7 @@ async function toggleReaction(slug,key){
 function renderPost(post,posts){
   const slug=post.slug;
   const related=posts.filter(p=>p.slug!==slug&&p.category===post.category).slice(-3).reverse();
-  document.title=post.title+' — Pulsewire';
+  document.title=post.title+' — WAVZO';
   document.getElementById('articleInner').innerHTML=`
     <div class="article-breadcrumb"><a href="/">Home</a> <span>/</span> ${post.category}</div>
     <div class="article-cat-tag">${post.category}</div>
@@ -370,7 +378,7 @@ function renderPost(post,posts){
     ${(post.musicFile||post.videoFile)?`
       <div class="download-gate" id="dlGate" style="display:none">
         <h3>Your download is almost ready</h3>
-        <p>A short ad helps us keep Pulsewire free</p>
+        <p>A short ad helps us keep WAVZO free</p>
         <div class="ad-slot" style="min-height:60px;margin:12px 0">Advertisement</div>
         <div class="countdown" id="dlCountdown"></div>
         <button class="dw-btn" id="dlFinalBtn" disabled>Please wait...</button>
@@ -380,7 +388,7 @@ function renderPost(post,posts){
     <div class="ad-slot">Advertisement</div>
     <div class="article-footer-meta">
       <span class="article-tag">${post.category}</span>
-      <span class="article-tag">Pulsewire</span>
+      <span class="article-tag">WAVZO</span>
     </div>
     ${related.length?`
       <div class="related-section">
