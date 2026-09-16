@@ -29,4 +29,4 @@ COPY server.js ./
 ENV PORT=10000
 EXPOSE 10000
 
-CMD ["sh", "-c", "node /opt/bgutil-ytdlp-pot-provider/server/build/main.js --host 127.0.0.1 --port 4416 & sleep 3 && node server.js"]
+CMD ["sh", "-c", "node /opt/bgutil-ytdlp-pot-provider/server/build/main.js --host 127.0.0.1 --port 4416 > /tmp/bgutil.log 2>&1 & PROVIDER_PID=$!; for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:4416/ping >/dev/null 2>&1; then echo 'bgutil provider is READY'; break; fi; if ! kill -0 $PROVIDER_PID 2>/dev/null; then echo 'bgutil provider EXITED'; cat /tmp/bgutil.log; exit 1; fi; sleep 1; done; if ! curl -fsS http://127.0.0.1:4416/ping >/dev/null 2>&1; then echo 'bgutil provider FAILED TO START'; cat /tmp/bgutil.log; exit 1; fi; echo '===== BGUTIL LOG ====='; cat /tmp/bgutil.log; echo '===== YT-DLP VERSION ====='; yt-dlp --version; echo '===== STARTING WAVZO MP3 SERVICE ====='; exec node server.js"]
