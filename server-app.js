@@ -421,4 +421,11 @@ app.use((err, req, res, next) => {
 module.exports = app;
 
 const PORT = process.env.PORT || 3000;
+// Catch-all error handler — must be last, before app.listen
+app.use((err, req, res, next) => {
+  console.error('Unhandled route error:', err.message);
+  if (res.headersSent) return next(err);
+  res.status(500).send('Something went wrong on our end. Please try again shortly.');
+});
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
