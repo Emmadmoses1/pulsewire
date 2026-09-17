@@ -63,7 +63,7 @@ async function safeRead(res, fallbackMsg = 'Something went wrong. Please try aga
 }
 
 async function initDB() {
-  if (!(await safeRead(res))) return;
+  await db.read();
   db.data ||= { posts: [], articles: [], admin: { username: 'admin', password: 'changeme123' } };
   db.data.articles = db.data.articles || [];
   if (db.data.admin.password && !db.data.admin.password.startsWith('$2')) {
