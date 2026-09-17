@@ -206,6 +206,8 @@ app.post('/admin/delete-post/:slug', requireAdmin, async (req, res) => {
 });
 
 const { fetchTrustedNews, correctGrammar } = require('./routes-extra');
+const facebookAuthRouter = require('./facebook-auth');
+app.use(facebookAuthRouter);
 app.get('/admin/news-suggestions', requireAdmin, async (req, res) => res.json(await fetchTrustedNews()));
 app.post('/admin/ai-correct', requireAdmin, async (req, res) => res.json(await correctGrammar(req.body.text || '')));
 
@@ -317,3 +319,6 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

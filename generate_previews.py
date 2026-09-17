@@ -1,6 +1,6 @@
 import json, os, subprocess
 
-env_path = os.path.expanduser('~/pulsewire/functions/.env')
+env_path = os.path.expanduser('~/pulsewire-static/.env')
 key = None
 with open(env_path) as f:
     for line in f:
@@ -49,7 +49,7 @@ for post in posts:
     )
 
     page = page.replace(
-        "const slug=new URLSearchParams(window.location.search).get('slug');",
+        "let slug=new URLSearchParams(window.location.search).get('slug');",
         f"const slug='{slug}';"
     )
 

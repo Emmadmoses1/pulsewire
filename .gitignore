@@ -11,3 +11,7 @@ migration-backup-wavzo/
 .DS_Store
 npm-debug.log*
 *.log
+reset-admin.js
+functions/.env
+functions/node_modules/
+admin.html

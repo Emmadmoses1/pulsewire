@@ -85,7 +85,7 @@ async function downloadCover(url,file){
 }
 
 app.get('/health',(req,res)=>{
-  res.json({ok:true,service:'pulsewire-mp3'});
+  res.json({ok:true,service:'wavzo-mp3'});
 });
 
 app.post('/convert',async(req,res)=>{
@@ -113,11 +113,11 @@ app.post('/convert',async(req,res)=>{
   */
 
   const id=crypto.randomBytes(10).toString('hex');
-  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'pulsewire-'+id+'-'));
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'wavzo-'+id+'-'));
 
   const source=path.join(dir,'source.%(ext)s');
   const input=path.join(dir,'source');
-  const output=path.join(dir,'pulsewire.mp3');
+  const output=path.join(dir,'wavzo.mp3');
   const cover=path.join(dir,'cover.jpg');
 
   try{
@@ -172,7 +172,7 @@ app.post('/convert',async(req,res)=>{
       '-c:a','libmp3lame',
       '-b:a','320k',
       '-ar','44100',
-      '-metadata',`album=PulseWire`
+      '-metadata',`album=WAVZO`
     );
 
     if(artist) ffArgs.push('-metadata',`artist=${artist}`);
@@ -190,7 +190,7 @@ app.post('/convert',async(req,res)=>{
     }
 
     const filename=safeName(
-      `${artist ? artist+' - ' : ''}${title || 'PulseWire Song'}`
+      `${artist ? artist+' - ' : ''}${title || 'WAVZO Song'}`
     )+'.mp3';
 
     res.setHeader('Content-Type','audio/mpeg');
@@ -229,7 +229,7 @@ app.post('/convert',async(req,res)=>{
 const PORT=process.env.PORT||10000;
 
 app.listen(PORT, '0.0.0.0', ()=>{
-  console.log(`PulseWire MP3 service running on port ${PORT}`);
+  console.log(`WAVZO MP3 service running on port ${PORT}`);
 });
 
 // ── Merge endpoint: prepend tag to song ──────────
@@ -255,7 +255,7 @@ app.post('/merge', async(req,res)=>{
     await run('ffmpeg',['-f','concat','-safe','0','-i',listFile,'-c','copy',outFile]);
 
     const data=fs.readFileSync(outFile);
-    res.set({'Content-Type':'audio/mpeg','Content-Disposition':'attachment; filename="pulsewire.mp3"'});
+    res.set({'Content-Type':'audio/mpeg','Content-Disposition':'attachment; filename="wavzo.mp3"'});
     res.send(data);
   }catch(e){
     res.status(500).json({error:'Merge failed.',detail:e.message});

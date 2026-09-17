@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WAVZO</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="ticker-bar">
+  <span class="ticker-live">LIVE</span>
+  <div class="ticker-track">
+    <% posts.slice(0,6).forEach(p => { %><span><%= p.title %></span><% }) %>
+    <% posts.slice(0,6).forEach(p => { %><span><%= p.title %></span><% }) %>
+  </div>
+</div>
+
+<header class="navbar" id="siteNav">
+  <div class="logo"><a href="/">WAV<span>ZO</span></a></div>
+  <nav>
+    <a href="/" class="active">HOME</a>
+    <a href="/admin/login">ADMIN</a>
+  </nav>
+</header>
+
+<% if (posts.length > 0) { const hero = posts[0]; const rest = posts.slice(1,4); %>
+<div class="hero-wrap">
+  <div>
+    <span class="hero-tag">TOP STORY</span>
+    <h1 class="hero-title"><%= hero.title %></h1>
+    <p class="hero-desc"><%= hero.excerpt %></p>
+    <a class="hero-link" href="/post/<%= hero.slug %>">Read full story &rarr;</a>
+  </div>
+  <div class="sidebar-list">
+    <% rest.forEach(p => { %>
+      <div class="side-item">
+        <div class="side-cat"><%= p.category %></div>
+        <a href="/post/<%= p.slug %>" class="side-title"><%= p.title %></a>
+      </div>
+    <% }) %>
+  </div>
+</div>
+<% } else { %>
+<div class="hero-wrap">
+  <p class="muted">No stories published yet. Check back soon.</p>
+</div>
+<% } %>
+
+<div class="ad-space">AD SPACE · 728x90</div>
+
+<div class="latest-header">
+  <h2>LATEST STORIES</h2>
+  <div class="filters">
+    <button class="active" data-filter="ALL">ALL</button>
+    <button data-filter="NEWS">NEWS</button>
+    <button data-filter="ENTERTAINMENT">ENTERTAINMENT</button>
+    <button data-filter="CULTURE">CULTURE</button>
+    <button data-filter="TRENDING">TRENDING</button>
+  </div>
+</div>
+
+<main class="grid" id="postGrid">
+  <% posts.forEach(post => { %>
+    <div class="card" data-category="<%= post.category %>">
+      <% if (post.coverImage) { %>
+        <img class="thumb-img" src="<%= post.coverImage %>" loading="lazy" alt="<%= post.title %>">
+      <% } else { %>
+        <div class="thumb"></div>
+      <% } %>
+      <div class="card-body">
+        <span class="category"><%= post.category %></span>
+        <h3><a href="/post/<%= post.slug %>"><%= post.title %></a></h3>
+        <p><%= post.excerpt %></p>
+        <small>WAVZO Staff &middot; <%= post.date %></small>
+      </div>
+    </div>
+  <% }) %>
+</main>
+<p id="emptyState" class="hidden">No stories in this category yet.</p>
+
+<div class="bottom-wrap">
+  <div></div>
+  <div class="ranked-box">
+    <h3>RANKED RIGHT NOW</h3>
+    <% posts.slice(0,4).forEach((p, i) => { %>
+      <div class="ranked-item">
+        <div class="ranked-num"><%= String(i+1).padStart(2,'0') %></div>
+        <a href="/post/<%= p.slug %>"><%= p.title %></a>
+      </div>
+    <% }) %>
+  </div>
+</div>
+
+<div class="newsletter">
+  <h2>NEVER MISS A HEADLINE</h2>
+  <p>One email a day. The stories everyone's talking about, none of the noise.</p>
+  <form method="POST" action="/subscribe" id="subForm">
+    <input type="email" name="email" id="subEmail" placeholder="you@email.com" required>
+    <button type="submit" id="subBtn">SUBSCRIBE</button>
+  </form>
+  <% if (typeof subMessage !== 'undefined' && subMessage) { %>
+    <p style="margin-top:10px;font-weight:700;"><%= subMessage %></p>
+  <% } %>
+</div>
+
+<footer>
+  <div>&copy; 2026 WAVZO. All rights reserved.</div>
+</footer>
+
+<button id="backToTop" aria-label="Back to top">&uarr;</button>
+
+<script>
+// ---- Category filter with empty state ----
+const grid = document.getElementById('postGrid');
+const emptyState = document.getElementById('emptyState');
+document.querySelectorAll('.filters button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const filter = btn.dataset.filter;
+    let visible = 0;
+    document.querySelectorAll('#postGrid .card').forEach(card => {
+      const match = filter === 'ALL' || card.dataset.category === filter;
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    emptyState.classList.toggle('hidden', visible !== 0);
+  });
+});
+
+// ---- Sticky nav shadow on scroll ----
+const nav = document.getElementById('siteNav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 10);
+  document.getElementById('backToTop').classList.toggle('visible', window.scrollY > 500);
+});
+
+// ---- Back to top ----
+document.getElementById('backToTop').addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// ---- Newsletter validation + loading state ----
+document.getElementById('subForm').addEventListener('submit', function(e) {
+  const email = document.getElementById('subEmail').value.trim();
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!valid) {
+    e.preventDefault();
+    alert('Enter a valid email address');
+    return;
+  }
+  const btn = document.getElementById('subBtn');
+  btn.disabled = true;
+  btn.textContent = 'SUBSCRIBING...';
+});
+</script>
+
+<%- include('partials-chat-widget') %>
+</body>
+</html>

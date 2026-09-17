@@ -60,23 +60,18 @@
     .reaction-btn.active{background:#e63946;border-color:#e63946;color:#fff}
   </style>
   <meta name="google-site-verification" content="N_Ld3rdWv_kQf6zgorjRoJk663yRqeXNBFN9JysrIPk" />
-  <meta property="og:image" content="https://res.cloudinary.com/smg1blzu/image/upload/v1789369120/pulsewire-og-image.jpg">
-  <meta property="og:image:width" content="2048">
-  <meta property="og:image:height" content="2048">
-  <meta name="twitter:image" content="https://res.cloudinary.com/smg1blzu/image/upload/v1789369120/pulsewire-og-image.jpg">
-  <meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
 
 <div class="ticker-bar">
   <span class="ticker-live">LIVE</span>
   <div class="ticker-viewport"><div class="ticker-track" id="tickerTrack">
-    <span>WAVZO — Breaking news, culture &amp; entertainment</span>
+    <span>WAVZO — Nigerian Music, News &amp; Culture</span>
   </div></div>
 </div>
 
 <header class="navbar" id="siteNav">
-  <div class="logo"><a href="/">PULSE<span>WIRE</span></a></div>
+  <div class="logo"><a href="/">WAV<span>ZO</span></a></div>
   <nav><a href="/">HOME</a></nav>
 </header>
 
@@ -174,14 +169,13 @@ function startDownload(url,type,slug){
 }
 
 function sharePost(platform){
-  const params=new URLSearchParams(window.location.search);
-  const slug=params.get('id')||params.get('slug')||'';
-  const workerUrl='https://pulsewire-og.dakudinamoses.workers.dev/post.html?id='+slug;
-  const shareUrl=encodeURIComponent(workerUrl);
+  const slug=new URLSearchParams(window.location.search).get('slug')||'';
+  const staticUrl='https://wavzo.com.ng/posts/'+slug+'.html';
+  const url=encodeURIComponent(staticUrl);
   const title=encodeURIComponent(document.title);
-  if(platform==='whatsapp')window.open('https://wa.me/?text='+title+'%20'+shareUrl);
-  else if(platform==='twitter')window.open('https://twitter.com/intent/tweet?text='+title+'&url='+shareUrl);
-  else if(platform==='copy'){navigator.clipboard.writeText(workerUrl);alert('Link copied!');}
+  if(platform==='whatsapp')window.open('https://wa.me/?text='+title+'%20'+url);
+  else if(platform==='twitter')window.open('https://twitter.com/intent/tweet?text='+title+'&url='+url);
+  else if(platform==='copy'){navigator.clipboard.writeText(staticUrl);alert('Link copied!');}
 }
 
 function escapeHtml(str){
@@ -421,7 +415,7 @@ function renderPost(post,posts){
 }
 
 async function init(){
-  let slug=new URLSearchParams(window.location.search).get('slug');
+  const slug='gunmen-abduct-six-imams-in-zamfara-police-260913-fcr9';
   if(!slug){
     const m=window.location.pathname.match(/\/posts\/(.+)\.html$/);
     if(m)slug=m[1];

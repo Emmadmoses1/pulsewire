@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — WAVZO Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="admin-body">
+  <%- include('partials/admin-navbar', { page: 'dashboard' }) %>
+
+  <main class="admin-main">
+    <div class="admin-page-header">
+      <div>
+        <h1 class="admin-page-title">Dashboard</h1>
+        <p class="admin-page-sub">Manage your content and posts</p>
+      </div>
+      <a href="/" target="_blank" class="btn btn-live">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Visit Live Site
+      </a>
+    </div>
+
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-num"><%= posts.length %></span>
+          <span class="stat-label">Total Posts</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-num"><%= posts.filter(p => p.category === 'TRENDING').length %></span>
+          <span class="stat-label">Trending</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-num"><%= posts.filter(p => p.category === 'NEWS').length %></span>
+          <span class="stat-label">News</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-num" id="lastPostedStat">—</span>
+          <span class="stat-label">Last Published</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-grid">
+      <div class="panel panel-wide">
+        <div class="panel-header">
+          <h2>Create New Post</h2>
+        </div>
+        <form method="POST" action="/admin/create-post" class="post-form" enctype="multipart/form-data" id="postForm">
+          <div class="form-row">
+            <div class="form-group grow">
+              <label>Title</label>
+              <input type="text" name="title" id="titleInput" placeholder="Enter post title..." required>
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select name="category">
+                <option>NEWS</option>
+                <option>ENTERTAINMENT</option>
+                <option>CULTURE</option>
+                <option>TRENDING</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Cover Image</label>
+            <div class="upload-area" id="uploadArea">
+              <input type="file" name="coverImage" id="coverImageInput" accept="image/*">
+              <img id="coverPreview" class="cover-preview hidden" alt="preview">
+              <div class="upload-placeholder" id="uploadPlaceholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Click to upload cover image</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Video File <span class="media-hint">(MP4, WebM — max 200MB)</span>
+              </label>
+              <div class="media-upload-box" id="videoUploadBox">
+                <input type="file" name="videoFile" id="videoFileInput" accept="video/*">
+                <div class="media-upload-inner" id="videoPlaceholder">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <span>Upload video</span>
+                </div>
+                <div class="media-selected hidden" id="videoSelected">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <span id="videoFileName"></span>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                Music / Audio <span class="media-hint">(MP3, WAV — max 50MB)</span>
+              </label>
+              <div class="media-upload-box" id="musicUploadBox">
+                <input type="file" name="musicFile" id="musicFileInput" accept="audio/*">
+                <div class="media-upload-inner" id="musicPlaceholder">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                  <span>Upload audio</span>
+                </div>
+                <div class="media-selected hidden" id="musicSelected">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                  <span id="musicFileName"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Excerpt <span class="charcount" id="excerptCount">0</span> / 200</label>
+            <input type="text" name="excerpt" id="excerptInput" placeholder="Short summary shown on homepage..." maxlength="200">
+          </div>
+
+          <div class="form-group">
+            <label>Content <span class="charcount" id="contentCount">0</span></label>
+            <textarea name="content" id="contentInput" rows="10" placeholder="Full article content — HTML allowed..."></textarea>
+          </div>
+
+          <div class="btn-row">
+            <button type="button" onclick="loadNews()" class="btn btn-dark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              Suggest from RSS
+            </button>
+            <button type="button" onclick="fixGrammar()" class="btn btn-accent">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+              AI Fix Grammar
+            </button>
+            <button type="submit" class="btn btn-primary" id="publishBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Publish Post
+            </button>
+          </div>
+        </form>
+        <div id="newsResults" class="news-results"></div>
+      </div>
+
+      <div class="panel panel-full">
+        <div class="panel-header">
+          <h2>All Posts <span class="badge-count" id="postCount"></span></h2>
+          <div class="panel-header-actions">
+            <input type="text" id="postSearch" placeholder="Search posts..." class="search-input">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="postsTable">
+            <thead>
+              <tr>
+                <th data-sort="title">Title <span class="sort-arrow">↕</span></th>
+                <th>Category</th>
+                <th>Media</th>
+                <th data-sort="date">Date <span class="sort-arrow">↕</span></th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% posts.forEach(post => { %>
+                <tr data-title="<%= post.title.toLowerCase() %>" data-created="<%= post.createdAt %>">
+                  <td class="td-title"><%= post.title %></td>
+                  <td><span class="badge badge-<%= post.category ? post.category.toLowerCase() : 'news' %>"><%= post.category %></span></td>
+                  <td class="td-media">
+                    <% if (post.coverImage) { %><span class="media-pill media-img" title="Has cover image">IMG</span><% } %>
+                    <% if (post.videoFile) { %><span class="media-pill media-vid" title="Has video">VID</span><% } %>
+                    <% if (post.musicFile) { %><span class="media-pill media-aud" title="Has audio">AUD</span><% } %>
+                  </td>
+                  <td class="td-date"><%= post.date %></td>
+                  <td class="td-actions">
+                    <a href="/post/<%= post.slug %>" target="_blank" class="action-btn action-view" title="View live">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </a>
+                    <a href="/admin/edit-post/<%= post.slug %>" class="action-btn action-edit" title="Edit">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </a>
+                    <form method="POST" action="/admin/delete-post/<%= post.slug %>" class="inline-form delete-form">
+                      <button type="submit" class="action-btn action-delete" title="Delete">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <p id="noResults" class="hidden muted" style="padding:1rem;">No posts match your search.</p>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    const excerptInput = document.getElementById('excerptInput');
+    const contentInput = document.getElementById('contentInput');
+    excerptInput.addEventListener('input', () => document.getElementById('excerptCount').textContent = excerptInput.value.length);
+    contentInput.addEventListener('input', () => document.getElementById('contentCount').textContent = contentInput.value.length);
+
+    // Cover image upload area
+    document.getElementById('uploadArea').addEventListener('click', () => document.getElementById('coverImageInput').click());
+    document.getElementById('coverImageInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const preview = document.getElementById('coverPreview');
+        preview.src = URL.createObjectURL(file);
+        preview.classList.remove('hidden');
+        document.getElementById('uploadPlaceholder').style.display = 'none';
+      }
+    });
+
+    // Video upload
+    document.getElementById('videoUploadBox').addEventListener('click', () => document.getElementById('videoFileInput').click());
+    document.getElementById('videoFileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        document.getElementById('videoPlaceholder').classList.add('hidden');
+        document.getElementById('videoSelected').classList.remove('hidden');
+        document.getElementById('videoFileName').textContent = file.name;
+      }
+    });
+
+    // Music upload
+    document.getElementById('musicUploadBox').addEventListener('click', () => document.getElementById('musicFileInput').click());
+    document.getElementById('musicFileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        document.getElementById('musicPlaceholder').classList.add('hidden');
+        document.getElementById('musicSelected').classList.remove('hidden');
+        document.getElementById('musicFileName').textContent = file.name;
+      }
+    });
+
+    document.getElementById('postForm').addEventListener('submit', function() {
+      const btn = document.getElementById('publishBtn');
+      btn.disabled = true; btn.innerHTML = 'Publishing...';
+    });
+
+    document.querySelectorAll('.delete-form').forEach(form => {
+      form.addEventListener('submit', e => { if (!confirm('Delete this post? This cannot be undone.')) e.preventDefault(); });
+    });
+
+    const searchInput = document.getElementById('postSearch');
+    const rows = Array.from(document.querySelectorAll('#postsTable tbody tr'));
+    const noResults = document.getElementById('noResults');
+    document.getElementById('postCount').textContent = rows.length;
+
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase().trim();
+      let visible = 0;
+      rows.forEach(row => { const match = row.dataset.title.includes(q); row.style.display = match ? '' : 'none'; if (match) visible++; });
+      noResults.classList.toggle('hidden', visible !== 0);
+    });
+
+    document.querySelectorAll('#postsTable th[data-sort]').forEach(th => {
+      let asc = true; th.style.cursor = 'pointer';
+      th.addEventListener('click', () => {
+        const tbody = document.querySelector('#postsTable tbody');
+        const sorted = rows.slice().sort((a, b) => {
+          let av = th.dataset.sort === 'date' ? Number(a.dataset.created) : a.dataset.title;
+          let bv = th.dataset.sort === 'date' ? Number(b.dataset.created) : b.dataset.title;
+          return asc ? (av < bv ? -1 : 1) : (av > bv ? -1 : 1);
+        });
+        sorted.forEach(r => tbody.appendChild(r)); asc = !asc;
+      });
+    });
+
+    if (rows.length) {
+      const latest = rows.reduce((a, b) => Number(a.dataset.created) > Number(b.dataset.created) ? a : b);
+      const days = Math.floor((Date.now() - Number(latest.dataset.created)) / 86400000);
+      document.getElementById('lastPostedStat').textContent = days === 0 ? 'Today' : days + 'd ago';
+    } else { document.getElementById('lastPostedStat').textContent = 'None'; }
+
+    function showToast(msg, isError) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast ' + (isError ? 'toast-error' : 'toast-success');
+      setTimeout(() => t.classList.add('hidden'), 3000);
+    }
+
+    async function loadNews() {
+      const box = document.getElementById('newsResults');
+      box.innerHTML = '<p class="muted" style="padding:1rem;">Loading headlines...</p>';
+      try {
+        const res = await fetch('/admin/news-suggestions');
+        const items = await res.json();
+        if (!items.length) { box.innerHTML = '<p class="muted" style="padding:1rem;">No headlines available.</p>'; return; }
+        box.innerHTML = items.map((item, i) => `
+          <div class="news-item">
+            <span class="news-source">${item.source}</span>
+            <p class="news-title">${item.title}</p>
+            <p class="news-excerpt">${item.excerpt}</p>
+            <button type="button" onclick="useNews(${i})" class="btn btn-sm btn-dark">Use This</button>
+          </div>`).join('');
+        window._newsItems = items;
+      } catch { box.innerHTML = '<p class="muted" style="padding:1rem;">Failed to load news.</p>'; }
+    }
+
+    function useNews(i) {
+      const item = window._newsItems[i];
+      document.getElementById('titleInput').value = item.title;
+      document.getElementById('excerptInput').value = item.excerpt;
+      document.getElementById('contentInput').value = item.excerpt + '\n\nSource: ' + item.link;
+      excerptInput.dispatchEvent(new Event('input'));
+      contentInput.dispatchEvent(new Event('input'));
+      showToast('Draft filled from ' + item.source);
+    }
+
+    async function fixGrammar() {
+      const original = contentInput.value;
+      if (!original.trim()) { showToast('Write something first', true); return; }
+      contentInput.value = 'Correcting grammar...'; contentInput.disabled = true;
+      try {
+        const res = await fetch('/admin/ai-correct', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: original }) });
+        const data = await res.json();
+        if (data.corrected) { contentInput.value = data.corrected; showToast('Grammar corrected ✓'); }
+        else { contentInput.value = original; showToast(data.error || 'Correction failed', true); }
+      } catch { contentInput.value = original; showToast('Request failed', true); }
+      finally { contentInput.disabled = false; contentInput.dispatchEvent(new Event('input')); }
+    }
+  </script>
+</body>
+</html>

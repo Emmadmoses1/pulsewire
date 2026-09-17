@@ -3,12 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pulsewire</title>
+<title>WAVZO</title>
 <link rel="stylesheet" href="/css/style.css">
-  <meta property="og:image" content="https://res.cloudinary.com/smg1blzu/image/upload/v1789369120/pulsewire-og-image.jpg">
-  <meta property="og:image:width" content="2048">
-  <meta property="og:image:height" content="2048">
-  <meta name="twitter:image" content="https://res.cloudinary.com/smg1blzu/image/upload/v1789369120/pulsewire-og-image.jpg">
+
   <meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
@@ -17,7 +14,7 @@
   <div class="ticker-viewport"><div class="ticker-track" id="tickerTrack"></div></div>
 </div>
 <header class="navbar" id="siteNav">
-  <div class="logo"><a href="/">PULSE<span>WIRE</span></a></div>
+  <div class="logo"><a href="/">WAV<span>ZO</span></a></div>
   <nav><a href="/">HOME</a><a href="/artists.html">ARTISTS</a></nav>
 </header>
 
@@ -45,7 +42,7 @@
   </div>
 </div>
 
-<footer>&copy; Pulsewire</footer>
+<footer>&copy; WAVZO</footer>
 
 <script>
 const BIN_ID='6aa50e3aac6210605ac3c542';
@@ -101,7 +98,7 @@ async function downloadMp3(){
   if(!window._songData){status.textContent='Nothing to download.';return;}
   btn.disabled=true;btn.textContent='Converting...';status.textContent='Processing audio — this may take a moment for longer tracks.';
   try{
-    const res=await fetch('https://pulsewire-ai.dakudinamoses.workers.dev/download-mp3',{
+    const res=await fetch('https://wavzo-ai.dakudinamoses.workers.dev/download-mp3',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(window._songData)

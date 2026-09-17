@@ -3,9 +3,6 @@
     "site": "pulsewire",
     "public": ".",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [
-      { "source": "/posts/**", "destination": "/post.html" }
-    ],
     "headers": [
       {
         "source": "**/*.@(html)",
@@ -13,6 +10,23 @@
           { "key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate" }
         ]
       }
+    ],
+    "rewrites": [
+      {
+        "source": "/admin/**",
+        "function": "app"
+      },
+      {
+        "source": "/auth/**",
+        "function": "app"
+      }
     ]
-  }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log"]
+    }
+  ]
 }
