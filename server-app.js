@@ -96,19 +96,23 @@ app.use(async (req, res, next) => {
                req.path.startsWith('/js') || req.path.startsWith('/admin') ||
                req.path.startsWith('/api');
   if (!skip) {
-    if (!(await safeRead(res))) return;
-    db.data.views = db.data.views || [];
-    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
-    let country = 'Local';
     try {
-      if (ip && ip !== '127.0.0.1' && ip !== '::1' && !ip.startsWith('192.168') && !ip.startsWith('10.')) {
-        const geoRes = await fetch('http://ip-api.com/json/' + ip + '?fields=country');
-        const geoData = await geoRes.json();
-        if (geoData.country) country = geoData.country;
-      }
-    } catch (e) {}
-    db.data.views.push({ path: req.path, ip, country, time: Date.now() });
-    await db.write();
+      await db.read();
+      db.data.views = db.data.views || [];
+      const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+      let country = 'Local';
+      try {
+        if (ip && ip !== '127.0.0.1' && ip !== '::1' && !ip.startsWith('192.168') && !ip.startsWith('10.')) {
+          const geoRes = await fetch('http://ip-api.com/json/' + ip + '?fields=country');
+          const geoData = await geoRes.json();
+          if (geoData.country) country = geoData.country;
+        }
+      } catch (e) {}
+      db.data.views.push({ path: req.path, ip, country, time: Date.now() });
+      await db.write();
+    } catch (err) {
+      console.error('Visitor tracking failed (non-fatal):', err.message);
+    }
   }
   next();
 });
