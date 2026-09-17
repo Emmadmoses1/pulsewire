@@ -187,8 +187,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <option value="MUSIC">MUSIC</option>
         </select>
       </div>
-      <div class="field"><label>Excerpt</label><input type="text" id="pExcerpt" placeholder="Short description..."></div>
-      <div class="field"><label>Content</label><textarea id="pContent" placeholder="Full article content..."></textarea>
+      <div class="field"><label>Excerpt <button type="button" class="btn" style="padding:3px 10px;font-size:11px;margin-left:8px;width:auto" onclick="aiGenExcerpt()">✨ AI Generate</button></label><input type="text" id="pExcerpt" placeholder="Short description..."></div>
+      <div class="field"><label>Content <button type="button" class="btn" style="padding:3px 10px;font-size:11px;margin-left:8px;width:auto" onclick="aiExpandContent()">📝 AI Expand</button></label><textarea id="pContent" placeholder="Full article content..."></textarea>
         <button type="button" id="fixGrammarBtn" class="btn" style="background:#333;margin-top:6px;padding:8px 14px;font-size:12px" onclick="fixGrammar()">✍️ AI Fix Grammar</button>
       </div>
 
@@ -440,6 +440,11 @@ const ADMIN_PASS='wavzo2026';
 const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='$2a$10$dsCr1ADyKPDy0pbmzlfCzOnOm9FP8aveuNhIFmktyMa8UvWUoMbUm';
 const BIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
+const RAPIDAPI_KEY='161ee8b7acmsh5b2364ad0b1fc09p17dac7jsn59ce97db1ced';
+const RAPIDAPI_HOST='youtube-mp4-mp3-downloader.p.rapidapi.com';
+const OPENROUTER_KEY='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';
+const OPENROUTER_MODEL='mistralai/mistral-7b-instruct';
+const VOICE_TAG_ID='wavzo-tag-v1';
 
 // ── Auth ──────────────────────────────────────────
 function doLogin(){
@@ -644,9 +649,11 @@ async function loadNews(){
           if (!image && enc.link && enc.type && enc.type.startsWith('image')) image = enc.link;
           if (!image) {
             const html = item.content || item.description || '';
-            const m = html.match(/<img[^>]+src="([^">]+)"/);
+            const m = html.match(/<img[^>]+src=["']([^"'> ]+)["']/) || html.match(/src=["']([^"'> ]+\.(jpg|jpeg|png|webp))["'/]/i);
             if (m) image = m[1];
           }
+          if (!image && item.media_content) image = item.media_content;
+          if (!image && data.feed?.image?.url) image = null; // feed icon, skip
           items.push({
             source: feed.name,
             title: item.title,
@@ -1678,6 +1685,42 @@ document.fonts.load('900 56px Poppins').then(()=>{
 });
 setTimeout(renderPoster,500);
 setTimeout(loadPosterSuggestions,600);
+
+async function aiGenExcerpt(){
+  const title=document.getElementById('pTitle')?.value||'';
+  const cat=document.getElementById('pCat')?.value||'';
+  if(!title){alert('Enter a title first.');return;}
+  const btn=event.target;btn.disabled=true;btn.textContent='...';
+  try{
+    const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENROUTER_KEY},
+      body:JSON.stringify({model:OPENROUTER_MODEL,max_tokens:80,messages:[{role:'user',content:'Write a short 1-2 sentence excerpt for a Nigerian music/news site post.\n\nTitle: '+title+'\nCategory: '+cat+'\n\nExcerpt only, no quotes.'}]})
+    });
+    const d=await r.json();
+    const text=d.choices?.[0]?.message?.content||'';
+    if(text)document.getElementById('pExcerpt').value=text.trim();
+  }catch(e){alert('AI error: '+e.message);}
+  btn.disabled=false;btn.textContent='✨ AI Generate';
+}
+
+async function aiExpandContent(){
+  const title=document.getElementById('pTitle')?.value||'';
+  const excerpt=document.getElementById('pExcerpt')?.value||'';
+  if(!title){alert('Enter a title first.');return;}
+  const btn=event.target;btn.disabled=true;btn.textContent='...';
+  try{
+    const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENROUTER_KEY},
+      body:JSON.stringify({model:OPENROUTER_MODEL,max_tokens:200,messages:[{role:'user',content:'Write a 150-word article body for a Nigerian music/news site.\n\nTitle: '+title+'\nExcerpt: '+excerpt+'\n\nArticle body only, no heading.'}]})
+    });
+    const d=await r.json();
+    const text=d.choices?.[0]?.message?.content||'';
+    if(text)document.getElementById('pContent').value=text.trim();
+  }catch(e){alert('AI error: '+e.message);}
+  btn.disabled=false;btn.textContent='📝 AI Expand';
+}
 </script>
 </body>
 </html>
