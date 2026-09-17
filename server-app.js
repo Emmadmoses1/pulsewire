@@ -1,3 +1,4 @@
+const { JsonBinDB } = require('./jsonbin-db');
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
@@ -6,8 +7,6 @@ const slugify = require('slugify');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const fs = require('fs');
-const { Low } = require('lowdb');
-const { JSONFile } = require('lowdb/node');
 
 const STORAGE_DIR = process.env.STORAGE_DIR || path.join(__dirname, 'storage');
 const DATA_DIR = path.join(STORAGE_DIR, 'data');
@@ -50,8 +49,7 @@ const postFields = postUpload.fields([
 ]);
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
-const adapter = new JSONFile(path.join(DATA_DIR, 'db.json'));
-const db = new Low(adapter, { posts: [], articles: [], admin: { username: 'admin', password: 'changeme123' } });
+const db = new JsonBinDB(process.env.JSONBIN_KEY, { posts: [], articles: [], admin: { username: 'admin', password: 'changeme123' } });
 
 async function initDB() {
   await db.read();
@@ -111,7 +109,9 @@ function requireAdmin(req, res, next) {
 app.get('/', async (req, res) => {
   await db.read();
   const posts = [...db.data.posts].reverse();
-  res.render('home', { posts, subMessage: null });
+  const songs = db.data.songs || [];
+  const artists = db.data.artists || [];
+  res.render('home', { posts, songs, artists, subMessage: null });
 });
 
 app.post('/subscribe', async (req, res) => {
@@ -136,10 +136,92 @@ app.get('/post/:slug', async (req, res) => {
   await db.read();
   const post = db.data.posts.find(p => p.slug === req.params.slug);
   if (!post) return res.status(404).send('Post not found');
+  post.views = (post.views || 0) + 1;
+  await db.write();
   const related = db.data.posts
     .filter(p => p.slug !== post.slug && p.category === post.category)
     .slice(-3).reverse();
   res.render('post', { post, related });
+});
+
+app.post('/post/:slug/comment', async (req, res) => {
+  await db.read();
+  const post = db.data.posts.find(p => p.slug === req.params.slug);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const name = (req.body.name || 'Anonymous').trim().slice(0, 60);
+  const text = (req.body.text || '').trim().slice(0, 1000);
+  if (!text) return res.status(400).json({ error: 'Comment text required' });
+  post.comments = post.comments || [];
+  const comment = { id: 'c' + Date.now() + Math.random().toString(36).slice(2, 6), name, text, ts: Date.now(), likes: 0, replies: [] };
+  post.comments.push(comment);
+  await db.write();
+  res.json({ comments: post.comments });
+});
+
+app.post('/post/:slug/comment/:commentId/reply', async (req, res) => {
+  await db.read();
+  const post = db.data.posts.find(p => p.slug === req.params.slug);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const comment = (post.comments || []).find(c => c.id === req.params.commentId);
+  if (!comment) return res.status(404).json({ error: 'Comment not found' });
+  const name = (req.body.name || 'Anonymous').trim().slice(0, 60);
+  const text = (req.body.text || '').trim().slice(0, 1000);
+  if (!text) return res.status(400).json({ error: 'Reply text required' });
+  comment.replies = comment.replies || [];
+  comment.replies.push({ id: 'r' + Date.now() + Math.random().toString(36).slice(2, 6), name, text, ts: Date.now(), likes: 0 });
+  await db.write();
+  res.json({ comments: post.comments });
+});
+
+app.post('/post/:slug/comment/:commentId/like', async (req, res) => {
+  await db.read();
+  const post = db.data.posts.find(p => p.slug === req.params.slug);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const comment = (post.comments || []).find(c => c.id === req.params.commentId);
+  if (!comment) return res.status(404).json({ error: 'Comment not found' });
+  comment.likes = (comment.likes || 0) + 1;
+  await db.write();
+  res.json({ comments: post.comments });
+});
+
+app.post('/post/:slug/comment/:commentId/reply/:replyId/like', async (req, res) => {
+  await db.read();
+  const post = db.data.posts.find(p => p.slug === req.params.slug);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const comment = (post.comments || []).find(c => c.id === req.params.commentId);
+  if (!comment) return res.status(404).json({ error: 'Comment not found' });
+  const reply = (comment.replies || []).find(r => r.id === req.params.replyId);
+  if (!reply) return res.status(404).json({ error: 'Reply not found' });
+  reply.likes = (reply.likes || 0) + 1;
+  await db.write();
+  res.json({ comments: post.comments });
+});
+
+app.post('/post/:slug/reaction', async (req, res) => {
+  await db.read();
+  const post = db.data.posts.find(p => p.slug === req.params.slug);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const { key, previous } = req.body;
+  const valid = ['like', 'love', 'laugh', 'wow', 'sad'];
+  if (!valid.includes(key)) return res.status(400).json({ error: 'Invalid reaction' });
+  post.reactions = post.reactions || {};
+  if (previous === key) {
+    post.reactions[key] = Math.max(0, (post.reactions[key] || 0) - 1);
+  } else {
+    if (previous && valid.includes(previous)) {
+      post.reactions[previous] = Math.max(0, (post.reactions[previous] || 0) - 1);
+    }
+    post.reactions[key] = (post.reactions[key] || 0) + 1;
+  }
+  await db.write();
+  res.json({ reactions: post.reactions });
+});
+
+app.get('/artists', async (req, res) => {
+  await db.read();
+  const artists = db.data.artists || [];
+  const songs = db.data.songs || [];
+  res.render('artists', { artists, songs });
 });
 
 app.get('/admin/login', (req, res) => res.render('admin-login', { error: null }));

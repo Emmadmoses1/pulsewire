@@ -6,10 +6,48 @@
   <title><%= post.title %> — WAVZO</title>
   <meta name="description" content="<%= post.excerpt %>">
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .views-bar{display:flex;gap:16px;align-items:center;margin:10px 0 16px;flex-wrap:wrap}
+    .views-bar span{font-size:12px;color:#888;display:flex;align-items:center;gap:5px}
+    .download-gate{background:#111;border:1px solid #222;border-radius:14px;padding:24px;margin:20px 0;text-align:center}
+    .download-gate h3{font-size:16px;font-weight:700;margin-bottom:8px}
+    .download-gate p{font-size:13px;color:#888;margin-bottom:16px}
+    .ad-notice{font-size:11px;color:#555;margin-top:10px}
+    .dw-btn{display:inline-flex;align-items:center;gap:8px;background:#e63946;color:#fff;padding:13px 28px;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;cursor:pointer;border:none;font-family:inherit;transition:.2s;margin:4px}
+    .dw-btn:hover{background:#c1121f}
+    .dw-btn:disabled{opacity:.5;cursor:not-allowed}
+    .share-row{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+    .share-btn-x{padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid #333;background:#1a1a1a;color:#ccc;font-family:inherit;transition:.2s}
+    .share-btn-x:hover{border-color:#e63946;color:#e63946}
+    .ad-slot{background:#111;border:1px solid #1a1a1a;border-radius:10px;min-height:90px;display:flex;align-items:center;justify-content:center;color:#333;font-size:12px;margin:20px 0;overflow:hidden}
+    .countdown{font-size:13px;color:#e63946;font-weight:700;margin-top:8px}
+    .comments-section{margin-top:30px;padding-top:20px;border-top:1px solid #222}
+    .comments-title{font-size:16px;font-weight:700;margin-bottom:14px}
+    .comment-form{margin-bottom:20px}
+    .comment-form input,.comment-form textarea{width:100%;box-sizing:border-box;background:#111;border:1px solid #222;border-radius:8px;padding:10px 12px;color:#fff;font-family:inherit;font-size:13px;margin-bottom:8px}
+    .comment-form textarea{min-height:70px;resize:vertical}
+    .comment-item{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:10px;padding:14px;margin-bottom:12px}
+    .comment-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:13px}
+    .comment-header strong{color:#fff}
+    .comment-date{color:#666;font-size:11px}
+    .comment-text{font-size:13px;color:#ccc;line-height:1.5;margin-bottom:8px}
+    .comment-actions{display:flex;gap:12px}
+    .comment-actions button{background:none;border:1px solid #333;color:#999;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+    .comment-actions button:hover{border-color:#e63946;color:#e63946}
+    .reply-form{margin-top:10px;padding:10px;background:#111;border-radius:8px}
+    .reply-form.hidden{display:none}
+    .reply-form input,.reply-form textarea{width:100%;box-sizing:border-box;background:#0a0a0a;border:1px solid #222;border-radius:6px;padding:8px 10px;color:#fff;font-family:inherit;font-size:12px;margin-bottom:6px}
+    .reply-form textarea{min-height:50px;resize:vertical}
+    .replies-list{margin-top:10px;padding-left:16px;border-left:2px solid #222}
+    .reply-item{padding:10px 0}
+    .reactions-bar{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+    .reaction-btn{background:#111;border:1px solid #222;border-radius:20px;padding:8px 14px;font-size:13px;cursor:pointer;color:#ccc;font-family:inherit;display:flex;align-items:center;gap:6px;transition:.15s}
+    .reaction-btn:hover{border-color:#444}
+    .reaction-btn.active{background:#e63946;border-color:#e63946;color:#fff}
+  </style>
 </head>
 <body>
 
-<!-- ── Ticker ─────────────────────────────────────── -->
 <div class="ticker-bar">
   <span class="ticker-live">LIVE</span>
   <div class="ticker-track">
@@ -22,114 +60,99 @@
   </div>
 </div>
 
-<!-- ── Navbar ─────────────────────────────────────── -->
 <header class="navbar" id="siteNav">
   <div class="logo"><a href="/">WAV<span>ZO</span></a></div>
   <nav>
     <a href="/">HOME</a>
-    <a href="/?filter=NEWS">NEWS</a>
-    <a href="/?filter=ENTERTAINMENT">ENTERTAINMENT</a>
-    <a href="/?filter=CULTURE">CULTURE</a>
-    <a href="/?filter=TRENDING">TRENDING</a>
   </nav>
-  <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">&#9776;</button>
 </header>
-<nav class="mobile-nav hidden" id="mobileNav">
-  <a href="/">HOME</a>
-  <a href="/?filter=NEWS">NEWS</a>
-  <a href="/?filter=ENTERTAINMENT">ENTERTAINMENT</a>
-  <a href="/?filter=CULTURE">CULTURE</a>
-  <a href="/?filter=TRENDING">TRENDING</a>
-</nav>
 
-<!-- ── Article ────────────────────────────────────── -->
 <main class="article-wrap">
   <div class="article-inner">
 
-    <!-- Breadcrumb -->
     <div class="article-breadcrumb">
       <a href="/">Home</a>
       <span>/</span>
-      <a href="/#<%= post.category.toLowerCase() %>"><%= post.category %></a>
+      <span><%= post.category %></span>
     </div>
 
-    <!-- Category + Title -->
     <div class="article-cat-tag"><%= post.category %></div>
     <h1 class="article-title"><%= post.title %></h1>
 
-    <!-- Meta -->
-    <div class="article-meta">
-      <div class="article-author">
-        <div class="author-avatar">PW</div>
-        <div>
-          <span class="author-name">WAVZO Staff</span>
-          <span class="article-date"><%= post.date %></span>
-        </div>
-      </div>
-      <div class="article-share">
-        <button class="share-btn" onclick="navigator.share ? navigator.share({title: '<%= post.title %>', url: window.location.href}) : copyLink()" title="Share">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          Share
-        </button>
-      </div>
+    <div class="views-bar">
+      <span>👁 <strong><%= (post.views||0).toLocaleString() %></strong> views</span>
+      <span>⬇ <strong><%= (post.downloadCount||0).toLocaleString() %></strong> downloads</span>
+      <span>📅 <%= post.date %></span>
     </div>
 
-    <!-- Ad -->
-    <div class="ad-space">AD SPACE · 728×90</div>
+    <div class="reactions-bar" id="reactionsBar">
+      <% const reactions = post.reactions || {}; %>
+      <% const REACTIONS = [{key:'like',emoji:'👍'},{key:'love',emoji:'❤️'},{key:'laugh',emoji:'😂'},{key:'wow',emoji:'😮'},{key:'sad',emoji:'😢'}]; %>
+      <% REACTIONS.forEach(r => { %>
+        <button class="reaction-btn" data-key="<%= r.key %>" onclick="toggleReaction('<%= r.key %>')">
+          <%= r.emoji %> <span class="reaction-count"><%= reactions[r.key] || 0 %></span>
+        </button>
+      <% }) %>
+    </div>
 
-    <!-- Cover image -->
+    <div class="share-row">
+      <button class="share-btn-x" onclick="sharePost('whatsapp')">📲 WhatsApp</button>
+      <button class="share-btn-x" onclick="sharePost('twitter')">🐦 Twitter</button>
+      <button class="share-btn-x" onclick="sharePost('copy')">🔗 Copy Link</button>
+    </div>
+
+    <div class="ad-slot">Advertisement</div>
+
     <% if (post.coverImage) { %>
       <img src="<%= post.coverImage %>" class="article-cover" alt="<%= post.title %>">
     <% } %>
 
-    <!-- Video player -->
     <% if (post.videoFile) { %>
       <div class="media-block">
-        <div class="media-label">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          Video
-        </div>
+        <div class="media-label">🎬 Video</div>
         <video controls class="post-video" preload="metadata">
           <source src="<%= post.videoFile %>">
-          Your browser does not support video.
         </video>
-        <a href="/download/<%= post.slug %>/video" class="download-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download Video
-        </a>
+        <div style="text-align:center;margin-top:12px">
+          <button class="dw-btn" onclick="startDownload('video')">⬇ Download Video</button>
+        </div>
       </div>
     <% } %>
 
-    <!-- Music player -->
     <% if (post.musicFile) { %>
       <div class="media-block">
-        <div class="media-label">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-          Audio
-        </div>
+        <div class="media-label">🎵 Audio</div>
         <audio controls class="post-audio" preload="metadata">
           <source src="<%= post.musicFile %>">
-          Your browser does not support audio.
         </audio>
-        <a href="/download/<%= post.slug %>/audio" class="download-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download Audio
-        </a>
+        <div style="text-align:center;margin-top:12px">
+          <button class="dw-btn" onclick="startDownload('audio')">⬇ Download Audio</button>
+        </div>
       </div>
     <% } %>
 
-    <!-- Article body -->
+    <% if (post.musicFile || post.videoFile) { %>
+      <div class="download-gate" id="dlGate" style="display:none">
+        <h3>Your download is almost ready</h3>
+        <p>A short ad helps us keep WAVZO free</p>
+        <div class="ad-slot" style="min-height:60px;margin:12px 0">Advertisement</div>
+        <div class="countdown" id="dlCountdown"></div>
+        <button class="dw-btn" id="dlFinalBtn" disabled>Please wait...</button>
+        <div class="ad-notice">Free download supported by ads</div>
+      </div>
+    <% } %>
+
     <div class="article-body">
       <%- post.content %>
     </div>
 
-    <!-- Tags / category footer -->
+    <div class="ad-slot">Advertisement</div>
+
     <div class="article-footer-meta">
       <span class="article-tag"><%= post.category %></span>
       <span class="article-tag">WAVZO</span>
     </div>
 
-    <!-- Related posts -->
     <% if (related && related.length > 0) { %>
       <div class="related-section">
         <h3 class="related-title">More from <%= post.category %></h3>
@@ -152,18 +175,56 @@
       </div>
     <% } %>
 
-    <!-- Back link -->
     <div class="article-back">
-      <a href="/" class="back-link">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        Back to all stories
-      </a>
+      <a href="/" class="back-link">&larr; Back to all stories</a>
+    </div>
+
+    <div class="comments-section">
+      <h3 class="comments-title">💬 Comments (<span id="commentCount"><%= (post.comments||[]).length %></span>)</h3>
+      <div class="comment-form">
+        <input type="text" id="commentName" placeholder="Your name">
+        <textarea id="commentText" placeholder="Write a comment..."></textarea>
+        <button class="dw-btn" style="padding:10px 20px;font-size:13px" onclick="postComment()">Post Comment</button>
+      </div>
+      <div id="commentsList">
+        <% function esc(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); } %>
+        <% const comments = post.comments || []; %>
+        <% if (!comments.length) { %>
+          <p style="color:#666;font-size:13px;padding:10px 0">No comments yet. Be the first!</p>
+        <% } else { %>
+          <% comments.forEach(c => { %>
+            <div class="comment-item">
+              <div class="comment-header"><strong><%= esc(c.name||'Anonymous') %></strong><span class="comment-date"><%= new Date(c.ts).toLocaleDateString() %></span></div>
+              <p class="comment-text"><%= esc(c.text) %></p>
+              <div class="comment-actions">
+                <button onclick="likeComment('<%= c.id %>')">👍 <%= c.likes||0 %></button>
+                <button onclick="toggleReplyForm('<%= c.id %>')">Reply</button>
+              </div>
+              <div class="reply-form hidden" id="replyForm-<%= c.id %>">
+                <input type="text" id="replyName-<%= c.id %>" placeholder="Your name">
+                <textarea id="replyText-<%= c.id %>" placeholder="Write a reply..."></textarea>
+                <button class="dw-btn" style="padding:6px 14px;font-size:12px" onclick="postReply('<%= c.id %>')">Reply</button>
+              </div>
+              <% if (c.replies && c.replies.length) { %>
+                <div class="replies-list">
+                  <% c.replies.forEach(r => { %>
+                    <div class="reply-item">
+                      <div class="comment-header"><strong><%= esc(r.name||'Anonymous') %></strong><span class="comment-date"><%= new Date(r.ts).toLocaleDateString() %></span></div>
+                      <p class="comment-text"><%= esc(r.text) %></p>
+                      <div class="comment-actions"><button onclick="likeReply('<%= c.id %>','<%= r.id %>')">👍 <%= r.likes||0 %></button></div>
+                    </div>
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
     </div>
 
   </div>
 </main>
 
-<!-- ── Newsletter ──────────────────────────────────── -->
 <div class="newsletter">
   <h2>NEVER MISS A HEADLINE</h2>
   <p>One email a day. The stories everyone's talking about, none of the noise.</p>
@@ -173,49 +234,155 @@
   </form>
 </div>
 
-<!-- ── Footer ─────────────────────────────────────── -->
 <footer>
   <div>&copy; <%= new Date().getFullYear() %> WAVZO. All rights reserved.</div>
-  <div style="margin-top:6px;">
-    <a href="/">Home</a>
-    <a href="/?filter=NEWS">News</a>
-    <a href="/?filter=ENTERTAINMENT">Entertainment</a>
-    <a href="/?filter=CULTURE">Culture</a>
-  </div>
 </footer>
 
-<button id="backToTop" aria-label="Back to top">&#8593;</button>
+<button id="backToTop" aria-label="Back to top">&uarr;</button>
 
 <%- include('partials-chat-widget') %>
 
 <script>
-  // Sticky nav
-  const nav = document.getElementById('siteNav');
-  window.addEventListener('scroll', () => {
-    nav.classList.toggle('scrolled', window.scrollY > 10);
-    document.getElementById('backToTop').classList.toggle('visible', window.scrollY > 400);
-  });
+const SLUG = '<%= post.slug %>';
 
-  // Back to top
-  document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 
-  // Mobile nav toggle
-  document.getElementById('mobileNavToggle').addEventListener('click', () => {
-    document.getElementById('mobileNav').classList.toggle('hidden');
-  });
+async function postJSON(url, body){
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body||{}) });
+  return res.json();
+}
 
-  // Copy link fallback for share
-  function copyLink() {
-    navigator.clipboard.writeText(window.location.href).then(() => alert('Link copied!'));
+function renderCommentsHTML(comments){
+  if(!comments||!comments.length) return '<p style="color:#666;font-size:13px;padding:10px 0">No comments yet. Be the first!</p>';
+  return comments.map(c => `
+    <div class="comment-item">
+      <div class="comment-header"><strong>${esc(c.name||'Anonymous')}</strong><span class="comment-date">${new Date(c.ts).toLocaleDateString()}</span></div>
+      <p class="comment-text">${esc(c.text)}</p>
+      <div class="comment-actions">
+        <button onclick="likeComment('${c.id}')">👍 ${c.likes||0}</button>
+        <button onclick="toggleReplyForm('${c.id}')">Reply</button>
+      </div>
+      <div class="reply-form hidden" id="replyForm-${c.id}">
+        <input type="text" id="replyName-${c.id}" placeholder="Your name">
+        <textarea id="replyText-${c.id}" placeholder="Write a reply..."></textarea>
+        <button class="dw-btn" style="padding:6px 14px;font-size:12px" onclick="postReply('${c.id}')">Reply</button>
+      </div>
+      ${(c.replies&&c.replies.length)?`<div class="replies-list">${c.replies.map(r=>`
+        <div class="reply-item">
+          <div class="comment-header"><strong>${esc(r.name||'Anonymous')}</strong><span class="comment-date">${new Date(r.ts).toLocaleDateString()}</span></div>
+          <p class="comment-text">${esc(r.text)}</p>
+          <div class="comment-actions"><button onclick="likeReply('${c.id}','${r.id}')">👍 ${r.likes||0}</button></div>
+        </div>
+      `).join('')}</div>`:''}
+    </div>
+  `).join('');
+}
+
+function refreshCommentsUI(comments){
+  document.getElementById('commentsList').innerHTML = renderCommentsHTML(comments);
+  document.getElementById('commentCount').textContent = comments.length;
+}
+
+async function postComment(){
+  const nameEl = document.getElementById('commentName');
+  const textEl = document.getElementById('commentText');
+  const text = textEl.value.trim();
+  if(!text) return;
+  const data = await postJSON(`/post/${SLUG}/comment`, { name: nameEl.value.trim(), text });
+  if(data.comments){ textEl.value=''; refreshCommentsUI(data.comments); }
+}
+
+function toggleReplyForm(commentId){
+  const form = document.getElementById('replyForm-'+commentId);
+  if(form) form.classList.toggle('hidden');
+}
+
+async function postReply(commentId){
+  const nameEl = document.getElementById('replyName-'+commentId);
+  const textEl = document.getElementById('replyText-'+commentId);
+  const text = textEl.value.trim();
+  if(!text) return;
+  const data = await postJSON(`/post/${SLUG}/comment/${commentId}/reply`, { name: nameEl.value.trim(), text });
+  if(data.comments) refreshCommentsUI(data.comments);
+}
+
+async function likeComment(commentId){
+  const data = await postJSON(`/post/${SLUG}/comment/${commentId}/like`);
+  if(data.comments) refreshCommentsUI(data.comments);
+}
+
+async function likeReply(commentId, replyId){
+  const data = await postJSON(`/post/${SLUG}/comment/${commentId}/reply/${replyId}/like`);
+  if(data.comments) refreshCommentsUI(data.comments);
+}
+
+function getMyReaction(){ try{ return localStorage.getItem('pw_reaction_'+SLUG) || ''; }catch(e){ return ''; } }
+function setMyReaction(key){ try{ localStorage.setItem('pw_reaction_'+SLUG, key); }catch(e){} }
+
+async function toggleReaction(key){
+  const previous = getMyReaction();
+  const data = await postJSON(`/post/${SLUG}/reaction`, { key, previous });
+  if(data.reactions){
+    document.querySelectorAll('.reaction-btn').forEach(btn => {
+      btn.querySelector('.reaction-count').textContent = data.reactions[btn.dataset.key] || 0;
+    });
+    setMyReaction(previous === key ? '' : key);
+    document.querySelectorAll('.reaction-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.key === getMyReaction());
+    });
   }
+}
 
-  // Newsletter
-  document.getElementById('subForm').addEventListener('submit', function(e) {
-    const email = document.getElementById('subEmail').value.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { e.preventDefault(); alert('Enter a valid email'); return; }
-    const btn = document.getElementById('subBtn');
-    btn.disabled = true; btn.textContent = 'SUBSCRIBING...';
-  });
+document.addEventListener('DOMContentLoaded', () => {
+  const mine = getMyReaction();
+  if(mine){
+    document.querySelectorAll('.reaction-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.key === mine));
+  }
+});
+
+function startDownload(type){
+  const gate = document.getElementById('dlGate');
+  const btn = document.getElementById('dlFinalBtn');
+  const countdown = document.getElementById('dlCountdown');
+  gate.style.display = 'block';
+  gate.scrollIntoView({ behavior: 'smooth' });
+  btn.disabled = true; btn.textContent = 'Please wait...';
+  let sec = 5;
+  countdown.textContent = 'Download starts in ' + sec + 's';
+  const timer = setInterval(() => {
+    sec--;
+    if(sec <= 0){
+      clearInterval(timer);
+      countdown.textContent = '✅ Ready!';
+      btn.disabled = false; btn.textContent = '⬇ DOWNLOAD NOW';
+      btn.onclick = () => { window.location.href = `/download/${SLUG}/${type}`; };
+    } else {
+      countdown.textContent = 'Download starts in ' + sec + 's';
+    }
+  }, 1000);
+}
+
+function sharePost(platform){
+  const url = encodeURIComponent(window.location.href);
+  const title = encodeURIComponent(document.title);
+  if(platform === 'whatsapp') window.open('https://wa.me/?text=' + title + '%20' + url);
+  else if(platform === 'twitter') window.open('https://twitter.com/intent/tweet?text=' + title + '&url=' + url);
+  else if(platform === 'copy'){ navigator.clipboard.writeText(window.location.href); alert('Link copied!'); }
+}
+
+const nav = document.getElementById('siteNav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 10);
+  document.getElementById('backToTop').classList.toggle('visible', window.scrollY > 400);
+});
+document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+document.getElementById('subForm').addEventListener('submit', function(e) {
+  const email = document.getElementById('subEmail').value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { e.preventDefault(); alert('Enter a valid email'); return; }
+  const btn = document.getElementById('subBtn');
+  btn.disabled = true; btn.textContent = 'SUBSCRIBING...';
+});
 </script>
 </body>
 </html>
