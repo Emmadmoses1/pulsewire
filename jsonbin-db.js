@@ -7,9 +7,17 @@ class JsonBinDB {
     this.data = defaultData;
   }
   async read() {
+    const now = Date.now();
+    if (this._cachedAt && (now - this._cachedAt) < 15000) {
+      return this.data;
+    }
     const res = await fetch(`${BASE_URL}/latest`, { headers: { 'X-Master-Key': this.key } });
-    if (!res.ok) throw new Error(`JSONBin read failed: ${res.status}`);
+    if (!res.ok) {
+      if (this.data) return this.data;
+      throw new Error(`JSONBin read failed: ${res.status}`);
+    }
     this.data = (await res.json()).record;
+    this._cachedAt = now;
     return this.data;
   }
   async write() {
