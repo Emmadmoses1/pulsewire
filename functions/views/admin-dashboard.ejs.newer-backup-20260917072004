@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WAVZO Admin</title>
+<title>Pulsewire Admin</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -119,7 +119,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <!-- LOGIN -->
 <div id="loginPage">
 <div class="login-page">
-  <div class="login-logo">WAV<span>ZO</span></div>
+  <div class="login-logo">PULSE<span>WIRE</span></div>
   <div class="login-sub">ADMIN PANEL</div>
   <div class="login-card">
     <h2>Welcome back 👋</h2>
@@ -137,9 +137,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <div id="adminPage" style="display:none">
 
 <div class="navbar">
-  <div class="nav-logo">WAV<span>ZO</span></div>
+  <div class="nav-logo">PULSE<span>WIRE</span></div>
   <div class="nav-right">
-    <a href="https://wavzo.com.ng/" target="_blank" class="logout-btn" style="text-decoration:none;color:#e11;border-color:#e11">VISIT LIVE SITE ↗</a>
+    <a href="https://pulsewire.web.app/" target="_blank" class="logout-btn" style="text-decoration:none;color:#e11;border-color:#e11">VISIT LIVE SITE ↗</a>
     <span class="nav-badge">ADMIN</span>
     <button class="logout-btn" onclick="doLogout()">LOGOUT</button>
   </div>
@@ -306,16 +306,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       </div>
       <div class="field"><label>Download Link <span class="media-hint">(only add if you have rights to share this file)</span></label>
         <input type="text" id="songDownloadUrl" placeholder="https://... (optional)"></div>
-      <div class="field">
-        <label>YouTube Link</label>
-        <div style="display:flex;gap:8px">
-          <input type="text" id="songYoutubeUrl" placeholder="https://youtube.com/watch?v=... (optional)" style="flex:1">
-          <button type="button" class="btn btn-sm btn-dark" onclick="searchYoutube()" id="ytSearchBtn">▶ Find Video</button>
-        </div>
-        <div id="ytPreview" style="margin-top:8px"></div>
-      </div>
+      <div class="field"><label>YouTube Link</label>
+        <input type="text" id="songYoutubeUrl" placeholder="https://youtube.com/watch?v=... (optional)"></div>
       <button class="btn" onclick="saveSong()">SAVE SONG</button>
-      <button class="btn" style="background:#555;margin-top:8px;display:none" onclick="cancelSongEdit()" id="cancelSongBtn">CANCEL</button>
+      <button class="btn" style="background:#555" onclick="cancelSongEdit()" id="cancelSongBtn" style="display:none">CANCEL</button>
+    </div>
     <div class="card">
       <div class="card-title">All Songs <span class="badge-count" id="songCount"></span></div>
       <div id="songsList"></div>
@@ -333,11 +328,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="field">
         <label>Page Access Token</label>
         <input type="password" id="fbPageToken" placeholder="EAAG...">
-      </div>
-      <div class="field" style="margin-top:18px">
-        <label>YouTube Data API Key</label>
-        <input type="password" id="ytApiKey" placeholder="AIza...">
-        <p style="font-size:11px;color:var(--muted);margin-top:4px">Free from console.cloud.google.com — enables auto-search for song YouTube links.</p>
       </div>
       <button class="btn" onclick="saveSettings()">SAVE SETTINGS</button>
       <p id="settingsSaved" style="color:#2a2;font-size:13px;margin-top:8px;display:none">✓ Saved</p>
@@ -430,13 +420,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </div><!-- /adminPage -->
 
 <script>
-const MP3_SERVICE_URL =
-  localStorage.getItem('wavzoMp3ServiceUrl') ||
-  'https://wavzo-1.onrender.com';
-
-
-const CLOUD='smg1blzu', PRESET='WAVZO';
-const ADMIN_PASS='wavzo2026';
+const CLOUD='smg1blzu', PRESET='Pulsewire';
+const ADMIN_PASS='pulsewire2026';
 const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='$2a$10$dsCr1ADyKPDy0pbmzlfCzOnOm9FP8aveuNhIFmktyMa8UvWUoMbUm';
 const BIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
@@ -530,7 +515,7 @@ async function scanCoverArt(){
   btn.disabled=true;btn.textContent='Scanning...';
   try{
     const base64=await fileToBase64(file);
-    const res=await fetch('https://wavzo-ai.dakudinamoses.workers.dev/scan-cover',{
+    const res=await fetch('https://pulsewire-ai.dakudinamoses.workers.dev/scan-cover',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({imageBase64:base64,mediaType:file.type})
@@ -555,7 +540,7 @@ async function fixGrammar(){
   const btn=document.getElementById('fixGrammarBtn');
   btn.disabled=true;btn.textContent='Correcting...';
   try{
-    const res=await fetch('https://wavzo-ai.dakudinamoses.workers.dev/correct-grammar',{
+    const res=await fetch('https://pulsewire-ai.dakudinamoses.workers.dev/correct-grammar',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({text:original})
@@ -833,14 +818,12 @@ async function loadSettings(){
   const db=await loadDB();
   document.getElementById('fbPageId').value = db.fbPageId || '';
   document.getElementById('fbPageToken').value = db.fbPageToken || '';
-  document.getElementById('ytApiKey').value = db.ytApiKey || '';
 }
 
 async function saveSettings(){
   const db=await loadDB();
   db.fbPageId = document.getElementById('fbPageId').value.trim();
   db.fbPageToken = document.getElementById('fbPageToken').value.trim();
-  db.ytApiKey = document.getElementById('ytApiKey').value.trim();
   await saveDB(db);
   const msg=document.getElementById('settingsSaved');
   msg.style.display='block';
@@ -856,8 +839,8 @@ async function postToFacebook(slug){
   const post=db.posts.find(p=>p.slug===slug);
   if(!post){alert('Post not found');return;}
 
-  const url=`https://wavzo.com.ng/posts/${slug}.html`;
-  const caption=`${post.title}\n\nSource: ${post.sourceName||'WAVZO'}\n\n👉 Read the full story: ${url}`;
+  const url=`https://pulsewire.web.app/posts/${slug}.html`;
+  const caption=`${post.title}\n\nSource: ${post.sourceName||'Pulsewire'}\n\n👉 Read the full story: ${url}`;
 
   const btn=document.getElementById('fb-btn-'+slug);
   btn.disabled=true;btn.textContent='Posting...';
@@ -1105,14 +1088,6 @@ async function searchSong(){
     const hit = data.results?.[0];
     if(!hit){status.textContent='No match found — fill in manually.';btn.disabled=false;btn.textContent='🔍 Search';return;}
     document.getElementById('songTitle').value = hit.trackName || title;
-    window._songMeta = {
-      artist: hit.artistName || artistName || '',
-      title: hit.trackName || title || '',
-      track: hit.trackNumber || '',
-      year: hit.releaseDate ? hit.releaseDate.slice(0,4) : '',
-      genre: hit.primaryGenreName || '',
-      coverUrl: hit.artworkUrl100 ? hit.artworkUrl100.replace('100x100','1000x1000') : ''
-    };
     document.getElementById('songExcerpt').value = `From the ${hit.collectionType || 'release'} "${hit.collectionName || ''}" by ${hit.artistName || ''}${hit.releaseDate ? ' (' + hit.releaseDate.slice(0,4) + ')' : ''}.`;
     if(hit.artworkUrl100){
       const hiRes = hit.artworkUrl100.replace('100x100','1000x1000');
@@ -1126,212 +1101,6 @@ async function searchSong(){
     status.textContent = 'Search failed — fill in manually.';
   }
   btn.disabled=false;btn.textContent='🔍 Search';
-}
-
-
-
-async function searchYoutube(){
-  const db=await loadDB();
-  const apiKey=db.ytApiKey;
-
-  if(!apiKey){
-    alert('Add your YouTube API Key in Settings first.');
-    return;
-  }
-
-  const title=document.getElementById('songTitle').value.trim();
-  const artistSel=document.getElementById('songArtist');
-  const artistName=artistSel.options[artistSel.selectedIndex]?.text||'';
-
-  if(!title){
-    alert('Type a song title first');
-    return;
-  }
-
-  const btn=document.getElementById('ytSearchBtn');
-  btn.disabled=true;
-  btn.textContent='Searching...';
-
-  try{
-    const q=encodeURIComponent(artistName+' '+title+' official');
-
-    const res=await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&type=video&q=${q}&key=${apiKey}`
-    );
-
-    const data=await res.json();
-    const hit=data.items?.[0];
-
-    if(!hit){
-      document.getElementById('ytPreview').innerHTML=
-        '<p style="font-size:12px;color:#e11">No video found — add link manually.</p>';
-
-      btn.disabled=false;
-      btn.textContent='▶ Find Video';
-      return;
-    }
-
-    const vid=hit.id.videoId;
-    const youtubeUrl='https://www.youtube.com/watch?v='+vid;
-
-    document.getElementById('songYoutubeUrl').value=youtubeUrl;
-
-    window._selectedYoutube={
-      url:youtubeUrl,
-      title:hit.snippet.title,
-      thumbnail:hit.snippet.thumbnails?.medium?.url ||
-                hit.snippet.thumbnails?.default?.url || ''
-    };
-
-    document.getElementById('ytPreview').innerHTML=`
-      <div style="display:flex;gap:10px;align-items:center;border:1px solid #2a2d3a;border-radius:8px;padding:9px">
-        <img src="${window._selectedYoutube.thumbnail}"
-             style="width:70px;height:52px;object-fit:cover;border-radius:5px">
-        <div style="flex:1;min-width:0">
-          <div style="font-size:12px;color:#d1d5db;line-height:1.35">
-            ${hit.snippet.title}
-          </div>
-          <div style="font-size:10px;color:#777;margin-top:3px">
-            YouTube video selected
-          </div>
-        </div>
-        <button
-          type="button"
-          class="btn btn-sm btn-dark"
-          id="convertYoutubeBtn"
-          onclick="convertYoutubeToMp3()"
-          style="white-space:nowrap">
-          🎵 Convert to MP3
-        </button>
-      </div>
-    `;
-
-  }catch(e){
-    document.getElementById('ytPreview').innerHTML=
-      '<p style="font-size:12px;color:#e11">Search failed: '+e.message+'</p>';
-  }
-
-  btn.disabled=false;
-  btn.textContent='▶ Find Video';
-}
-
-async function convertYoutubeToMp3(){
-  const url=document.getElementById('songYoutubeUrl').value.trim();
-
-  if(!url){
-    alert('Find a YouTube video first.');
-    return;
-  }
-
-  const meta=window._songMeta||{};
-
-  const artist=
-    meta.artist ||
-    document.getElementById('songArtist').options[
-      document.getElementById('songArtist').selectedIndex
-    ]?.text || '';
-
-  const title=
-    meta.title ||
-    document.getElementById('songTitle').value.trim();
-
-  const btn=document.getElementById('convertYoutubeBtn');
-
-  if(btn){
-    btn.disabled=true;
-    btn.textContent='⏳ Converting...';
-  }
-
-  const preview=document.getElementById('ytPreview');
-
-  preview.insertAdjacentHTML(
-    'beforeend',
-    '<div id="ytMp3Status" style="font-size:11px;color:var(--muted);margin-top:8px">Preparing MP3 conversion...</div>' +
-    '<div class="prog-wrap" id="ytMp3Prog" style="display:block;margin-top:6px"><div class="prog-fill" id="ytMp3Bar" style="width:5%"></div></div>'
-  );
-
-  const status=document.getElementById('ytMp3Status');
-  const bar=document.getElementById('ytMp3Bar');
-
-  try{
-    const response=await fetch(MP3_SERVICE_URL+'/convert',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        url,
-        artist,
-        title,
-        track:meta.track||'',
-        year:meta.year||'',
-        genre:meta.genre||'',
-        coverUrl:meta.coverUrl||window._pendingSongCoverUrl||''
-      })
-    });
-
-    if(!response.ok){
-      let message='Conversion failed.';
-      try{
-        const err=await response.json();
-        message=err.error || err.detail || message;
-      }catch(_){}
-      throw new Error(message);
-    }
-
-    if(bar)bar.style.width='70%';
-    if(status)status.textContent='✓ MP3 created — uploading to Cloudinary...';
-
-    const blob=await response.blob();
-
-    if(!blob.size){
-      throw new Error('The converter returned an empty MP3.');
-    }
-
-    const safeTitle=(title||'song')
-      .replace(/[\/:*?"<>|]+/g,'')
-      .trim();
-
-    const file=new File(
-      [blob],
-      safeTitle+'.mp3',
-      {type:'audio/mpeg'}
-    );
-
-    const cloudUrl=await uploadCloud(
-      file,
-      'ytMp3Prog',
-      'ytMp3Bar'
-    );
-
-    if(!cloudUrl){
-      throw new Error('Cloudinary upload failed.');
-    }
-
-    document.getElementById('songDownloadUrl').value=cloudUrl;
-
-    if(bar)bar.style.width='100%';
-    if(status){
-      status.style.color='#22c55e';
-      status.textContent='✓ MP3 ready. Download Link has been filled automatically.';
-    }
-
-    if(btn){
-      btn.disabled=false;
-      btn.textContent='✓ MP3 Ready';
-    }
-
-  }catch(e){
-    if(status){
-      status.style.color='#ef4444';
-      status.textContent='Conversion failed: '+e.message;
-    }
-
-    if(btn){
-      btn.disabled=false;
-      btn.textContent='🎵 Convert to MP3';
-    }
-
-    alert('MP3 conversion failed: '+e.message);
-  }
 }
 
 async function loadPosts(){
@@ -1629,10 +1398,10 @@ function drawPosterToCanvas(ctx,W,H,tplName,title,sub,extra,img){
 
   ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(0,H-80,W,80);
   ctx.fillStyle='#fff';ctx.font=`800 28px ${F}`;
-  ctx.textAlign='left';ctx.fillText('WAV',60,H-32);
-  ctx.fillStyle=tpl.accent;ctx.fillText('ZO',116,H-32);
+  ctx.textAlign='left';ctx.fillText('PULSE',60,H-32);
+  ctx.fillStyle=tpl.accent;ctx.fillText('WIRE',148,H-32);
   ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font=`500 20px ${F}`;
-  ctx.textAlign='right';ctx.fillText('wavzo.com.ng',W-60,H-32);
+  ctx.textAlign='right';ctx.fillText('pulsewire.web.app',W-60,H-32);
 
   for(let i=0;i<6;i++){
     ctx.fillStyle=tpl.accent+'44';
@@ -1665,7 +1434,7 @@ function downloadPoster(){
   const canvas=document.getElementById('posterCanvas');
   const link=document.createElement('a');
   const title=document.getElementById('posterTitle').value||'poster';
-  link.download=title.toLowerCase().replace(/\s+/g,'-')+'-wavzo.png';
+  link.download=title.toLowerCase().replace(/\s+/g,'-')+'-pulsewire.png';
   link.href=canvas.toDataURL('image/png');
   link.click();
 }

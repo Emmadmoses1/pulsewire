@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Artists — WAVZO</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .artists-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:20px;padding:20px 30px}
+    .artist-card{text-decoration:none;color:inherit;background:#111;border:1px solid #1a1a1a;border-radius:12px;overflow:hidden;transition:.2s}
+    .artist-card:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,.2)}
+    .artist-photo{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+    .artist-info{padding:12px}
+    .artist-name{font-weight:700;font-size:14px;margin-bottom:2px}
+    .artist-genre{font-size:12px;color:#888}
+    .page-title{padding:24px 30px 0;font-size:22px;font-weight:900}
+  </style>
+</head>
+<body>
+
+<header class="navbar" id="siteNav">
+  <div class="logo"><a href="/">WAV<span>ZO</span></a></div>
+  <nav>
+    <a href="/">HOME</a>
+    <a href="/artists" class="active">ARTISTS</a>
+  </nav>
+</header>
+
+<h1 class="page-title">All Artists</h1>
+
+<div class="artists-grid">
+  <% artists.forEach(a => { %>
+    <a class="artist-card" href="/artists/<%= a.slug %>.html">
+      <% if (a.photo) { %>
+        <img class="artist-photo" src="<%= a.photo %>" alt="<%= a.name %>" loading="lazy">
+      <% } else { %>
+        <div class="artist-photo" style="background:#1a1a1a"></div>
+      <% } %>
+      <div class="artist-info">
+        <div class="artist-name"><%= a.name %></div>
+        <div class="artist-genre"><%= a.genre || '' %></div>
+      </div>
+    </a>
+  <% }) %>
+</div>
+
+<% if (!artists.length) { %>
+  <p style="padding:30px;color:#888">No artists added yet.</p>
+<% } %>
+
+<footer>
+  <div>&copy; <%= new Date().getFullYear() %> WAVZO. All rights reserved.</div>
+</footer>
+
+</body>
+</html>
