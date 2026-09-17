@@ -15,3 +15,4 @@ functions/.env
 functions/node_modules/
 admin.html
 storage/data/*.bak
+storage/data/facebook.json

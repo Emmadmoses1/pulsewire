@@ -159,6 +159,12 @@ app.get('/admin/dashboard', requireAdmin, async (req, res) => {
   res.render('admin-dashboard', { posts });
 });
 
+app.get('/admin/export-backup', requireAdmin, async (req, res) => {
+  await db.read();
+  res.setHeader('Content-Disposition', 'attachment; filename=db-backup.json');
+  res.json(db.data);
+});
+
 app.post('/admin/create-post', requireAdmin, postFields, async (req, res) => {
   await db.read();
   const { title, category, excerpt, content } = req.body;
