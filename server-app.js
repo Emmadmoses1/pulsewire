@@ -126,6 +126,10 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.get('/artists.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'artists.html'));
+});
+
 app.post('/subscribe', async (req, res) => {
   if (!(await safeRead(res))) return;
   db.data.subscribers = db.data.subscribers || [];

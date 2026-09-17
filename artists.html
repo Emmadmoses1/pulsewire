@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All Artists — WAVZO</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#111}
+a{text-decoration:none;color:inherit}
+
+.ticker-bar{background:#0a0a0a;color:#fff;display:flex;align-items:center;overflow:hidden;white-space:nowrap;padding:8px 0;font-size:12px;border-bottom:3px solid #e11}
+.ticker-live{background:#e11;padding:4px 12px;border-radius:2px;font-weight:800;margin:0 16px;flex-shrink:0;font-size:10px;letter-spacing:2px;text-transform:uppercase}
+.ticker-viewport{flex:1;overflow:hidden;min-width:0}
+.ticker-track{display:inline-block;animation:tickscroll 35s linear infinite}
+.ticker-track span{margin-right:80px;font-weight:500;opacity:.9}
+.ticker-track span::before{content:'•';margin-right:80px;color:#e11;opacity:.6}
+@keyframes tickscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+.site-nav{background:#fff;border-bottom:1px solid #e8e8e8;position:sticky;top:0;z-index:300;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:62px;box-shadow:0 1px 0 #e8e8e8}
+.nav-logo{font-weight:900;font-size:26px;letter-spacing:-2px;color:#0a0a0a;display:flex;align-items:center;gap:2px}
+.nav-logo span{color:#e11}
+.nav-links{display:flex;align-items:center;gap:2px}
+.nav-links a{font-size:12px;font-weight:700;letter-spacing:.3px;color:#444;padding:8px 14px;border-radius:6px;transition:.15s;text-transform:uppercase}
+.nav-links a:hover{color:#e11;background:#fff5f5}
+@media(max-width:768px){.site-nav{padding:0 16px}.nav-logo{font-size:22px}}
+
+.page-title{max-width:1100px;margin:36px auto 8px;padding:0 20px;font-size:26px;font-weight:900}
+.artist-grid{max-width:1100px;margin:0 auto;padding:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:20px}
+.artist-grid-card{text-align:center;cursor:pointer}
+.artist-grid-img{width:100%;aspect-ratio:1;border-radius:50%;overflow:hidden;background:#eee;border:2px solid #eee;transition:.15s}
+.artist-grid-card:hover .artist-grid-img{border-color:#e11}
+.artist-grid-img img{width:100%;height:100%;object-fit:cover;display:block}
+.artist-grid-img-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;background:#eee}
+.artist-grid-name{margin-top:10px;font-weight:700;font-size:14px}
+.artist-grid-genre{color:#888;font-size:11px;margin-top:2px;text-transform:uppercase}
+.empty-msg{max-width:1100px;margin:60px auto;padding:0 20px;text-align:center;color:#888}
+footer{text-align:center;padding:30px;color:#999;font-size:12px}
+</style>
+</head>
+<body>
+<div class="ticker-bar">
+  <span class="ticker-live">LIVE</span>
+  <div class="ticker-viewport"><div class="ticker-track" id="tickerTrack"></div></div>
+</div>
+<nav class="site-nav">
+  <a href="/" class="nav-logo">WAV<span>ZO</span></a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/artists.html">Artists</a>
+  </div>
+</nav>
+
+<h1 class="page-title">All Artists</h1>
+<div class="artist-grid" id="artistGrid"></div>
+<p class="empty-msg" id="emptyMsg" style="display:none">No artists yet.</p>
+
+<footer>&copy; WAVZO</footer>
+
+<script>
+const BIN_ID='6aa50e3aac6210605ac3c542';
+const BIN_KEY='$2a$10$dsCr1ADyKPDy0pbmzlfCzOnOm9FP8aveuNhIFmktyMa8UvWUoMbUm';
+const BIN_URL='https://api.jsonbin.io/v3/b/'+BIN_ID;
+
+async function init(){
+  const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+  const data=await res.json();
+  const db=data.record||{};
+  const artists=db.artists||[];
+
+  if(!artists.length){
+    document.getElementById('emptyMsg').style.display='block';
+  } else {
+    const grid=document.getElementById('artistGrid');
+    grid.innerHTML=artists.map(a=>`
+      <a class="artist-grid-card" href="/artists/${a.slug}.html">
+        <div class="artist-grid-img">
+          ${a.photo?`<img src="${a.photo}" alt="${a.name}" loading="lazy">`:`<div class="artist-grid-img-placeholder">🎤</div>`}
+        </div>
+        <div class="artist-grid-name">${a.name}</div>
+        <div class="artist-grid-genre">${a.genre||''}</div>
+      </a>`).join('');
+  }
+
+  const track=document.getElementById('tickerTrack');
+  [...(db.posts||[]).slice(0,6),...(db.posts||[]).slice(0,6)].forEach(p=>{const t=document.createElement('span');t.textContent=p.title;track.appendChild(t);});
+}
+init();
+</script>
+</body>
+</html>
