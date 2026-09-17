@@ -312,6 +312,46 @@ app.post('/admin/delete-post/:slug', requireAdmin, async (req, res) => {
 const { fetchTrustedNews, correctGrammar } = require('./routes-extra');
 const facebookAuthRouter = require('./facebook-auth');
 app.use(facebookAuthRouter);
+
+app.post('/admin/post-to-facebook/:slug', requireAdmin, async (req, res) => {
+  try {
+    await db.read();
+    const post = db.data.posts.find(p => p.slug === req.params.slug);
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+
+    const conn = facebookAuthRouter.getFacebookConnection();
+    if (!conn) return res.status(400).json({ error: 'No Facebook Page connected. Go to Settings and click Connect with Facebook.' });
+
+    const postUrl = `https://wavzo.com.ng/posts/${post.slug}.html`;
+    const caption = `${post.title}
+
+Source: WAVZO
+
+👉 Read the full story: ${postUrl}`;
+    const absCover = post.coverImage ? (post.coverImage.startsWith('http') ? post.coverImage : `https://wavzo.com.ng${post.coverImage}`) : null;
+
+    let apiUrl, body;
+    if (absCover) {
+      apiUrl = `https://graph.facebook.com/v21.0/${conn.pageId}/photos`;
+      body = new URLSearchParams({ url: absCover, caption, access_token: conn.pageAccessToken });
+    } else {
+      apiUrl = `https://graph.facebook.com/v21.0/${conn.pageId}/feed`;
+      body = new URLSearchParams({ message: caption, link: postUrl, access_token: conn.pageAccessToken });
+    }
+
+    const fbRes = await fetch(apiUrl, { method: 'POST', body });
+    const data = await fbRes.json();
+
+    if (data.id || data.post_id) {
+      return res.json({ success: true, id: data.id || data.post_id });
+    }
+    console.error('Facebook post failed:', data);
+    return res.status(400).json({ error: data.error?.error_user_msg || data.error?.message || 'Unknown error' });
+  } catch (err) {
+    console.error('post-to-facebook error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 app.get('/admin/news-suggestions', requireAdmin, async (req, res) => res.json(await fetchTrustedNews()));
 app.post('/admin/ai-correct', requireAdmin, async (req, res) => res.json(await correctGrammar(req.body.text || '')));
 
