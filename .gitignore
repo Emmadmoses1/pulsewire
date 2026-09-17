@@ -3,7 +3,6 @@ node_modules/
 .env.*
 !.env.example
 
-storage/
 migration-backup-wavzo/
 .firebase/
 *.bak
@@ -15,3 +14,4 @@ reset-admin.js
 functions/.env
 functions/node_modules/
 admin.html
+storage/data/*.bak
