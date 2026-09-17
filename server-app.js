@@ -70,6 +70,7 @@ app.use('/posts', express.static(path.join(__dirname, 'posts'), { extensions: ['
 app.use('/songs', express.static(path.join(__dirname, 'songs'), { extensions: ['html'] }));
 app.use('/artists', express.static(path.join(__dirname, 'artists'), { extensions: ['html'] }));
 app.use('/uploads', express.static(UPLOADS_DIR));
+app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(session({
