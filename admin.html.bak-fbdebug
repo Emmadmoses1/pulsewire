@@ -891,8 +891,7 @@ async function postToFacebook(slug){
       btn.textContent='Posted ✓';
     } else {
       btn.disabled=false;btn.textContent='📘 Post to Facebook';
-      console.error('Facebook API response:', data);
-      alert('Facebook post failed: '+JSON.stringify(data.error||data));
+      alert('Facebook post failed: '+(data.error?.message||'Unknown error'));
     }
   }catch(e){
     btn.disabled=false;btn.textContent='📘 Post to Facebook';

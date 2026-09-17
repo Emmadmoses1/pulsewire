@@ -51,19 +51,8 @@ const postFields = postUpload.fields([
 fs.mkdirSync(DATA_DIR, { recursive: true });
 const db = new JsonBinDB(process.env.JSONBIN_KEY, { posts: [], articles: [], admin: { username: 'admin', password: 'changeme123' } });
 
-async function safeRead(res, fallbackMsg = 'Something went wrong. Please try again shortly.') {
-  try {
-    if (!(await safeRead(res))) return;
-    return true;
-  } catch (err) {
-    console.error('DB read failed:', err.message);
-    res.status(503).send(fallbackMsg);
-    return false;
-  }
-}
-
 async function initDB() {
-  if (!(await safeRead(res))) return;
+  await db.read();
   db.data ||= { posts: [], articles: [], admin: { username: 'admin', password: 'changeme123' } };
   db.data.articles = db.data.articles || [];
   if (db.data.admin.password && !db.data.admin.password.startsWith('$2')) {
@@ -96,7 +85,7 @@ app.use(async (req, res, next) => {
                req.path.startsWith('/js') || req.path.startsWith('/admin') ||
                req.path.startsWith('/api');
   if (!skip) {
-    if (!(await safeRead(res))) return;
+    await db.read();
     db.data.views = db.data.views || [];
     const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
     let country = 'Local';
@@ -119,7 +108,7 @@ function requireAdmin(req, res, next) {
 }
 
 app.get('/', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const posts = [...db.data.posts].reverse();
   const songs = db.data.songs || [];
   const artists = db.data.artists || [];
@@ -127,7 +116,7 @@ app.get('/', async (req, res) => {
 });
 
 app.post('/subscribe', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   db.data.subscribers = db.data.subscribers || [];
   const email = (req.body.email || '').trim().toLowerCase();
   const posts = [...db.data.posts].reverse();
@@ -145,7 +134,7 @@ app.post('/subscribe', async (req, res) => {
 });
 
 app.get('/post/:slug', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const post = db.data.posts.find(p => p.slug === req.params.slug);
   if (!post) return res.status(404).send('Post not found');
   post.views = (post.views || 0) + 1;
@@ -157,7 +146,7 @@ app.get('/post/:slug', async (req, res) => {
 });
 
 app.post('/post/:slug/comment', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const post = db.data.posts.find(p => p.slug === req.params.slug);
   if (!post) return res.status(404).json({ error: 'Post not found' });
   const name = (req.body.name || 'Anonymous').trim().slice(0, 60);
@@ -171,7 +160,7 @@ app.post('/post/:slug/comment', async (req, res) => {
 });
 
 app.post('/post/:slug/comment/:commentId/reply', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const post = db.data.posts.find(p => p.slug === req.params.slug);
   if (!post) return res.status(404).json({ error: 'Post not found' });
   const comment = (post.comments || []).find(c => c.id === req.params.commentId);
@@ -186,7 +175,7 @@ app.post('/post/:slug/comment/:commentId/reply', async (req, res) => {
 });
 
 app.post('/post/:slug/comment/:commentId/like', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const post = db.data.posts.find(p => p.slug === req.params.slug);
   if (!post) return res.status(404).json({ error: 'Post not found' });
   const comment = (post.comments || []).find(c => c.id === req.params.commentId);
@@ -197,7 +186,7 @@ app.post('/post/:slug/comment/:commentId/like', async (req, res) => {
 });
 
 app.post('/post/:slug/comment/:commentId/reply/:replyId/like', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const post = db.data.posts.find(p => p.slug === req.params.slug);
   if (!post) return res.status(404).json({ error: 'Post not found' });
   const comment = (post.comments || []).find(c => c.id === req.params.commentId);
@@ -210,7 +199,7 @@ app.post('/post/:slug/comment/:commentId/reply/:replyId/like', async (req, res) 
 });
 
 app.post('/post/:slug/reaction', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const post = db.data.posts.find(p => p.slug === req.params.slug);
   if (!post) return res.status(404).json({ error: 'Post not found' });
   const { key, previous } = req.body;
@@ -230,7 +219,7 @@ app.post('/post/:slug/reaction', async (req, res) => {
 });
 
 app.get('/artists', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const artists = db.data.artists || [];
   const songs = db.data.songs || [];
   res.render('artists', { artists, songs });
@@ -238,7 +227,7 @@ app.get('/artists', async (req, res) => {
 
 app.get('/admin/login', (req, res) => res.render('admin-login', { error: null }));
 app.post('/admin/login', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const { username, password } = req.body;
   const match = username === db.data.admin.username &&
                 await bcrypt.compare(password, db.data.admin.password);
@@ -248,19 +237,19 @@ app.post('/admin/login', async (req, res) => {
 app.get('/admin/logout', (req, res) => req.session.destroy(() => res.redirect('/')));
 
 app.get('/admin/dashboard', requireAdmin, async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const posts = [...db.data.posts].reverse();
   res.render('admin-dashboard', { posts });
 });
 
 app.get('/admin/export-backup', requireAdmin, async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   res.setHeader('Content-Disposition', 'attachment; filename=db-backup.json');
   res.json(db.data);
 });
 
 app.post('/admin/create-post', requireAdmin, postFields, async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const { title, category, excerpt, content } = req.body;
   const slug = slugify(title, { lower: true, strict: true }) + '-' + Date.now();
   const coverImage = req.files?.coverImage?.[0] ? '/uploads/images/' + req.files.coverImage[0].filename : null;
@@ -278,14 +267,14 @@ app.post('/admin/create-post', requireAdmin, postFields, async (req, res) => {
 });
 
 app.get('/admin/edit-post/:slug', requireAdmin, async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const post = db.data.posts.find(p => p.slug === req.params.slug);
   if (!post) return res.status(404).send('Post not found');
   res.render('admin-edit-post', { post });
 });
 
 app.post('/admin/edit-post/:slug', requireAdmin, postFields, async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const post = db.data.posts.find(p => p.slug === req.params.slug);
   if (!post) return res.status(404).send('Post not found');
   const { title, category, excerpt, content } = req.body;
@@ -299,7 +288,7 @@ app.post('/admin/edit-post/:slug', requireAdmin, postFields, async (req, res) =>
 });
 
 app.post('/admin/delete-post/:slug', requireAdmin, async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   db.data.posts = db.data.posts.filter(p => p.slug !== req.params.slug);
   await db.write();
   res.redirect('/admin/dashboard');
@@ -312,7 +301,7 @@ app.get('/admin/news-suggestions', requireAdmin, async (req, res) => res.json(aw
 app.post('/admin/ai-correct', requireAdmin, async (req, res) => res.json(await correctGrammar(req.body.text || '')));
 
 app.get('/admin/analytics', requireAdmin, async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const views = db.data.views || [];
   const totalViews = views.length;
   const uniqueVisitors = new Set(views.map(v => v.ip)).size;
@@ -331,7 +320,7 @@ app.get('/admin/analytics', requireAdmin, async (req, res) => {
 });
 
 app.post('/api/chat/send', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   db.data.chats = db.data.chats || [];
   const { name, message, chatId } = req.body;
   const id = chatId || ('chat-' + Date.now());
@@ -343,26 +332,26 @@ app.post('/api/chat/send', async (req, res) => {
 });
 
 app.get('/api/chat/:id', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const chat = (db.data.chats || []).find(c => c.id === req.params.id);
   res.json(chat || { messages: [] });
 });
 
 app.get('/admin/messages', requireAdmin, async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const chats = [...(db.data.chats || [])].reverse();
   res.render('admin-messages', { chats });
 });
 
 app.post('/admin/chat/reply/:id', requireAdmin, async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const chat = (db.data.chats || []).find(c => c.id === req.params.id);
   if (chat) { chat.messages.push({ from: 'admin', text: req.body.message, time: Date.now() }); await db.write(); }
   res.redirect('/admin/messages');
 });
 
 app.get('/download/:slug/:type', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const post = db.data.posts.find(p => p.slug === req.params.slug);
   if (!post) return res.status(404).send('Not found');
   const file = req.params.type === 'video' ? post.videoFile
@@ -378,19 +367,19 @@ app.get('/download/:slug/:type', async (req, res) => {
 });
 
 app.get('/articles', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   res.json([...(db.data.articles || [])].reverse());
 });
 
 app.get('/article/:slug', async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const article = (db.data.articles || []).find(a => a.slug === req.params.slug);
   if (!article) return res.status(404).send('Not found');
   res.json(article);
 });
 
 app.post('/admin/create-article', requireAdmin, async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   const { title, category, body, author } = req.body;
   const slug = slugify(title, { lower: true, strict: true }) + '-' + Date.now();
   db.data.articles = db.data.articles || [];
@@ -405,7 +394,7 @@ app.post('/admin/create-article', requireAdmin, async (req, res) => {
 });
 
 app.post('/admin/delete-article/:slug', requireAdmin, async (req, res) => {
-  if (!(await safeRead(res))) return;
+  await db.read();
   db.data.articles = (db.data.articles || []).filter(a => a.slug !== req.params.slug);
   await db.write();
   res.redirect('/admin/dashboard');
