@@ -109,12 +109,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .tpl-preview{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;letter-spacing:1px;color:#fff;text-align:center;padding:8px}
 .tpl-name{font-size:11px;font-weight:600;text-align:center;padding:7px;color:var(--muted);background:var(--surface2)}
 
+.upload-area{border:2px dashed var(--border);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:.2s;position:relative;min-height:80px;display:flex;align-items:center;justify-content:center}
+.upload-area:hover{border-color:var(--red)}
+.upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-placeholder span{font-size:12px;color:var(--muted)}
+.cover-preview{max-width:100%;max-height:120px;border-radius:8px;object-fit:cover}
+.cover-preview.hidden{display:none}
+.badge-count{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px}
+.btn-dark{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
+.btn-dark:hover{border-color:var(--red);color:var(--red);opacity:1}
 /* CANVAS */
 #posterCanvas{width:100%;border-radius:10px;border:1px solid var(--border);display:block}
 .canvas-wrap{margin-bottom:14px}
 </style>
 </head>
 <body>
+<div id="toast" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;border:1px solid #333;color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap" ></div>
 
 <!-- LOGIN -->
 <div id="loginPage">
@@ -187,8 +197,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <option value="MUSIC">MUSIC</option>
         </select>
       </div>
-      <div class="field"><label>Excerpt <button type="button" class="btn" style="padding:3px 10px;font-size:11px;margin-left:8px;width:auto" onclick="aiGenExcerpt()">✨ AI Generate</button></label><input type="text" id="pExcerpt" placeholder="Short description..."></div>
-      <div class="field"><label>Content <button type="button" class="btn" style="padding:3px 10px;font-size:11px;margin-left:8px;width:auto" onclick="aiExpandContent()">📝 AI Expand</button></label><textarea id="pContent" placeholder="Full article content..."></textarea>
+      <div class="field"><label>Excerpt <button type="button" class="btn btn-sm" style="background:#333;width:auto;padding:4px 10px;font-size:11px;margin-left:6px" onclick="aiGenExcerpt()">✨ AI Generate</button></label><input type="text" id="pExcerpt" placeholder="Short description..."></div>
+      <div class="field"><label>Content <button type="button" class="btn btn-sm" style="background:#333;width:auto;padding:4px 10px;font-size:11px;margin-left:6px" onclick="aiExpandContent()">📝 AI Expand</button></label><textarea id="pContent" placeholder="Full article content..."></textarea>
         <button type="button" id="fixGrammarBtn" class="btn" style="background:#333;margin-top:6px;padding:8px 14px;font-size:12px" onclick="fixGrammar()">✍️ AI Fix Grammar</button>
       </div>
 
@@ -306,16 +316,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       </div>
       <div class="field"><label>Download Link <span class="media-hint">(only add if you have rights to share this file)</span></label>
         <input type="text" id="songDownloadUrl" placeholder="https://... (optional)"></div>
-      <div class="field">
-        <label>YouTube Link</label>
-        <div style="display:flex;gap:8px">
-          <input type="text" id="songYoutubeUrl" placeholder="https://youtube.com/watch?v=... (optional)" style="flex:1">
-          <button type="button" class="btn btn-sm btn-dark" onclick="searchYoutube()" id="ytSearchBtn">▶ Find Video</button>
-        </div>
+      <div class="field"><label>YouTube Link</label>
+        <div style="display:flex;gap:8px"><input type="text" id="songYoutubeUrl" placeholder="https://youtube.com/watch?v=... (optional)" style="flex:1"><button type="button" class="btn btn-sm btn-dark" onclick="searchYoutube()" id="ytSearchBtn" style="width:auto;padding:8px 14px">▶ Find Video</button></div>
         <div id="ytPreview" style="margin-top:8px"></div>
       </div>
       <button class="btn" onclick="saveSong()">SAVE SONG</button>
-      <button class="btn" style="background:#555;margin-top:8px;display:none" onclick="cancelSongEdit()" id="cancelSongBtn">CANCEL</button>
+      <button class="btn" style="background:#555" onclick="cancelSongEdit()" id="cancelSongBtn" style="display:none">CANCEL</button>
+    </div>
     <div class="card">
       <div class="card-title">All Songs <span class="badge-count" id="songCount"></span></div>
       <div id="songsList"></div>
@@ -334,11 +341,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <label>Page Access Token</label>
         <input type="password" id="fbPageToken" placeholder="EAAG...">
       </div>
-      <div class="field" style="margin-top:18px">
-        <label>YouTube Data API Key</label>
-        <input type="password" id="ytApiKey" placeholder="AIza...">
-        <p style="font-size:11px;color:var(--muted);margin-top:4px">Free from console.cloud.google.com — enables auto-search for song YouTube links.</p>
-      </div>
+      <div class="field" style="margin-top:18px"><label>YouTube Data API Key</label><input type="password" id="ytApiKey" placeholder="AIza..."><p style="font-size:11px;color:var(--muted);margin-top:4px">Free from console.cloud.google.com</p></div>
       <button class="btn" onclick="saveSettings()">SAVE SETTINGS</button>
       <p id="settingsSaved" style="color:#2a2;font-size:13px;margin-top:8px;display:none">✓ Saved</p>
     </div>
@@ -430,11 +433,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </div><!-- /adminPage -->
 
 <script>
-const MP3_SERVICE_URL =
-  localStorage.getItem('wavzoMp3ServiceUrl') ||
-  'https://wavzo-1.onrender.com';
-
-
 const CLOUD='smg1blzu', PRESET='WAVZO';
 const ADMIN_PASS='wavzo2026';
 const BIN_ID='6aa50e3aac6210605ac3c542';
@@ -449,7 +447,7 @@ const VOICE_TAG_ID='wavzo-tag-v1';
 // ── Auth ──────────────────────────────────────────
 function doLogin(){
   if(document.getElementById('loginPass').value===ADMIN_PASS){
-    sessionStorage.setItem('pw','1');
+    localStorage.setItem('pw','1');
     document.getElementById('loginPage').style.display='none';
     document.getElementById('adminPage').style.display='block';
     loadDash();renderPoster();
@@ -458,8 +456,9 @@ function doLogin(){
     e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2500);
   }
 }
-function doLogout(){sessionStorage.removeItem('pw');location.reload();}
-if(sessionStorage.getItem('pw')){
+function doLogout(){localStorage.removeItem('pw');location.reload();}
+function showToast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+if(localStorage.getItem('pw')){
   document.getElementById('loginPage').style.display='none';
   document.getElementById('adminPage').style.display='block';
   loadDash();renderPoster();
@@ -473,7 +472,7 @@ function showSec(name,el){
   el.classList.add('active');
   if(name==='posts')loadPosts();
   if(name==='dash')loadDash();
-  if(name==='poster')renderPoster();
+  if(name==='poster'){renderPoster();loadPosterSuggestions();}
   if(name==='settings')loadSettings();
   if(name==='artists')loadArtists();
   if(name==='songs')loadSongsAdmin();
@@ -587,6 +586,16 @@ async function uploadCloud(file,progId,barId){
   });
 }
 
+async function uploadFromUrl(remoteUrl,filename){
+  const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/video/upload`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({file:remoteUrl,upload_preset:PRESET,public_id:filename,resource_type:'video'})
+  });
+  const d=await res.json();
+  if(d.public_id)return d.public_id;
+  throw new Error(d.error?.message||'Cloudinary fetch-upload failed');
+}
+
 // ── Publish ───────────────────────────────────────
 let _rssImageUrl = null;
 let _rssMusicUrl = null;
@@ -649,11 +658,9 @@ async function loadNews(){
           if (!image && enc.link && enc.type && enc.type.startsWith('image')) image = enc.link;
           if (!image) {
             const html = item.content || item.description || '';
-            const m = html.match(/<img[^>]+src=["']([^"'> ]+)["']/) || html.match(/src=["']([^"'> ]+\.(jpg|jpeg|png|webp))["'/]/i);
+            const m = html.match(/<img[^>]+src="([^">]+)"/);
             if (m) image = m[1];
           }
-          if (!image && item.media_content) image = item.media_content;
-          if (!image && data.feed?.image?.url) image = null; // feed icon, skip
           items.push({
             source: feed.name,
             title: item.title,
@@ -1112,14 +1119,6 @@ async function searchSong(){
     const hit = data.results?.[0];
     if(!hit){status.textContent='No match found — fill in manually.';btn.disabled=false;btn.textContent='🔍 Search';return;}
     document.getElementById('songTitle').value = hit.trackName || title;
-    window._songMeta = {
-      artist: hit.artistName || artistName || '',
-      title: hit.trackName || title || '',
-      track: hit.trackNumber || '',
-      year: hit.releaseDate ? hit.releaseDate.slice(0,4) : '',
-      genre: hit.primaryGenreName || '',
-      coverUrl: hit.artworkUrl100 ? hit.artworkUrl100.replace('100x100','1000x1000') : ''
-    };
     document.getElementById('songExcerpt').value = `From the ${hit.collectionType || 'release'} "${hit.collectionName || ''}" by ${hit.artistName || ''}${hit.releaseDate ? ' (' + hit.releaseDate.slice(0,4) + ')' : ''}.`;
     if(hit.artworkUrl100){
       const hiRes = hit.artworkUrl100.replace('100x100','1000x1000');
@@ -1133,212 +1132,6 @@ async function searchSong(){
     status.textContent = 'Search failed — fill in manually.';
   }
   btn.disabled=false;btn.textContent='🔍 Search';
-}
-
-
-
-async function searchYoutube(){
-  const db=await loadDB();
-  const apiKey=db.ytApiKey;
-
-  if(!apiKey){
-    alert('Add your YouTube API Key in Settings first.');
-    return;
-  }
-
-  const title=document.getElementById('songTitle').value.trim();
-  const artistSel=document.getElementById('songArtist');
-  const artistName=artistSel.options[artistSel.selectedIndex]?.text||'';
-
-  if(!title){
-    alert('Type a song title first');
-    return;
-  }
-
-  const btn=document.getElementById('ytSearchBtn');
-  btn.disabled=true;
-  btn.textContent='Searching...';
-
-  try{
-    const q=encodeURIComponent(artistName+' '+title+' official');
-
-    const res=await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&type=video&q=${q}&key=${apiKey}`
-    );
-
-    const data=await res.json();
-    const hit=data.items?.[0];
-
-    if(!hit){
-      document.getElementById('ytPreview').innerHTML=
-        '<p style="font-size:12px;color:#e11">No video found — add link manually.</p>';
-
-      btn.disabled=false;
-      btn.textContent='▶ Find Video';
-      return;
-    }
-
-    const vid=hit.id.videoId;
-    const youtubeUrl='https://www.youtube.com/watch?v='+vid;
-
-    document.getElementById('songYoutubeUrl').value=youtubeUrl;
-
-    window._selectedYoutube={
-      url:youtubeUrl,
-      title:hit.snippet.title,
-      thumbnail:hit.snippet.thumbnails?.medium?.url ||
-                hit.snippet.thumbnails?.default?.url || ''
-    };
-
-    document.getElementById('ytPreview').innerHTML=`
-      <div style="display:flex;gap:10px;align-items:center;border:1px solid #2a2d3a;border-radius:8px;padding:9px">
-        <img src="${window._selectedYoutube.thumbnail}"
-             style="width:70px;height:52px;object-fit:cover;border-radius:5px">
-        <div style="flex:1;min-width:0">
-          <div style="font-size:12px;color:#d1d5db;line-height:1.35">
-            ${hit.snippet.title}
-          </div>
-          <div style="font-size:10px;color:#777;margin-top:3px">
-            YouTube video selected
-          </div>
-        </div>
-        <button
-          type="button"
-          class="btn btn-sm btn-dark"
-          id="convertYoutubeBtn"
-          onclick="convertYoutubeToMp3()"
-          style="white-space:nowrap">
-          🎵 Convert to MP3
-        </button>
-      </div>
-    `;
-
-  }catch(e){
-    document.getElementById('ytPreview').innerHTML=
-      '<p style="font-size:12px;color:#e11">Search failed: '+e.message+'</p>';
-  }
-
-  btn.disabled=false;
-  btn.textContent='▶ Find Video';
-}
-
-async function convertYoutubeToMp3(){
-  const url=document.getElementById('songYoutubeUrl').value.trim();
-
-  if(!url){
-    alert('Find a YouTube video first.');
-    return;
-  }
-
-  const meta=window._songMeta||{};
-
-  const artist=
-    meta.artist ||
-    document.getElementById('songArtist').options[
-      document.getElementById('songArtist').selectedIndex
-    ]?.text || '';
-
-  const title=
-    meta.title ||
-    document.getElementById('songTitle').value.trim();
-
-  const btn=document.getElementById('convertYoutubeBtn');
-
-  if(btn){
-    btn.disabled=true;
-    btn.textContent='⏳ Converting...';
-  }
-
-  const preview=document.getElementById('ytPreview');
-
-  preview.insertAdjacentHTML(
-    'beforeend',
-    '<div id="ytMp3Status" style="font-size:11px;color:var(--muted);margin-top:8px">Preparing MP3 conversion...</div>' +
-    '<div class="prog-wrap" id="ytMp3Prog" style="display:block;margin-top:6px"><div class="prog-fill" id="ytMp3Bar" style="width:5%"></div></div>'
-  );
-
-  const status=document.getElementById('ytMp3Status');
-  const bar=document.getElementById('ytMp3Bar');
-
-  try{
-    const response=await fetch(MP3_SERVICE_URL+'/convert',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        url,
-        artist,
-        title,
-        track:meta.track||'',
-        year:meta.year||'',
-        genre:meta.genre||'',
-        coverUrl:meta.coverUrl||window._pendingSongCoverUrl||''
-      })
-    });
-
-    if(!response.ok){
-      let message='Conversion failed.';
-      try{
-        const err=await response.json();
-        message=err.error || err.detail || message;
-      }catch(_){}
-      throw new Error(message);
-    }
-
-    if(bar)bar.style.width='70%';
-    if(status)status.textContent='✓ MP3 created — uploading to Cloudinary...';
-
-    const blob=await response.blob();
-
-    if(!blob.size){
-      throw new Error('The converter returned an empty MP3.');
-    }
-
-    const safeTitle=(title||'song')
-      .replace(/[\/:*?"<>|]+/g,'')
-      .trim();
-
-    const file=new File(
-      [blob],
-      safeTitle+'.mp3',
-      {type:'audio/mpeg'}
-    );
-
-    const cloudUrl=await uploadCloud(
-      file,
-      'ytMp3Prog',
-      'ytMp3Bar'
-    );
-
-    if(!cloudUrl){
-      throw new Error('Cloudinary upload failed.');
-    }
-
-    document.getElementById('songDownloadUrl').value=cloudUrl;
-
-    if(bar)bar.style.width='100%';
-    if(status){
-      status.style.color='#22c55e';
-      status.textContent='✓ MP3 ready. Download Link has been filled automatically.';
-    }
-
-    if(btn){
-      btn.disabled=false;
-      btn.textContent='✓ MP3 Ready';
-    }
-
-  }catch(e){
-    if(status){
-      status.style.color='#ef4444';
-      status.textContent='Conversion failed: '+e.message;
-    }
-
-    if(btn){
-      btn.disabled=false;
-      btn.textContent='🎵 Convert to MP3';
-    }
-
-    alert('MP3 conversion failed: '+e.message);
-  }
 }
 
 async function loadPosts(){
@@ -1367,6 +1160,84 @@ async function deletePost(slug){
   const db=await loadDB();
   db.posts=db.posts.filter(p=>p.slug!==slug);
   await saveDB(db);loadPosts();loadDash();
+}
+
+async function searchYoutube(){
+  const db=await loadDB();const apiKey=db.ytApiKey;
+  if(!apiKey){alert('Add your YouTube API Key in Settings first.');return;}
+  const title=document.getElementById('songTitle').value.trim();
+  const artistSel=document.getElementById('songArtist');
+  const artistName=artistSel.options[artistSel.selectedIndex]?.text||'';
+  if(!title){alert('Type a song title first');return;}
+  const btn=document.getElementById('ytSearchBtn');
+  btn.disabled=true;btn.textContent='Searching...';
+  try{
+    const q=encodeURIComponent(artistName+' '+title+' official');
+    const res=await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&type=video&q='+q+'&key='+apiKey);
+    const data=await res.json();
+    const hit=data.items?.[0];
+    if(!hit){document.getElementById('ytPreview').innerHTML='<p style="font-size:12px;color:#e11">No video found.</p>';btn.disabled=false;btn.textContent='▶ Find Video';return;}
+    const vid=hit.id.videoId;
+    const youtubeUrl='https://www.youtube.com/watch?v='+vid;
+    document.getElementById('songYoutubeUrl').value=youtubeUrl;
+    window._selectedYoutube={url:youtubeUrl,title:hit.snippet.title,thumbnail:hit.snippet.thumbnails?.medium?.url||''};
+    window._songMeta=window._songMeta||{};
+    document.getElementById('ytPreview').innerHTML=`
+      <div style="display:flex;gap:10px;align-items:center;border:1px solid #222;border-radius:8px;padding:9px">
+        <img src="${window._selectedYoutube.thumbnail}" style="width:70px;height:52px;object-fit:cover;border-radius:5px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;color:#d1d5db;line-height:1.35">${hit.snippet.title}</div>
+          <div style="font-size:10px;color:#777;margin-top:3px">YouTube video selected</div>
+        </div>
+        <button type="button" class="btn btn-sm btn-dark" id="convertYoutubeBtn" onclick="convertYoutubeToMp3()" style="white-space:nowrap;width:auto;padding:8px 14px">🎵 Convert to MP3</button>
+      </div>`;
+  }catch(e){document.getElementById('ytPreview').innerHTML='<p style="font-size:12px;color:#e11">Search failed: '+e.message+'</p>';}
+  btn.disabled=false;btn.textContent='▶ Find Video';
+}
+
+async function convertYoutubeToMp3(){
+  const url=document.getElementById('songYoutubeUrl').value.trim();
+  if(!url){alert('Find a YouTube video first.');return;}
+  const meta=window._songMeta||{};
+  const artistSel=document.getElementById('songArtist');
+  const artist=meta.artist||artistSel.options[artistSel.selectedIndex]?.text||'';
+  const title=meta.title||document.getElementById('songTitle').value.trim();
+  const btn=document.getElementById('convertYoutubeBtn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Converting...';}
+  const preview=document.getElementById('ytPreview');
+  preview.insertAdjacentHTML('beforeend','<div id="ytMp3Status" style="font-size:11px;color:#888;margin-top:8px">Starting conversion...</div><div class="prog-wrap" id="ytMp3Prog" style="display:block;margin-top:6px"><div class="prog-fill" id="ytMp3Bar" style="width:5%"></div></div>');
+  const status=document.getElementById('ytMp3Status');
+  const bar=document.getElementById('ytMp3Bar');
+  try{
+    const vidMatch=url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if(!vidMatch)throw new Error('Invalid YouTube URL');
+    const videoId=vidMatch[1];
+    if(status)status.textContent='Requesting MP3...';if(bar)bar.style.width='20%';
+    const initRes=await fetch('https://'+RAPIDAPI_HOST+'/api/v1/download?format=mp3&id='+videoId+'&audioQuality=128&addInfo=false&allowExtendedDuration=false',{headers:{'x-rapidapi-key':RAPIDAPI_KEY,'x-rapidapi-host':RAPIDAPI_HOST}});
+    const initData=await initRes.json();
+    if(!initData.progressId)throw new Error('Could not start conversion');
+    if(bar)bar.style.width='40%';if(status)status.textContent='Converting...';
+    let downloadUrl='';
+    for(let i=0;i<30;i++){
+      await new Promise(r=>setTimeout(r,3000));
+      const pollRes=await fetch('https://'+RAPIDAPI_HOST+'/api/v1/progress?id='+initData.progressId,{headers:{'x-rapidapi-key':RAPIDAPI_KEY,'x-rapidapi-host':RAPIDAPI_HOST}});
+      const pollData=await pollRes.json();
+      if(pollData.finished&&pollData.downloadUrl){downloadUrl=pollData.downloadUrl;break;}
+    }
+    if(!downloadUrl)throw new Error('Conversion timed out');
+    if(bar)bar.style.width='60%';if(status)status.textContent='Uploading to WAVZO...';
+    const safeTitle=((title||'song').replace(/[^a-z0-9]/gi,'-').toLowerCase())+'-'+Date.now();
+    const pubId=await uploadFromUrl(downloadUrl,safeTitle);
+    const taggedUrl='https://res.cloudinary.com/'+CLOUD+'/video/upload/l_video:'+VOICE_TAG_ID+',fl_splice,e_volume:200/fl_layer_apply,so_0,du_3/'+pubId+'.mp3';
+    document.getElementById('songDownloadUrl').value=taggedUrl;
+    if(bar)bar.style.width='100%';
+    if(status){status.style.color='#22c55e';status.textContent='✓ MP3 ready!';}
+    if(btn){btn.disabled=false;btn.textContent='✓ MP3 Ready';}
+  }catch(e){
+    if(status){status.style.color='#ef4444';status.textContent='Failed: '+e.message;}
+    if(btn){btn.disabled=false;btn.textContent='🎵 Convert to MP3';}
+    alert('Conversion failed: '+e.message);
+  }
 }
 
 // ── POSTER MAKER ──────────────────────────────────
@@ -1693,8 +1564,7 @@ async function aiGenExcerpt(){
   const btn=event.target;btn.disabled=true;btn.textContent='...';
   try{
     const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENROUTER_KEY},
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENROUTER_KEY},
       body:JSON.stringify({model:OPENROUTER_MODEL,max_tokens:80,messages:[{role:'user',content:'Write a short 1-2 sentence excerpt for a Nigerian music/news site post.\n\nTitle: '+title+'\nCategory: '+cat+'\n\nExcerpt only, no quotes.'}]})
     });
     const d=await r.json();
@@ -1711,8 +1581,7 @@ async function aiExpandContent(){
   const btn=event.target;btn.disabled=true;btn.textContent='...';
   try{
     const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENROUTER_KEY},
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENROUTER_KEY},
       body:JSON.stringify({model:OPENROUTER_MODEL,max_tokens:200,messages:[{role:'user',content:'Write a 150-word article body for a Nigerian music/news site.\n\nTitle: '+title+'\nExcerpt: '+excerpt+'\n\nArticle body only, no heading.'}]})
     });
     const d=await r.json();
