@@ -53,7 +53,7 @@ const db = new JsonBinDB(process.env.JSONBIN_KEY, { posts: [], articles: [], adm
 
 async function safeRead(res, fallbackMsg = 'Something went wrong. Please try again shortly.') {
   try {
-    if (!(await safeRead(res))) return;
+    await db.read();
     return true;
   } catch (err) {
     console.error('DB read failed:', err.message);
