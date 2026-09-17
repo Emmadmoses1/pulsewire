@@ -1,12 +1,617 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="0; url=/">
-  <title>WAVZO</title>
+  <title>WAVZO — Nigerian Music, News & Culture</title>
+  <meta name="description" content="Breaking news, trending topics, entertainment & culture from Nigeria.">
+  <link rel="canonical" href="https://wavzo.com.ng/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="WAVZO">
+  <meta property="og:title" content="WAVZO — Nigerian Music, News & Culture">
+  <meta property="og:description" content="Breaking news, trending topics, entertainment & culture from Nigeria.">
+  <meta property="og:url" content="https://wavzo.com.ng/">
+  <meta property="og:image" content="https://wavzo.com.ng/og-cover.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@wavzo">
+  <meta name="twitter:title" content="WAVZO — Nigerian Music, News & Culture">
+  <meta name="twitter:description" content="Breaking news, trending topics, entertainment & culture from Nigeria.">
+  <meta name="twitter:image" content="https://wavzo.com.ng/og-cover.jpg">
+
+  <meta name="google-site-verification" content="N_Ld3rdWv_kQf6zgorjRoJk663yRqeXNBFN9JysrIPk">
+  <link rel="stylesheet" href="/css/style.css">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2046617449524755" crossorigin="anonymous"></script>
+
+  <style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#111}
+  a{text-decoration:none;color:inherit}
+
+  /* TICKER */
+  .ticker-bar{background:#0a0a0a;color:#fff;display:flex;align-items:center;overflow:hidden;white-space:nowrap;padding:8px 0;font-size:12px;border-bottom:3px solid #e11}
+  .ticker-live{background:#e11;padding:4px 12px;border-radius:2px;font-weight:800;margin:0 16px;flex-shrink:0;font-size:10px;letter-spacing:2px;text-transform:uppercase}
+  .ticker-viewport{flex:1;overflow:hidden;min-width:0}
+  .ticker-track{display:inline-block;animation:tickscroll 35s linear infinite}
+  .ticker-track span{margin-right:80px;font-weight:500;opacity:.9}
+  .ticker-track span::before{content:'•';margin-right:80px;color:#e11;opacity:.6}
+  @keyframes tickscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .ticker-bar:hover .ticker-track{animation-play-state:paused}
+
+  /* NAVBAR */
+  .site-nav{background:#fff;border-bottom:1px solid #e8e8e8;position:sticky;top:0;z-index:300;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:62px;box-shadow:0 1px 0 #e8e8e8}
+  .site-nav.scrolled{box-shadow:0 4px 20px rgba(0,0,0,.08)}
+  .nav-logo{font-weight:900;font-size:26px;letter-spacing:-2px;color:#0a0a0a;display:flex;align-items:center;gap:2px}
+  .nav-logo span{color:#e11}
+  .nav-logo sup{font-size:9px;font-weight:700;color:#e11;letter-spacing:1px;margin-left:2px;opacity:.8}
+  .nav-links{display:flex;align-items:center;gap:2px}
+  .nav-links a{font-size:12px;font-weight:700;letter-spacing:.3px;color:#444;padding:8px 14px;border-radius:6px;transition:.15s;text-transform:uppercase}
+  .nav-links a:hover{color:#e11;background:#fff5f5}
+  .nav-right{display:flex;align-items:center;gap:10px}
+  .nav-search-btn{background:none;border:1.5px solid #e0e0e0;color:#555;padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:.15s}
+  .nav-search-btn:hover{border-color:#e11;color:#e11}
+  .nav-hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px}
+  .nav-hamburger span{display:block;width:22px;height:2px;background:#111;border-radius:2px;transition:.2s}
+  .mobile-nav-drawer{display:none;flex-direction:column;background:#fff;border-bottom:1px solid #f0f0f0;padding:8px 16px 16px}
+  .mobile-nav-drawer.open{display:flex}
+  .mobile-nav-drawer a{padding:12px 4px;font-size:14px;font-weight:700;color:#111;border-bottom:1px solid #f5f5f5;text-transform:uppercase;letter-spacing:.3px}
+  .mobile-nav-drawer a:last-child{border-bottom:none}
+  @media(max-width:768px){.nav-links{display:none}.nav-hamburger{display:flex}.site-nav{padding:0 16px}.nav-logo{font-size:22px}}
+
+  /* CAT STRIP */
+  .cat-strip{background:#0a0a0a;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid #1a1a1a}
+  .cat-strip::-webkit-scrollbar{display:none}
+  .cat-strip a{color:#888;font-size:11px;font-weight:700;letter-spacing:1px;padding:13px 20px;white-space:nowrap;cursor:pointer;border-bottom:2px solid transparent;transition:.15s;text-decoration:none;display:block;text-transform:uppercase}
+  .cat-strip a:hover,.cat-strip a.active{color:#fff;border-bottom-color:#e11}
+
+  /* SEARCH */
+  .search-drawer{display:none;background:#fff;border-bottom:1px solid #e8e8e8;padding:14px 24px;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+  .search-drawer.open{display:block}
+  .search-inner{max-width:640px;margin:0 auto;display:flex;gap:10px}
+  .search-inner input{flex:1;border:1.5px solid #e0e0e0;border-radius:8px;padding:11px 18px;font-size:14px;outline:none;transition:.15s}
+  .search-inner input:focus{border-color:#e11;box-shadow:0 0 0 3px rgba(238,17,17,.08)}
+  .search-inner button{background:#0a0a0a;color:#fff;border:none;border-radius:8px;padding:11px 24px;font-weight:700;font-size:13px;cursor:pointer;transition:.15s}
+  .search-inner button:hover{background:#e11}
+
+  /* HERO */
+  .hero-slider{position:relative;background:#000;overflow:hidden;height:520px}
+  @media(max-width:768px){.hero-slider{height:320px}}
+  .hero-slides{display:flex;height:100%;transition:transform .6s cubic-bezier(.4,0,.2,1)}
+  .hero-slide{min-width:100%;position:relative;overflow:hidden}
+  .hero-slide img{width:100%;height:100%;object-fit:cover;display:block;opacity:.7;transition:transform 6s ease}
+  .hero-slide.active img{transform:scale(1.04)}
+  .hero-slide-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.9) 0%,rgba(0,0,0,.4) 45%,rgba(0,0,0,.1) 100%)}
+  .hero-slide-content{position:absolute;bottom:0;left:0;right:0;padding:40px 48px;max-width:900px}
+  @media(max-width:768px){.hero-slide-content{padding:20px 20px}}
+  .hero-slide-cat{background:#e11;color:#fff;font-size:10px;font-weight:800;letter-spacing:2px;padding:4px 12px;border-radius:2px;display:inline-block;margin-bottom:12px;text-transform:uppercase}
+  .hero-slide-title{color:#fff;font-size:36px;font-weight:900;line-height:1.15;margin:0 0 12px}
+  @media(max-width:768px){.hero-slide-title{font-size:22px}}
+  .hero-slide-excerpt{color:rgba(255,255,255,.75);font-size:15px;margin:0 0 20px;max-width:580px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  @media(max-width:768px){.hero-slide-excerpt{display:none}}
+  .hero-slide-meta{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+  .hero-slide-author{color:rgba(255,255,255,.6);font-size:12px;font-weight:600}
+  .hero-slide-date{color:rgba(255,255,255,.4);font-size:12px}
+  .hero-slide-link{display:inline-flex;align-items:center;gap:8px;background:#e11;color:#fff;font-size:13px;font-weight:700;padding:12px 24px;border-radius:6px;text-decoration:none;transition:.2s;letter-spacing:.3px}
+  .hero-slide-link:hover{background:#c00;transform:translateY(-1px)}
+  .hero-prev,.hero-next{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.1);backdrop-filter:blur(8px);color:#fff;border:1px solid rgba(255,255,255,.2);width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .hero-prev{left:20px}.hero-next{right:20px}
+  .hero-prev:hover,.hero-next:hover{background:rgba(255,255,255,.2)}
+  .hero-dots{position:absolute;bottom:20px;right:24px;display:flex;gap:6px;z-index:10}
+  .hero-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);border:none;cursor:pointer;padding:0;transition:.2s}
+  .hero-dot.active{background:#fff;width:20px;border-radius:3px}
+  @media(max-width:768px){.hero-prev,.hero-next{width:36px;height:36px;font-size:16px}}
+
+  /* ARTISTS STRIP */
+  .artists-section{background:#0a0a0a;padding:24px 0 20px;overflow:hidden}
+  .artists-header{display:flex;align-items:center;justify-content:space-between;padding:0 32px 16px}
+  .artists-header h2{color:#fff;font-size:12px;font-weight:800;letter-spacing:2px;margin:0;text-transform:uppercase;opacity:.6}
+  .artists-header a{color:#e11;font-size:12px;font-weight:700;letter-spacing:.5px}
+  .artists-track{display:flex;gap:20px;padding:0 32px;animation:artistscroll 30s linear infinite}
+  .artists-track:hover{animation-play-state:paused}
+  @keyframes artistscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .artist-card{flex-shrink:0;width:88px;text-align:center;cursor:pointer;text-decoration:none}
+  .artist-img-wrap{width:72px;height:72px;border-radius:50%;overflow:hidden;margin:0 auto 8px;border:2px solid #222;transition:.2s}
+  .artist-card:hover .artist-img-wrap{border-color:#e11;transform:scale(1.06)}
+  .artist-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+  .artist-img-placeholder{width:100%;height:100%;background:linear-gradient(135deg,#1a1a1a,#2a2a2a);display:flex;align-items:center;justify-content:center;font-size:24px}
+  .artist-name{color:#ccc;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;margin:0 auto}
+
+  /* LAYOUT */
+  .page-wrap{max-width:1240px;margin:0 auto;padding:0 24px}
+  @media(max-width:768px){.page-wrap{padding:0 14px}}
+
+  /* SECTION HEADER */
+  .sec-hd{display:flex;align-items:center;justify-content:space-between;padding:32px 0 16px}
+  .sec-hd h2{font-size:16px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;position:relative;padding-left:14px}
+  .sec-hd h2::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:#e11;border-radius:2px}
+  .sec-hd a{font-size:12px;font-weight:700;color:#e11;letter-spacing:.3px}
+
+  /* FEATURED GRID */
+  .featured-grid{display:grid;grid-template-columns:3fr 2fr;gap:3px;border-radius:10px;overflow:hidden}
+  @media(max-width:900px){.featured-grid{grid-template-columns:1fr}}
+  .featured-main{position:relative;overflow:hidden;background:#000;aspect-ratio:16/9}
+  .featured-main img{width:100%;height:100%;object-fit:cover;opacity:.82;display:block;transition:.4s}
+  .featured-main:hover img{opacity:.7;transform:scale(1.03)}
+  .featured-main-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.88) 0%,transparent 55%)}
+  .featured-main-content{position:absolute;bottom:0;padding:24px}
+  .featured-side{display:flex;flex-direction:column;gap:3px}
+  @media(max-width:900px){.featured-side{flex-direction:row}}
+  .featured-side-item{position:relative;overflow:hidden;background:#000;flex:1;min-height:140px}
+  .featured-side-item img{width:100%;height:100%;object-fit:cover;opacity:.75;display:block;transition:.4s}
+  .featured-side-item:hover img{opacity:.6;transform:scale(1.04)}
+  .featured-side-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,transparent 55%)}
+  .featured-side-content{position:absolute;bottom:0;padding:14px}
+  .f-cat{background:#e11;color:#fff;font-size:9px;font-weight:800;letter-spacing:1.5px;padding:3px 10px;border-radius:2px;display:inline-block;margin-bottom:8px;text-transform:uppercase}
+  .f-title-lg{color:#fff;font-size:24px;font-weight:900;line-height:1.2;display:block}
+  .f-title-lg:hover{color:#ffd}
+  .f-title-sm{color:#fff;font-size:13px;font-weight:700;line-height:1.35;display:block}
+  .f-title-sm:hover{color:#ffd}
+  @media(max-width:768px){.f-title-lg{font-size:17px}}
+
+  /* MUSIC STRIP */
+  .music-strip{background:#fff;border-top:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;padding:24px 0}
+  .music-scroll{display:flex;gap:16px;padding:0 32px;overflow-x:auto;scrollbar-width:none}
+  .music-scroll::-webkit-scrollbar{display:none}
+  .music-card{flex-shrink:0;width:156px;background:#f8f8f8;border-radius:10px;overflow:hidden;text-decoration:none;transition:.2s;display:block;border:1px solid #eee}
+  .music-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.1);border-color:#e11}
+  .music-card-img{width:100%;height:156px;object-fit:cover;display:block;background:#e0e0e0}
+  .music-card-placeholder{width:100%;height:156px;background:linear-gradient(135deg,#0a0a0a,#e11);display:flex;align-items:center;justify-content:center;font-size:40px}
+  .music-card-body{padding:12px}
+  .music-card-type{font-size:9px;font-weight:800;color:#e11;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+  .music-card-title{font-size:13px;font-weight:800;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+  .music-card-artist{font-size:11px;color:#888;font-weight:500}
+
+  /* POST GRID */
+  .posts-section{padding:0 0 48px}
+  .post-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+  .post-filter-btn{background:#fff;border:1.5px solid #e0e0e0;padding:8px 18px;font-weight:700;font-size:11px;border-radius:20px;cursor:pointer;transition:.15s;color:#666;letter-spacing:.3px;text-transform:uppercase}
+  .post-filter-btn:hover{border-color:#111;color:#111}
+  .post-filter-btn.active{background:#0a0a0a;color:#fff;border-color:#0a0a0a}
+  .posts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px}
+  @media(max-width:768px){.posts-grid{grid-template-columns:1fr;gap:16px}}
+  .post-card{background:#fff;border-radius:10px;overflow:hidden;border:1px solid #f0f0f0;transition:.2s;display:block;text-decoration:none}
+  .post-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.1);border-color:#e0e0e0}
+  .post-card-img{width:100%;height:200px;object-fit:cover;display:block;background:#f0f0f0}
+  .post-card-placeholder{width:100%;height:200px;background:linear-gradient(135deg,#f5f5f5,#e8e8e8);display:flex;align-items:center;justify-content:center;font-size:48px}
+  .post-card-body{padding:16px 18px}
+  .post-card-cat{font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+  .cat-news{color:#1a56db}.cat-entertainment{color:#c81e78}.cat-culture{color:#0f9960}.cat-trending{color:#d97706}.cat-music{color:#e11}
+  .post-card-title{font-size:16px;font-weight:800;color:#0a0a0a;line-height:1.35;margin:0 0 8px}
+  .post-card-excerpt{font-size:13px;color:#777;line-height:1.6;margin:0 0 12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .post-card-meta{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#bbb;padding-top:12px;border-top:1px solid #f5f5f5}
+  .post-card-stats{display:flex;align-items:center;gap:10px}
+  #emptyState{text-align:center;padding:60px 20px;color:#bbb;font-size:14px;grid-column:1/-1}
+
+  /* AD */
+  .ad-wrap{padding:16px 0}
+  .ad-space{text-align:center;border:1px dashed #e8e8e8;padding:24px;color:#ccc;font-size:11px;border-radius:8px;background:#fafafa;letter-spacing:.5px;text-transform:uppercase}
+
+  /* NEWSLETTER */
+  .newsletter{background:#0a0a0a;color:#fff;text-align:center;padding:64px 24px}
+  .newsletter-inner{max-width:520px;margin:0 auto}
+  .newsletter-tag{display:inline-block;background:#e11;color:#fff;font-size:10px;font-weight:800;letter-spacing:2px;padding:4px 14px;border-radius:2px;margin-bottom:20px;text-transform:uppercase}
+  .newsletter h2{font-size:30px;font-weight:900;margin:0 0 10px;line-height:1.2}
+  .newsletter p{color:#666;font-size:14px;margin:0 0 28px;line-height:1.7}
+  .newsletter form{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .newsletter input{flex:1;min-width:220px;padding:14px 20px;border:none;border-radius:6px;font-size:14px;background:#1a1a1a;color:#fff;outline:none;border:1px solid #2a2a2a;transition:.15s}
+  .newsletter input:focus{border-color:#e11}
+  .newsletter button{background:#e11;color:#fff;border:none;padding:14px 28px;font-weight:800;cursor:pointer;border-radius:6px;transition:.15s;font-size:13px;letter-spacing:.5px;text-transform:uppercase}
+  .newsletter button:hover{background:#c00}
+
+  /* FOOTER */
+  .site-footer{background:#0a0a0a;color:#555;padding:48px 0 24px}
+  .footer-inner{max-width:1240px;margin:0 auto;padding:0 32px}
+  .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;margin-bottom:40px;padding-bottom:40px;border-bottom:1px solid #1a1a1a}
+  @media(max-width:768px){.footer-grid{grid-template-columns:1fr;gap:28px}}
+  .footer-brand{font-size:24px;font-weight:900;color:#fff;letter-spacing:-1.5px;margin-bottom:10px}
+  .footer-brand span{color:#e11}
+  .footer-desc{font-size:13px;color:#444;line-height:1.7;max-width:260px}
+  .footer-col h3{font-size:10px;font-weight:800;color:#333;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}
+  .footer-col a{display:block;color:#444;font-size:13px;font-weight:500;margin-bottom:10px;transition:.15s}
+  .footer-col a:hover{color:#fff}
+  .footer-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .footer-copy{font-size:12px;color:#2a2a2a}
+  .footer-legal{display:flex;gap:16px}
+  .footer-legal a{color:#2a2a2a;font-size:12px;transition:.15s}
+  .footer-legal a:hover{color:#555}
+
+  /* BACK TO TOP */
+  #backToTop{position:fixed;bottom:24px;right:24px;background:#0a0a0a;color:#fff;width:44px;height:44px;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:18px;cursor:pointer;border:none;box-shadow:0 4px 16px rgba(0,0,0,.3);z-index:998;transition:.2s}
+  #backToTop:hover{background:#e11;transform:translateY(-2px)}
+  #backToTop.visible{display:flex}
+
+  /* SKELETON */
+  .skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px}
+  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  </style>
 </head>
 <body>
-  <p>Redirecting to <a href="/">WAVZO</a>...</p>
+
+<!-- TICKER -->
+<div class="ticker-bar">
+  <span class="ticker-live">Live</span>
+  <div class="ticker-viewport"><div class="ticker-track" id="tickerTrack"></div></div>
+</div>
+
+<!-- NAVBAR -->
+<nav class="site-nav" id="siteNav">
+  <a href="/" class="nav-logo">WAV<span>ZO</span></a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/artists.html">Artists</a>
+    <a href="javascript:void(0)" onclick="selectCategory('NEWS')">News</a>
+    <a href="javascript:void(0)" onclick="selectCategory('MUSIC')">Music</a>
+    <a href="javascript:void(0)" onclick="selectCategory('ENTERTAINMENT')">Entertainment</a>
+    <a href="javascript:void(0)" onclick="selectCategory('TRENDING')">Trending</a>
+  </div>
+  <div class="nav-right">
+    <button class="nav-search-btn" onclick="toggleSearch()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Search
+    </button>
+    <button class="nav-hamburger" id="navHamburger" onclick="toggleMobileNav()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav-drawer" id="mobileNavDrawer">
+  <a href="/">Home</a>
+  <a href="/artists.html">Artists</a>
+  <a href="javascript:void(0)" onclick="selectCategory('NEWS');toggleMobileNav()">News</a>
+  <a href="javascript:void(0)" onclick="selectCategory('MUSIC');toggleMobileNav()">Music</a>
+  <a href="javascript:void(0)" onclick="selectCategory('ENTERTAINMENT');toggleMobileNav()">Entertainment</a>
+  <a href="javascript:void(0)" onclick="selectCategory('TRENDING');toggleMobileNav()">Trending</a>
+  <a href="javascript:void(0)" onclick="selectCategory('CULTURE');toggleMobileNav()">Culture</a>
+</div>
+
+<!-- SEARCH -->
+<div class="search-drawer" id="searchDrawer">
+  <div class="search-inner">
+    <input type="text" id="postSearch" placeholder="Search stories, music, artists...">
+    <button onclick="applyFilters()">Search</button>
+  </div>
+</div>
+
+<!-- CAT STRIP -->
+<div class="cat-strip" id="catStrip">
+  <a class="active" data-cat="ALL" onclick="selectCategory('ALL')">All</a>
+  <a data-cat="NEWS" onclick="selectCategory('NEWS')">News</a>
+  <a data-cat="MUSIC" onclick="selectCategory('MUSIC')">Music</a>
+  <a data-cat="ENTERTAINMENT" onclick="selectCategory('ENTERTAINMENT')">Entertainment</a>
+  <a data-cat="TRENDING" onclick="selectCategory('TRENDING')">Trending</a>
+  <a data-cat="CULTURE" onclick="selectCategory('CULTURE')">Culture</a>
+</div>
+
+<!-- HERO -->
+<div class="hero-slider" id="heroSlider">
+  <div class="hero-slides" id="heroSlides"></div>
+  <button class="hero-prev" onclick="heroNav(-1)">&#8249;</button>
+  <button class="hero-next" onclick="heroNav(1)">&#8250;</button>
+  <div class="hero-dots" id="heroDots"></div>
+</div>
+
+<!-- ARTISTS -->
+<div class="artists-section" id="artistsSection" style="display:none">
+  <div class="artists-header">
+    <h2>Artists & Stars</h2>
+    <a href="/artists.html">View All →</a>
+  </div>
+  <div class="artists-track" id="artistsTrack"></div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="page-wrap">
+
+  <!-- AD -->
+  <div class="ad-wrap">
+    <div class="ad-space">
+      <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2046617449524755" data-ad-slot="6071836286" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+  </div>
+
+  <!-- FEATURED -->
+  <div class="sec-hd">
+    <h2>Top Stories</h2>
+  </div>
+  <div class="featured-grid" id="featuredGrid"></div>
+
+  <!-- MUSIC -->
+  <div class="sec-hd" id="musicSecHeader" style="display:none">
+    <h2>New Music</h2>
+    <a href="/artists.html">All Artists →</a>
+  </div>
+  <div class="music-strip" id="musicStrip" style="display:none">
+    <div class="music-scroll" id="musicScroll"></div>
+  </div>
+
+  <!-- LATEST -->
+  <div class="sec-hd">
+    <h2>Latest Stories</h2>
+  </div>
+  <div class="posts-section">
+    <div class="post-filters">
+      <button class="post-filter-btn active" data-filter="ALL" onclick="selectCategory('ALL')">All</button>
+      <button class="post-filter-btn" data-filter="NEWS" onclick="selectCategory('NEWS')">News</button>
+      <button class="post-filter-btn" data-filter="ENTERTAINMENT" onclick="selectCategory('ENTERTAINMENT')">Entertainment</button>
+      <button class="post-filter-btn" data-filter="CULTURE" onclick="selectCategory('CULTURE')">Culture</button>
+      <button class="post-filter-btn" data-filter="TRENDING" onclick="selectCategory('TRENDING')">Trending</button>
+      <button class="post-filter-btn" data-filter="MUSIC" onclick="selectCategory('MUSIC')">Music</button>
+    </div>
+    <div class="posts-grid" id="postGrid"></div>
+    <p id="emptyState" style="display:none">No stories found.</p>
+  </div>
+
+</div>
+
+<!-- NEWSLETTER -->
+<div class="newsletter">
+  <div class="newsletter-inner">
+    <span class="newsletter-tag">Newsletter</span>
+    <h2>Never Miss a Headline</h2>
+    <p>One email a day — the stories everyone's talking about, none of the noise.</p>
+    <form id="subForm">
+      <input type="email" id="subEmail" placeholder="Enter your email address" required>
+      <button type="submit">Subscribe</button>
+    </form>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">WAV<span>ZO</span></div>
+        <div class="footer-desc">Nigeria's home for music, breaking news, entertainment and culture — all in one place.</div>
+      </div>
+      <div class="footer-col">
+        <h3>Sections</h3>
+        <a href="javascript:void(0)" onclick="selectCategory('NEWS')">News</a>
+        <a href="javascript:void(0)" onclick="selectCategory('MUSIC')">Music</a>
+        <a href="javascript:void(0)" onclick="selectCategory('ENTERTAINMENT')">Entertainment</a>
+        <a href="javascript:void(0)" onclick="selectCategory('TRENDING')">Trending</a>
+        <a href="javascript:void(0)" onclick="selectCategory('CULTURE')">Culture</a>
+      </div>
+      <div class="footer-col">
+        <h3>Company</h3>
+        <a href="/artists.html">Artists</a>
+        <a href="/admin.html">Admin</a>
+        <a href="mailto:hello@wavzo.com.ng">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">&copy; 2026 WAVZO. All rights reserved.</div>
+      <div class="footer-legal">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<button id="backToTop" title="Back to top">↑</button>
+
+<script>
+const BIN_ID='6aa50e3aac6210605ac3c542';
+const BIN_KEY='$2a$10$dsCr1ADyKPDy0pbmzlfCzOnOm9FP8aveuNhIFmktyMa8UvWUoMbUm';
+const BIN_URL='https://api.jsonbin.io/v3/b/'+BIN_ID;
+const CACHE_KEY='wz_v3';
+const CACHE_TTL=5*60*1000;
+const SITE='https://wavzo.com.ng';
+const DEFAULT_OG=SITE+'/og-cover.jpg';
+
+function getCache(){try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(c&&Date.now()-c.ts<CACHE_TTL)return c;}catch(e){}return null;}
+function setCache(d){try{localStorage.setItem(CACHE_KEY,JSON.stringify({...d,ts:Date.now()}));}catch(e){}}
+
+async function fetchAll(){
+  const r=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+  const d=await r.json();
+  const rec=d.record||{};
+  const data={posts:[...(rec.posts||[])].reverse(),songs:rec.songs||[],artists:rec.artists||[]};
+  setCache(data);
+  return data;
+}
+
+/* ── OG META UPDATER ── */
+function updateOG({title,description,image,url}){
+  const set=(s,v)=>{let el=document.querySelector(s);if(el)el.setAttribute('content',v);};
+  if(title){document.title=title+' — WAVZO';set('meta[property="og:title"]',title+' — WAVZO');set('meta[name="twitter:title"]',title+' — WAVZO');}
+  if(description){set('meta[name="description"]',description);set('meta[property="og:description"]',description);set('meta[name="twitter:description"]',description);}
+  if(image){set('meta[property="og:image"]',image);set('meta[name="twitter:image"]',image);}
+  if(url){set('meta[property="og:url"]',url);set('link[rel="canonical"]',url);}
+}
+
+/* ── HERO ── */
+let heroIdx=0,heroTotal=0,heroTimer=null;
+function buildHero(posts){
+  const slides=posts.filter(p=>p.coverImage).slice(0,6);
+  if(!slides.length)return;
+  heroTotal=slides.length;
+  // update OG with first post image
+  const first=slides[0];
+  updateOG({image:first.coverImage||DEFAULT_OG});
+  document.getElementById('heroSlides').innerHTML=slides.map((p,i)=>`
+    <div class="hero-slide${i===0?' active':''}">
+      <img src="${p.coverImage}" alt="${p.title}" loading="${i===0?'eager':'lazy'}">
+      <div class="hero-slide-overlay"></div>
+      <div class="hero-slide-content">
+        <span class="hero-slide-cat">${p.category}</span>
+        <h2 class="hero-slide-title">${p.title}</h2>
+        <p class="hero-slide-excerpt">${p.excerpt||''}</p>
+        <div class="hero-slide-meta">
+          <span class="hero-slide-date">${p.date||''}</span>
+        </div>
+        <a class="hero-slide-link" href="/posts/${p.slug}.html">Read Story →</a>
+      </div>
+    </div>`).join('');
+  document.getElementById('heroDots').innerHTML=slides.map((_,i)=>`<button class="hero-dot${i===0?' active':''}" onclick="heroGoTo(${i})"></button>`).join('');
+  heroAutoPlay();
+}
+function heroGoTo(i){
+  heroIdx=i;
+  document.getElementById('heroSlides').style.transform=`translateX(-${i*100}%)`;
+  document.querySelectorAll('.hero-dot').forEach((d,j)=>d.classList.toggle('active',j===i));
+  document.querySelectorAll('.hero-slide').forEach((s,j)=>s.classList.toggle('active',j===i));
+}
+function heroNav(dir){heroGoTo((heroIdx+dir+heroTotal)%heroTotal);clearInterval(heroTimer);heroAutoPlay();}
+function heroAutoPlay(){heroTimer=setInterval(()=>heroGoTo((heroIdx+1)%heroTotal),5500);}
+
+/* ── ARTISTS ── */
+function buildArtists(artists){
+  if(!artists.length)return;
+  document.getElementById('artistsSection').style.display='block';
+  const track=document.getElementById('artistsTrack');
+  const doubled=[...artists,...artists];
+  track.innerHTML=doubled.map(a=>`
+    <a class="artist-card" href="/artists.html">
+      <div class="artist-img-wrap">
+        ${a.photo?`<img src="${a.photo}" alt="${a.name}" loading="lazy">`:`<div class="artist-img-placeholder">🎤</div>`}
+      </div>
+      <div class="artist-name">${a.name}</div>
+    </a>`).join('');
+  track.style.animationDuration=(doubled.length*2)+'s';
+}
+
+/* ── FEATURED ── */
+function buildFeatured(posts){
+  const grid=document.getElementById('featuredGrid');
+  const fp=posts.filter(p=>p.coverImage).slice(0,3);
+  if(!fp.length){grid.style.display='none';return;}
+  const[main,...side]=fp;
+  grid.innerHTML=`
+    <div class="featured-main">
+      <img src="${main.coverImage}" alt="${main.title}" loading="eager">
+      <div class="featured-main-overlay"></div>
+      <div class="featured-main-content">
+        <span class="f-cat">${main.category}</span>
+        <a class="f-title-lg" href="/posts/${main.slug}.html">${main.title}</a>
+      </div>
+    </div>
+    <div class="featured-side">
+      ${side.map(p=>`
+        <div class="featured-side-item">
+          <img src="${p.coverImage}" alt="${p.title}" loading="lazy">
+          <div class="featured-side-overlay"></div>
+          <div class="featured-side-content">
+            <span class="f-cat">${p.category}</span>
+            <a class="f-title-sm" href="/posts/${p.slug}.html">${p.title}</a>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+/* ── MUSIC ── */
+function buildMusic(songs,artists){
+  if(!songs.length)return;
+  const am={};artists.forEach(a=>am[a.id]=a);
+  document.getElementById('musicStrip').style.display='block';
+  document.getElementById('musicSecHeader').style.display='flex';
+  document.getElementById('musicScroll').innerHTML=[...songs].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,12).map(s=>`
+    <a class="music-card" href="/songs/${s.slug}.html">
+      ${s.cover?`<img class="music-card-img" src="${s.cover}" alt="${s.title}" loading="lazy">`:`<div class="music-card-placeholder">🎵</div>`}
+      <div class="music-card-body">
+        <div class="music-card-type">${s.type||'Single'}</div>
+        <div class="music-card-title">${s.title}</div>
+        <div class="music-card-artist">${am[s.artistId]?am[s.artistId].name:''}</div>
+      </div>
+    </a>`).join('');
+}
+
+/* ── TICKER ── */
+function buildTicker(posts){
+  const items=posts.slice(0,10);
+  document.getElementById('tickerTrack').innerHTML=[...items,...items].map(p=>`<span>${p.title}</span>`).join('');
+}
+
+/* ── POST GRID ── */
+let allPosts=[],currentCategory='ALL';
+function buildGrid(posts){allPosts=posts;applyFilters();}
+function catColor(cat){return{NEWS:'cat-news',ENTERTAINMENT:'cat-entertainment',CULTURE:'cat-culture',TRENDING:'cat-trending',MUSIC:'cat-music'}[cat]||'cat-news';}
+
+function applyFilters(){
+  const q=(document.getElementById('postSearch')?.value||'').trim().toLowerCase();
+  const filtered=allPosts.filter(p=>(currentCategory==='ALL'||p.category===currentCategory)&&(!q||p.title.toLowerCase().includes(q)||(p.excerpt||'').toLowerCase().includes(q)));
+  const grid=document.getElementById('postGrid');
+  const empty=document.getElementById('emptyState');
+  if(!filtered.length){grid.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  grid.innerHTML=filtered.map(p=>`
+    <a class="post-card" href="/posts/${p.slug}.html">
+      ${p.coverImage?`<img class="post-card-img" src="${p.coverImage}" alt="${p.title}" loading="lazy">`:`<div class="post-card-placeholder">${p.category==='MUSIC'?'🎵':'📰'}</div>`}
+      <div class="post-card-body">
+        <div class="post-card-cat ${catColor(p.category)}">${p.category}</div>
+        <h3 class="post-card-title">${p.title}</h3>
+        <p class="post-card-excerpt">${p.excerpt||''}</p>
+        <div class="post-card-meta">
+          <span>${p.date||''}</span>
+          <div class="post-card-stats">
+            ${p.views?`<span>👁 ${p.views.toLocaleString()}</span>`:''}
+            ${p.downloads?`<span>⬇ ${p.downloads.toLocaleString()}</span>`:''}
+          </div>
+        </div>
+      </div>
+    </a>`).join('');
+}
+
+function selectCategory(cat){
+  currentCategory=cat;
+  document.querySelectorAll('.post-filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.filter===cat));
+  document.querySelectorAll('.cat-strip a').forEach(a=>a.classList.toggle('active',a.dataset.cat===cat));
+  document.getElementById('postGrid').scrollIntoView({behavior:'smooth',block:'start'});
+  applyFilters();
+}
+
+function toggleSearch(){
+  const d=document.getElementById('searchDrawer');
+  d.classList.toggle('open');
+  if(d.classList.contains('open'))document.getElementById('postSearch').focus();
+}
+function toggleMobileNav(){document.getElementById('mobileNavDrawer').classList.toggle('open');}
+
+/* ── INIT ── */
+function render(data){
+  buildTicker(data.posts);
+  buildHero(data.posts);
+  buildArtists(data.artists);
+  buildFeatured(data.posts);
+  buildMusic(data.songs,data.artists);
+  buildGrid(data.posts);
+}
+
+async function init(){
+  const cached=getCache();
+  if(cached){
+    render(cached);
+    fetchAll().then(render).catch(()=>{});
+  }else{
+    try{render(await fetchAll());}
+    catch(e){document.getElementById('featuredGrid').innerHTML='<p style="padding:40px;color:#999;text-align:center">Failed to load stories. Please refresh.</p>';}
+  }
+}
+
+init();
+window.addEventListener('scroll',()=>{
+  document.getElementById('siteNav').classList.toggle('scrolled',window.scrollY>10);
+  document.getElementById('backToTop').classList.toggle('visible',window.scrollY>600);
+});
+document.getElementById('backToTop').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+document.getElementById('postSearch').addEventListener('input',applyFilters);
+document.getElementById('subForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const btn=document.querySelector('#subForm button');
+  btn.textContent='Subscribed ✓';
+  btn.style.background='#0f9960';
+  document.getElementById('subEmail').value='';
+  setTimeout(()=>{btn.textContent='Subscribe';btn.style.background='';},3000);
+});
+</script>
 </body>
 </html>
