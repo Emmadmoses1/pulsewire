@@ -116,25 +116,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="loginPage">
-<div class="login-page">
-  <div class="login-logo">PULSE<span>WIRE</span></div>
-  <div class="login-sub">ADMIN PANEL</div>
-  <div class="login-card">
-    <h2>Welcome back 👋</h2>
-    <div class="field">
-      <label>Password</label>
-      <input type="password" id="loginPass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
-    </div>
-    <button class="btn" onclick="doLogin()">SIGN IN</button>
-    <div class="err" id="loginErr">Wrong password.</div>
-  </div>
-</div>
 </div>
 
 <!-- ADMIN -->
-<div id="adminPage" style="display:none">
+<div id="adminPage">
 
 <div class="navbar">
   <div class="nav-logo">PULSE<span>WIRE</span></div>
@@ -426,24 +411,9 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='$2a$10$dsCr1ADyKPDy0pbmzlfCzOnOm9FP8aveuNhIFmktyMa8UvWUoMbUm';
 const BIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-// ── Auth ──────────────────────────────────────────
-function doLogin(){
-  if(document.getElementById('loginPass').value===ADMIN_PASS){
-    sessionStorage.setItem('pw','1');
-    document.getElementById('loginPage').style.display='none';
-    document.getElementById('adminPage').style.display='block';
-    loadDash();renderPoster();
-  } else {
-    const e=document.getElementById('loginErr');
-    e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2500);
-  }
-}
-function doLogout(){sessionStorage.removeItem('pw');location.reload();}
-if(sessionStorage.getItem('pw')){
-  document.getElementById('loginPage').style.display='none';
-  document.getElementById('adminPage').style.display='block';
-  loadDash();renderPoster();
-}
+// ── Auth (server session already enforced by requireAdmin) ──
+function doLogout(){ window.location.href="/admin/logout"; }
+loadDash();renderPoster();
 
 // ── Nav ───────────────────────────────────────────
 function showSec(name,el){
