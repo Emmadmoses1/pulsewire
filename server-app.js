@@ -122,12 +122,8 @@ function requireAdmin(req, res, next) {
   res.redirect('/admin/login');
 }
 
-app.get('/', async (req, res) => {
-  if (!(await safeRead(res))) return;
-  const posts = [...db.data.posts].reverse();
-  const songs = db.data.songs || [];
-  const artists = db.data.artists || [];
-  res.render('home', { posts, songs, artists, subMessage: null });
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.post('/subscribe', async (req, res) => {
