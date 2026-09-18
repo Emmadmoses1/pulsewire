@@ -63,13 +63,23 @@ async function safeRead(res, fallbackMsg = 'Something went wrong. Please try aga
 }
 
 async function initDB() {
-  await db.read();
-  db.data ||= { posts: [], articles: [], admin: { username: 'admin', password: 'changeme123' } };
+  try {
+    await db.read();
+  } catch (err) {
+    console.error('initDB: read failed, starting with defaults:', err.message);
+  }
+  db.data ||= {};
+  db.data.posts = db.data.posts || [];
   db.data.articles = db.data.articles || [];
+  db.data.admin = db.data.admin || { username: 'admin', password: 'changeme123' };
   if (db.data.admin.password && !db.data.admin.password.startsWith('$2')) {
     db.data.admin.password = await bcrypt.hash(db.data.admin.password, 10);
   }
-  await db.write();
+  try {
+    await db.write();
+  } catch (err) {
+    console.error('initDB: write failed (will retry on next request):', err.message);
+  }
 }
 initDB();
 
