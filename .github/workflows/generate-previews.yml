@@ -1,0 +1,33 @@
+name: Generate Post Previews
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create .env file
+        run: |
+          echo "JSONBIN_KEY=${{ secrets.JSONBIN_KEY }}" > .env
+
+      - name: Run preview generator
+        run: python3 generate_previews.py
+
+      - name: Commit generated previews
+        run: |
+          git config user.name "WAVZO Bot"
+          git config user.email "bot@wavzo.com.ng"
+          git add posts/ songs/ artists/ -f
+          git diff --cached --quiet || git commit -m "Auto-generate post previews [skip ci]"
+          git push
