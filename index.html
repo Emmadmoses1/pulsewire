@@ -15,7 +15,7 @@
   <meta property="og:title" content="WAVZO — Nigerian Music, News & Culture">
   <meta property="og:description" content="Breaking news, trending topics, entertainment & culture from Nigeria.">
   <meta property="og:url" content="https://wavzo.com.ng/">
-  <meta property="og:image" content="https://wavzo.com.ng/og-cover.jpg">
+  <meta property="og:image" content="https://wavzo.com.ng/images/wavzo-og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
 
@@ -24,7 +24,7 @@
   <meta name="twitter:site" content="@wavzo">
   <meta name="twitter:title" content="WAVZO — Nigerian Music, News & Culture">
   <meta name="twitter:description" content="Breaking news, trending topics, entertainment & culture from Nigeria.">
-  <meta name="twitter:image" content="https://wavzo.com.ng/og-cover.jpg">
+  <meta name="twitter:image" content="https://wavzo.com.ng/images/wavzo-og-image.png">
 
   <meta name="google-site-verification" content="N_Ld3rdWv_kQf6zgorjRoJk663yRqeXNBFN9JysrIPk">
   <link rel="stylesheet" href="/css/style.css">
@@ -408,7 +408,7 @@ const BIN_URL='https://api.jsonbin.io/v3/b/'+BIN_ID;
 const CACHE_KEY='wz_v3';
 const CACHE_TTL=5*60*1000;
 const SITE='https://wavzo.com.ng';
-const DEFAULT_OG=SITE+'/og-cover.jpg';
+const DEFAULT_OG=SITE+'/images/wavzo-og-image.png';
 
 function getCache(){try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(c&&Date.now()-c.ts<CACHE_TTL)return c;}catch(e){}return null;}
 function setCache(d){try{localStorage.setItem(CACHE_KEY,JSON.stringify({...d,ts:Date.now()}));}catch(e){}}
