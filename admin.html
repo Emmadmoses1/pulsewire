@@ -451,6 +451,21 @@ const RAPIDAPI_HOST='youtube-mp4-mp3-downloader.p.rapidapi.com';
 const OPENROUTER_KEY='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';
 const OPENROUTER_MODEL='mistralai/mistral-7b-instruct';
 const VOICE_TAG_ID='wavzo-tag-v1';
+const GITHUB_TOKEN='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';
+const GITHUB_REPO='Emmadmoses1/pulsewire';
+
+async function triggerPreviewGeneration(){
+  try{
+    await fetch('https://api.github.com/repos/'+GITHUB_REPO+'/actions/workflows/generate-previews.yml/dispatches',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+GITHUB_TOKEN,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+      body:JSON.stringify({ref:'main'})
+    });
+    console.log('Preview generation triggered');
+  }catch(e){
+    console.log('Trigger failed:',e.message);
+  }
+}
 
 // ── Auth ──────────────────────────────────────────
 function doLogin(){
@@ -831,6 +846,7 @@ async function publishPost(){
     }
     await saveDB(db);
     pubSuc.textContent=editingSlug?'✅ Post updated!':'✅ Post published!';pubSuc.classList.add('show');
+    triggerPreviewGeneration();
     btn.textContent='PUBLISH POST';btn.disabled=false;
     ['pTitle','pExcerpt','pContent'].forEach(id=>document.getElementById(id).value='');
     ['coverIn','audioIn','videoIn'].forEach(id=>document.getElementById(id).value='');
@@ -1051,6 +1067,7 @@ async function saveSong(){
     db.songs.push({id:'song-'+Date.now(),title,artistId,type,excerpt,downloadUrl,youtubeUrl,cover,slug,createdAt:Date.now()});
   }
   await saveDB(db);
+  triggerPreviewGeneration();
   ['songTitle','songExcerpt','songDownloadUrl','songYoutubeUrl'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('songEditId').value='';
   document.getElementById('songCoverPrev').classList.add('hidden');
