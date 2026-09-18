@@ -92,6 +92,7 @@ app.use('/songs', express.static(path.join(__dirname, 'songs'), { extensions: ['
 app.use('/artists', express.static(path.join(__dirname, 'artists'), { extensions: ['html'] }));
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use('/images', express.static(path.join(__dirname, 'images')));
+app.get('/sitemap.xml', (req, res) => res.sendFile(path.join(__dirname, 'sitemap.xml')));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
