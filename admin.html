@@ -690,11 +690,20 @@ async function loadNews(){
             else if (enc.type.startsWith('video')) { mediaType = 'video'; mediaUrl = enc.link; }
           }
           let image = item.thumbnail || null;
-          if (!image && enc.link && enc.type && enc.type.startsWith('image')) image = enc.link;
+          if (!image && enc.link && enc.type && enc.type.startsWith('image') && !enc.link.includes('logo')) image = enc.link;
           if (!image) {
             const html = item.content || item.description || '';
-            const m = html.match(/<img[^>]+src="([^">]+)"/);
-            if (m) image = m[1];
+            const m = html.match(/<img[^>]+src="(https?:\/\/[^">]+\.(jpg|jpeg|png|webp)[^"]*)"/i);
+            if (m && !m[1].includes('logo') && !m[1].includes('icon')) image = m[1];
+          }
+          if (!image) {
+            try {
+              const ogRes = await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(item.link));
+              const ogData = await ogRes.json();
+              const ogM = ogData.contents.match(/property=["']og:image["'][^>]+content=["']([^"']+)["']/) ||
+                          ogData.contents.match(/content=["']([^"']+)["'][^>]+property=["']og:image["']/);
+              if (ogM) image = ogM[1];
+            } catch(e) {}
           }
           items.push({
             source: feed.name,
