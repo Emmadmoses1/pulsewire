@@ -622,18 +622,6 @@ async function uploadCloud(file,progId,barId){
   });
 }
 
-async function uploadCloudPublicId(file,progId,barId){
-  const fd=new FormData();fd.append('file',file);fd.append('upload_preset',PRESET);
-  document.getElementById(progId).style.display='block';
-  return new Promise((res,rej)=>{
-    const xhr=new XMLHttpRequest();
-    xhr.open('POST',`https://api.cloudinary.com/v1_1/${CLOUD}/auto/upload`);
-    xhr.upload.onprogress=e=>{if(e.lengthComputable)document.getElementById(barId).style.width=(e.loaded/e.total*100)+'%';};
-    xhr.onload=()=>{const d=JSON.parse(xhr.responseText);d.public_id?res(d.public_id):rej(d);};
-    xhr.onerror=rej;xhr.send(fd);
-  });
-}
-
 async function uploadFromUrl(remoteUrl,filename){
   const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/video/upload`,{
     method:'POST',headers:{'Content-Type':'application/json'},
@@ -1314,8 +1302,7 @@ async function convertYoutubeToMp3(){
     if(bar)bar.style.width='80%';if(status)status.textContent='Uploading to WAVZO...';
     const safeTitle=((title||'song').replace(/[^a-z0-9]/gi,'-').toLowerCase())+'-'+Date.now();
     const taggedFile=new File([taggedBlob],safeTitle+'.mp3',{type:'audio/mpeg'});
-    const pubId=await uploadCloudPublicId(taggedFile,'ytMp3Prog','ytMp3Bar');
-    const taggedUrl='https://res.cloudinary.com/'+CLOUD+'/video/upload/l_video:'+VOICE_TAG_ID+',fl_splice,e_volume:200/fl_layer_apply,so_0,du_3/'+pubId+'.mp3';
+    const taggedUrl=await uploadCloud(taggedFile,'ytMp3Prog','ytMp3Bar');
 
     document.getElementById('songDownloadUrl').value=taggedUrl;
     if(bar)bar.style.width='100%';

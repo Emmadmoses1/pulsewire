@@ -172,7 +172,7 @@ app.post('/convert',async(req,res)=>{
       '-c:a','libmp3lame',
       '-b:a','320k',
       '-ar','44100',
-      '-metadata',`album=WAVZO`
+      '-metadata',`album=wavzo.com.ng`
     );
 
     if(artist) ffArgs.push('-metadata',`artist=${artist}`);
