@@ -408,7 +408,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 const CLOUD='smg1blzu', PRESET='Pulsewire';
 const ADMIN_PASS='pulsewire2026';
 const BIN_ID='6aa50e3aac6210605ac3c542';
-const BIN_KEY='$2a$10$dsCr1ADyKPDy0pbmzlfCzOnOm9FP8aveuNhIFmktyMa8UvWUoMbUm';
+const BIN_KEY='$2a$10$mdqVObTCy3dJ/mscdn./0.AscxgxHKCM0Mq.O7ApHHlKB1UVXsFy6';
 const BIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
 // ── Auth (server session already enforced by requireAdmin) ──
