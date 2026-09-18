@@ -567,7 +567,7 @@ async function fixGrammar(){
   const btn=document.getElementById('fixGrammarBtn');
   btn.disabled=true;btn.textContent='Correcting...';
   try{
-    const res=await fetch('https://wavzo-ai.dakudinamoses.workers.dev/correct-grammar',{
+    const res=await fetch('/admin/ai-correct',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({text:original})
