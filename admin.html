@@ -455,6 +455,17 @@ const VOICE_TAG_ID='wavzo-tag-v1';
 const GITHUB_TOKEN='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';
 const GITHUB_REPO='Emmadmoses1/pulsewire';
 
+async function indexNow(url){
+  try{
+    await fetch('https://api.indexnow.org/indexnow',{
+      method:'POST',
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({host:"wavzo.com.ng",key:"wavzo2026indexnow",urlList:[url]})
+    });
+    console.log("IndexNow pinged:",url);
+  }catch(e){console.log("IndexNow failed:",e.message);}
+}
+
 async function triggerPreviewGeneration(){
   try{
     await fetch('https://api.github.com/repos/'+GITHUB_REPO+'/actions/workflows/generate-previews.yml/dispatches',{
