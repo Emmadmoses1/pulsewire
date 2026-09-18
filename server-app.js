@@ -336,7 +336,7 @@ app.post('/admin/delete-post/:slug', requireAdmin, async (req, res) => {
   res.redirect('/admin/dashboard');
 });
 
-const { fetchTrustedNews, correctGrammar } = require('./routes-extra');
+const { fetchTrustedNews, correctGrammar, scanCoverArt } = require('./routes-extra');
 const facebookAuthRouter = require('./facebook-auth');
 app.use(facebookAuthRouter);
 
@@ -381,6 +381,7 @@ Source: WAVZO
 });
 app.get('/admin/news-suggestions', requireAdmin, async (req, res) => res.json(await fetchTrustedNews()));
 app.post('/admin/ai-correct', requireAdmin, async (req, res) => res.json(await correctGrammar(req.body.text || '')));
+app.post('/admin/ai-scan-cover', requireAdmin, async (req, res) => res.json(await scanCoverArt(req.body.imageBase64 || '', req.body.mediaType || '')));
 
 app.get('/admin/analytics', requireAdmin, async (req, res) => {
   if (!(await safeRead(res))) return;

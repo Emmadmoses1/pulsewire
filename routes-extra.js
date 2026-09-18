@@ -83,4 +83,66 @@ async function correctGrammar(text) {
   return { error: 'AI request failed' };
 }
 
-module.exports = { fetchTrustedNews, correctGrammar };
+async function scanCoverArt(imageBase64, mediaType) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey || apiKey === "paste_your_key_here") {
+    return { error: "No API key set in .env file" };
+  }
+  if (!imageBase64) {
+    return { error: "No image provided" };
+  }
+  const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+  const safeMediaType = allowedTypes.includes(mediaType) ? mediaType : "image/jpeg";
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01"
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1000,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: { type: "base64", media_type: safeMediaType, data: imageBase64 }
+            },
+            {
+              type: "text",
+              text: "This is a music cover/single art image. Identify the song title and artist from any text visible on the image. Then write a short music-blog post about the track. Respond with ONLY a raw JSON object (no markdown, no code fences, no commentary) with exactly these keys: title (song title, or best guess, or empty string if truly unreadable), artist (artist name, or empty string if truly unreadable), excerpt (a punchy one-sentence teaser, under 160 characters), content (a short 2-3 paragraph write-up suitable for a music news post, written like a music blogger, do not invent specific facts you cannot see or infer from the image)."
+            }
+          ]
+        }
+      ]
+    })
+  });
+
+  const data = await response.json();
+  if (!data.content || !data.content[0]) {
+    console.error("scan-cover: unexpected API response", data);
+    return { error: "AI request failed" };
+  }
+
+  let raw = data.content[0].text.trim();
+  raw = raw.replace(/^```json\s*/i, "").replace(/^```\s*/, "").replace(/```\s*$/, "").trim();
+
+  try {
+    const parsed = JSON.parse(raw);
+    return {
+      title: parsed.title || "",
+      artist: parsed.artist || "",
+      excerpt: parsed.excerpt || "",
+      content: parsed.content || ""
+    };
+  } catch (e) {
+    console.error("scan-cover: failed to parse AI JSON:", raw);
+    return { error: "Could not parse AI response" };
+  }
+}
+
+module.exports = { fetchTrustedNews, correctGrammar, scanCoverArt };

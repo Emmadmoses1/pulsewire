@@ -542,7 +542,7 @@ async function scanCoverArt(){
   btn.disabled=true;btn.textContent='Scanning...';
   try{
     const base64=await fileToBase64(file);
-    const res=await fetch('https://wavzo-ai.dakudinamoses.workers.dev/scan-cover',{
+    const res=await fetch('/admin/ai-scan-cover',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({imageBase64:base64,mediaType:file.type})
