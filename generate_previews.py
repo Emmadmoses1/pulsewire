@@ -134,3 +134,12 @@ if os.path.exists('song.html'):
         with open(f'songs/{slug}.html', 'w') as f:
             f.write(page)
         print(f'Generated songs/{slug}.html')
+
+# ── Ping Google to index new pages ──
+import urllib.request
+sitemap_url = 'https://wavzo.com.ng/sitemap.xml'
+try:
+    urllib.request.urlopen(f'https://www.google.com/ping?sitemap={sitemap_url}')
+    print('Google pinged successfully')
+except Exception as e:
+    print(f'Google ping failed: {e}')
