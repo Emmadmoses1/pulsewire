@@ -109,7 +109,7 @@ async function downloadMp3(){
   if(!window._songData){status.textContent='Nothing to download.';return;}
   btn.disabled=true;btn.textContent='Converting...';status.textContent='Processing audio — this may take a moment for longer tracks.';
   try{
-    const res=await fetch('https://wavzo-ai.dakudinamoses.workers.dev/download-mp3',{
+    const res=await fetch('/api/download-mp3',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(window._songData)

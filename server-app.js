@@ -94,6 +94,23 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+app.post('/api/download-mp3', async (req, res) => {
+  try {
+    const { audioUrl, artist, title } = req.body || {};
+    if (!audioUrl) return res.status(400).json({ error: 'Missing audioUrl' });
+    const upstream = await fetch(audioUrl);
+    if (!upstream.ok) return res.status(502).json({ error: 'Could not fetch source audio' });
+    const buffer = Buffer.from(await upstream.arrayBuffer());
+    const filename = ((artist || 'Unknown Artist') + ' - ' + (title || 'Track') + '.mp3').replace(/[\/\\:*?"<>|]/g, '');
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
+    res.send(buffer);
+  } catch (err) {
+    console.error('download-mp3 error:', err.message);
+    res.status(500).json({ error: 'Download failed' });
+  }
+});
 app.use(session({
   secret: process.env.SESSION_SECRET || 'change-this-session-secret-locally',
   resave: false,
