@@ -781,14 +781,28 @@ async function useNews(i){
   document.getElementById('pExcerpt').value = item.excerpt;
   document.getElementById('pContent').value = (item.fullContent || item.excerpt) + '\n\nSource: ' + item.link;
 
+  document.getElementById('coverFname').textContent = 'Fetching image...';
+
   if (!item.image) {
-    try {
-      const ogRes = await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(item.link));
-      const ogData = await ogRes.json();
-      const ogM = ogData.contents.match(/property=["']og:image["'][^>]+content=["']([^"']+)["']/) ||
-                  ogData.contents.match(/content=["']([^"']+)["'][^>]+property=["']og:image["']/);
-      if (ogM) item.image = ogM[1];
-    } catch(e) {}
+    // Try multiple proxies to get OG image
+    const proxies = [
+      'https://api.allorigins.win/get?url=',
+      'https://corsproxy.io/?',
+      'https://api.codetabs.com/v1/proxy?quest='
+    ];
+    for(const proxy of proxies){
+      try{
+        const r = await fetch(proxy + encodeURIComponent(item.link));
+        const html = proxy.includes('allorigins') ? (await r.json()).contents : await r.text();
+        const m = html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/) ||
+                  html.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/) ||
+                  html.match(/<img[^>]+src=["'](https?:\/\/[^"'> ]+\.(?:jpg|jpeg|png|webp))["']/i);
+        if(m && m[1] && !m[1].includes('logo') && !m[1].includes('icon')){
+          item.image = m[1];
+          break;
+        }
+      }catch(e){}
+    }
   }
 
   if (item.image) {
@@ -797,6 +811,7 @@ async function useNews(i){
     prev.src = item.image;
     prev.style.display = 'block';
     document.getElementById('coverFname').textContent = 'Image from ' + item.source;
+    document.getElementById('scanCoverBtn').style.display = 'inline-block';
   } else {
     document.getElementById('coverFname').textContent = 'No image found — upload manually';
   }
@@ -1451,13 +1466,10 @@ async function loadPosterSuggestions(){
     list=[...sp,...ss];
   }
 
-  window._posterSuggestions=list;
-
   if(!list.length){
-    // fallback: show all posts
-    list=[...posts].reverse().slice(0,6);
-    window._posterSuggestions=list;
+    list=[...posts].reverse().slice(0,8);
   }
+  window._posterSuggestions=list;
   if(!list.length){
     box.innerHTML='<p style="color:var(--muted);font-size:13px;padding:8px 0">No posts yet.</p>';
     return;
