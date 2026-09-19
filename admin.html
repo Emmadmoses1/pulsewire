@@ -1206,6 +1206,18 @@ async function searchSong(){
   btn.disabled=false;btn.textContent='🔍 Search';
 }
 
+async function trackSongDownload(songId){
+  try{
+    const db=await loadDB();
+    db.songs=db.songs||[];
+    const idx=db.songs.findIndex(s=>s.id===songId);
+    if(idx>-1){
+      db.songs[idx].downloads=(db.songs[idx].downloads||0)+1;
+      await saveDB(db);
+    }
+  }catch(e){console.log('Track download failed:',e.message);}
+}
+
 async function loadPosts(){
   const db=await loadDB();const posts=[...( db.posts||[])].reverse();
   const list=document.getElementById('postsList');
@@ -1387,15 +1399,36 @@ async function loadPosterSuggestions(){
     return;
   }
 
+  const db2=await loadDB();
+  const songs=db2.songs||[];
+  const artists=db2.artists||[];
+  const artistMap={};artists.forEach(a=>artistMap[a.id]=a);
+
   let list=[];
+  let isSong=false;
   if(currentTpl==='news'){
-    list=posts.filter(p=>p.category==='NEWS').slice().reverse().slice(0,6);
+    list=posts.filter(p=>p.category==='NEWS').slice().reverse().slice(0,8);
   } else if(currentTpl==='newmusic'){
-    list=posts.filter(p=>p.category==='MUSIC').slice().reverse().slice(0,6);
+    const sp=posts.filter(p=>p.category==='MUSIC').slice().reverse().slice(0,4);
+    const ss=songs.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,4).map(s=>({
+      title:s.title+' — '+(artistMap[s.artistId]?.name||''),
+      coverImage:s.cover,date:'',category:'MUSIC',slug:'',_song:s
+    }));
+    list=[...sp,...ss];
   } else if(currentTpl==='download'){
-    list=posts.filter(p=>p.category==='MUSIC'&&(p.musicFile||p.videoFile)).slice().reverse().slice(0,6);
-  } else if(currentTpl==='trending'){
-    list=posts.filter(p=>p.category==='MUSIC').slice().sort((a,b)=>((b.views||0)+(b.downloads||0))-((a.views||0)+(a.downloads||0))).slice(0,6);
+    const sp=posts.filter(p=>p.category==='MUSIC'&&(p.musicFile||p.videoFile)).slice().reverse().slice(0,4);
+    const ss=songs.filter(s=>s.downloadUrl).slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,4).map(s=>({
+      title:s.title+' — '+(artistMap[s.artistId]?.name||''),
+      coverImage:s.cover,date:'',category:'MUSIC',slug:'',_song:s
+    }));
+    list=[...sp,...ss];
+  } else {
+    const sp=posts.filter(p=>p.category==='MUSIC').slice().sort((a,b)=>((b.views||0)+(b.downloads||0))-((a.views||0)+(a.downloads||0))).slice(0,4);
+    const ss=songs.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,4).map(s=>({
+      title:s.title+' — '+(artistMap[s.artistId]?.name||''),
+      coverImage:s.cover,date:'',category:'MUSIC',slug:'',_song:s
+    }));
+    list=[...sp,...ss];
   }
 
   window._posterSuggestions=list;
@@ -1460,10 +1493,15 @@ async function generateFlyerGallery(){
 
   try{
     const db=await loadDB();
-    const posts=(db.posts||[]).filter(p=>p.category==='MUSIC'&&(p.musicFile||p.videoFile)).slice().reverse().slice(0,8);
+    const allSongs=(db.songs||[]).slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,4);
+    const allArtists=db.artists||[];
+    const aMap={};allArtists.forEach(a=>aMap[a.id]=a);
+    const musicPosts=(db.posts||[]).filter(p=>p.category==='MUSIC'&&(p.musicFile||p.videoFile)).slice().reverse().slice(0,4);
+    const songItems=allSongs.map(s=>({title:s.title+(aMap[s.artistId]?' — '+aMap[s.artistId].name:''),coverImage:s.cover,date:'',slug:s.slug,musicFile:s.downloadUrl}));
+    const posts=[...musicPosts,...songItems];
 
     if(!posts.length){
-      gallery.innerHTML='<p style="color:var(--muted);font-size:13px">No recent music posts with audio/video yet.</p>';
+      gallery.innerHTML='<p style="color:var(--muted);font-size:13px">No music yet.</p>';
       return;
     }
 
