@@ -263,7 +263,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <label>Name</label>
         <div style="display:flex;gap:8px">
           <input type="text" id="artistName" placeholder="e.g. Burna Boy" style="flex:1">
-          <button type="button" class="btn btn-sm btn-dark" onclick="searchArtist()" id="artistSearchBtn">🔍 Search</button>
+          <button type="button" class="btn btn-sm btn-dark" onclick="searchArtist()" id="artistSearchBtn">🔍 Search + AI</button>
         </div>
         <p id="artistSearchStatus" style="font-size:12px;color:var(--muted);margin-top:4px"></p>
       </div>
@@ -282,8 +282,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <div class="upload-placeholder" id="artistPhotoPlaceholder"><span>Click to upload photo</span></div>
         </div>
       </div>
-      <button class="btn" onclick="saveArtist()">SAVE ARTIST</button>
-      <button class="btn" style="background:#555" onclick="cancelArtistEdit()" id="cancelArtistBtn" style="display:none">CANCEL</button>
+      <button class="btn" id="saveArtistBtn" onclick="saveArtist()">SAVE ARTIST</button>
+      <button class="btn" style="background:#555;display:none" onclick="cancelArtistEdit()" id="cancelArtistBtn">CANCEL</button>
     </div>
     <div class="card">
       <div class="card-title">All Artists <span class="badge-count" id="artistCount"></span></div>
@@ -333,8 +333,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <div style="display:flex;gap:8px"><input type="text" id="songYoutubeUrl" placeholder="https://youtube.com/watch?v=... (optional)" style="flex:1"><button type="button" class="btn btn-sm btn-dark" onclick="searchYoutube()" id="ytSearchBtn" style="width:auto;padding:8px 14px">▶ Find Video</button></div>
         <div id="ytPreview" style="margin-top:8px"></div>
       </div>
-      <button class="btn" onclick="saveSong()">SAVE SONG</button>
-      <button class="btn" style="background:#555" onclick="cancelSongEdit()" id="cancelSongBtn" style="display:none">CANCEL</button>
+      <button class="btn" id="saveSongBtn" onclick="saveSong()">SAVE SONG</button>
+      <button class="btn" style="background:#555;display:none" onclick="cancelSongEdit()" id="cancelSongBtn">CANCEL</button>
     </div>
     <div class="card">
       <div class="card-title">All Songs <span class="badge-count" id="songCount"></span></div>
@@ -481,15 +481,16 @@ async function indexNow(url){
 
 async function triggerPreviewGeneration(){
   try{
-    await fetch('https://api.github.com/repos/'+GITHUB_REPO+'/actions/workflows/generate-previews.yml/dispatches',{
+    const r=await fetch('https://api.github.com/repos/'+GITHUB_REPO+'/actions/workflows/generate-previews.yml/dispatches',{
       method:'POST',
       headers:{'Authorization':'Bearer '+GITHUB_TOKEN,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
       body:JSON.stringify({ref:'main'})
     });
-    console.log('Preview generation triggered');
-  }catch(e){
-    console.log('Trigger failed:',e.message);
-  }
+    if(r.status===204){console.log('Preview generation triggered');return true;}
+    let m='';try{m=(await r.json()).message||'';}catch(e){}
+    showToast('⚠ Saved, but site rebuild not triggered ('+r.status+(m?': '+m:'')+')',7000);
+  }catch(e){showToast('⚠ Site rebuild not triggered: '+e.message,7000);}
+  return false;
 }
 
 // ── Auth ──────────────────────────────────────────
@@ -505,7 +506,7 @@ function doLogin(){
   }
 }
 function doLogout(){localStorage.removeItem('pw');location.reload();}
-function showToast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function showToast(msg,ms){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),ms||2500);}
 if(localStorage.getItem('pw')){
   document.getElementById('loginPage').style.display='none';
   document.getElementById('adminPage').style.display='block';
@@ -527,12 +528,84 @@ function showSec(name,el){
 }
 
 // ── DB ────────────────────────────────────────────
+/* FIXES-1 */
+const VISION_MODELS=['openrouter/free','openrouter/free','nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free'];
+window.addEventListener('unhandledrejection',ev=>{
+  const r=ev.reason;
+  const m=(r&&(r.message||(r.error&&r.error.message)))||(typeof r==='string'?r:JSON.stringify(r));
+  showToast('⚠ '+String(m).slice(0,160),6000);
+});
 async function loadDB(){
-  const r=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
-  const d=await r.json();return d.record||{posts:[]};
+  let r;
+  try{r=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});}
+  catch(e){throw new Error('Cannot reach JSONBin - check your internet.');}
+  let d=null;try{d=await r.json();}catch(e){}
+  if(!r.ok)throw new Error('JSONBin load failed ('+r.status+')'+((d&&d.message)?': '+d.message:''));
+  const db=d&&d.record;
+  if(!db||typeof db!=='object')throw new Error('JSONBin returned empty data - stopped so nothing gets overwritten.');
+  db.posts=db.posts||[];
+  return db;
 }
 async function saveDB(data){
-  await fetch(BIN_URL,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':BIN_KEY},body:JSON.stringify(data)});
+  const body=JSON.stringify(data);
+  let r;
+  try{r=await fetch(BIN_URL,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':BIN_KEY},body});}
+  catch(e){throw new Error('Cannot reach JSONBin - check your internet.');}
+  let d=null;try{d=await r.json();}catch(e){}
+  if(!r.ok)throw new Error('JSONBin save failed ('+r.status+')'+((d&&d.message)?': '+d.message:'')+' - database is '+Math.round(body.length/1024)+' KB (free limit 100 KB).');
+  return d;
+}
+async function compressImage(file,maxDim,quality){
+  maxDim=maxDim||1200;quality=quality||0.85;
+  const t=(file&&file.type||'').toLowerCase();
+  if(!file||t==='image/gif'||t==='image/svg+xml'||(t&&t.indexOf('image/')!==0))return file;
+  try{
+    let src;
+    if(window.createImageBitmap){src=await createImageBitmap(file);}
+    else{src=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(file);});}
+    const scale=Math.min(1,maxDim/Math.max(src.width,src.height));
+    const cw=Math.round(src.width*scale),ch=Math.round(src.height*scale);
+    const c=document.createElement('canvas');c.width=cw;c.height=ch;
+    const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cw,ch);ctx.drawImage(src,0,0,cw,ch);
+    const blob=await new Promise(res=>c.toBlob(res,'image/jpeg',quality));
+    if(!blob||!blob.size)return file;
+    return new File([blob],(file.name||'photo').replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg'});
+  }catch(e){console.warn('compress failed, using original',e);return file;}
+}
+async function aiChat(messages,opts){
+  opts=opts||{};
+  const models=opts.models||[OPENROUTER_MODEL,'openrouter/free'];
+  let lastErr='';
+  for(const model of models){
+    try{
+      const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENROUTER_KEY},
+        body:JSON.stringify({model,max_tokens:opts.maxTokens||800,temperature:opts.temperature==null?0.4:opts.temperature,messages})
+      });
+      const raw=await r.text();let d=null;try{d=JSON.parse(raw);}catch(e){}
+      if(!r.ok||!d||d.error){lastErr=(d&&d.error&&(d.error.message||JSON.stringify(d.error)))||('HTTP '+r.status+' '+raw.slice(0,100));continue;}
+      let t=d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
+      if(Array.isArray(t))t=t.map(p=>p.text||'').join('');
+      t=(t||'').trim();
+      if(!t){lastErr='empty reply from '+model;continue;}
+      if(opts.parse){try{return opts.parse(t);}catch(e){lastErr='bad reply from '+model;continue;}}
+      return t;
+    }catch(e){lastErr=e.message;}
+  }
+  throw new Error(lastErr||'AI is unavailable right now');
+}
+function parseAiJson(t){
+  t=String(t).replace(/```(?:json)?/gi,'').trim();
+  const a=t.indexOf('{'),b=t.lastIndexOf('}');
+  if(a<0||b<=a)throw new Error('no json');
+  return JSON.parse(t.slice(a,b+1));
+}
+function htmlToText(html){
+  if(!html)return '';
+  const x=String(html).replace(/<(script|style)[\s\S]*?<\/\1>/gi,'').replace(/<\s*br\s*\/?>/gi,'\n').replace(/<\/(p|div|h[1-6]|li|blockquote)>/gi,'\n\n');
+  const d=new DOMParser().parseFromString(x,'text/html');
+  return (d.body.textContent||'').replace(/\u00a0/g,' ').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
 }
 
 // ── Dashboard ─────────────────────────────────────
@@ -577,22 +650,24 @@ function fileToBase64(file){
 
 async function scanCoverArt(){
   const file=document.getElementById('coverIn').files[0];
-  if(!file){alert('Choose a cover image first.');return;}
+  const remote=(typeof _rssImageUrl==='string'&&_rssImageUrl)||'';
+  if(!file&&!remote){alert('Choose a cover image first.');return;}
   const btn=document.getElementById('scanCoverBtn');
   btn.disabled=true;btn.textContent='Scanning...';
   try{
-    const base64=await fileToBase64(file);
-    const res=await fetch('/admin/ai-scan-cover',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({imageBase64:base64,mediaType:file.type})
-    });
-    const data=await res.json();
-    if(data.error){alert('Scan failed: '+data.error);return;}
-    if(data.title)document.getElementById('pTitle').value=data.artist?`${data.title} — ${data.artist}`:data.title;
+    let imgUrl=remote;
+    if(file){
+      const small=await compressImage(file,1024,0.8);
+      imgUrl=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=()=>rej(new Error('Could not read the image'));fr.readAsDataURL(small);});
+    }
+    const prompt='You help run a Nigerian music blog. This image is cover art or a flyer for a music release. Read any visible text (artist name, song or album title). Reply with ONLY a JSON object, no markdown: {"title":"song or album title if visible, else empty","artist":"artist name if visible, else empty","excerpt":"one or two sentence teaser","content":"2-3 paragraph blog article about the release, paragraphs separated by \\n\\n. Do not invent facts like release dates, chart positions or awards."}';
+    const data=await aiChat([{role:'user',content:[{type:'text',text:prompt},{type:'image_url',image_url:{url:imgUrl}}]}],{models:VISION_MODELS,maxTokens:1500,parse:parseAiJson});
+    const title=(data.title||'').trim(),artist=(data.artist||'').trim();
+    if(title||artist)document.getElementById('pTitle').value=(title&&artist)?(title+' — '+artist):(title||artist);
     if(data.excerpt)document.getElementById('pExcerpt').value=data.excerpt;
     if(data.content)document.getElementById('pContent').value=data.content;
     document.getElementById('pCat').value='MUSIC';
+    showToast('Cover scanned ✓ - review the text');
   }catch(e){
     alert('Scan failed: '+e.message);
   }finally{
@@ -607,16 +682,10 @@ async function fixGrammar(){
   const btn=document.getElementById('fixGrammarBtn');
   btn.disabled=true;btn.textContent='Correcting...';
   try{
-    const res=await fetch('/admin/ai-correct',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:original})
-    });
-    const data=await res.json();
-    if(data.corrected)field.value=data.corrected;
-    else alert(data.error||'Correction failed');
+    const out=await aiChat([{role:'user',content:'Fix the grammar, spelling and punctuation of this text. Keep the meaning, tone and paragraph breaks. Return ONLY the corrected text.\n\n'+original}],{maxTokens:Math.min(3000,Math.ceil(original.length/2)+500),temperature:0.2});
+    field.value=out;
   }catch(e){
-    alert('Request failed: '+e.message);
+    alert('Correction failed: '+e.message);
   }finally{
     btn.disabled=false;btn.textContent='✍️ AI Fix Grammar';
   }
@@ -624,13 +693,18 @@ async function fixGrammar(){
 function showFname(i,id){if(i.files[0])document.getElementById(id).textContent='✓ '+i.files[0].name;}
 async function uploadCloud(file,progId,barId){
   const fd=new FormData();fd.append('file',file);fd.append('upload_preset',PRESET);
-  document.getElementById(progId).style.display='block';
+  const pw=progId&&document.getElementById(progId);if(pw)pw.style.display='block';
+  const bar=barId&&document.getElementById(barId);
   return new Promise((res,rej)=>{
     const xhr=new XMLHttpRequest();
     xhr.open('POST',`https://api.cloudinary.com/v1_1/${CLOUD}/auto/upload`);
-    xhr.upload.onprogress=e=>{if(e.lengthComputable)document.getElementById(barId).style.width=(e.loaded/e.total*100)+'%';};
-    xhr.onload=()=>{const d=JSON.parse(xhr.responseText);d.secure_url?res(d.secure_url):rej(d);};
-    xhr.onerror=rej;xhr.send(fd);
+    xhr.upload.onprogress=e=>{if(bar&&e.lengthComputable)bar.style.width=(e.loaded/e.total*100)+'%';};
+    xhr.onload=()=>{
+      let d={};try{d=JSON.parse(xhr.responseText);}catch(e){}
+      d.secure_url?res(d.secure_url):rej(new Error('Cloudinary: '+((d.error&&d.error.message)||('upload failed (HTTP '+xhr.status+')'))));
+    };
+    xhr.onerror=()=>rej(new Error('Network error while uploading to Cloudinary'));
+    xhr.send(fd);
   });
 }
 
@@ -713,9 +787,10 @@ async function loadNews(){
   }
 
   let items = [];
-  for (const feed of FEEDS) {
+  const _buckets = FEEDS.map(() => []);
+  await Promise.all(FEEDS.map(async (feed, _fi) => {
     try {
-      const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.url));
+      const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.url), (typeof AbortSignal.timeout === 'function' ? { signal: AbortSignal.timeout(15000) } : {}));
       const data = await res.json();
       if (data.status === 'ok' && data.items) {
         data.items.slice(0, 5).forEach(item => {
@@ -740,18 +815,19 @@ async function loadNews(){
             }
           }
 
-          items.push({
+          _buckets[_fi].push({
             source: feed.name,
             title: item.title,
             link: item.link,
-            excerpt: (item.description || '').replace(/<[^>]*>/g, '').slice(0, 200),
-            fullContent: (item.content || item.description || '').replace(/<[^>]*>/g, '').trim(),
+            excerpt: htmlToText(item.description).replace(/\s+/g, ' ').slice(0, 200),
+            fullContent: htmlToText(item.content || item.description || '').replace(/^The post .+ appeared first on .+$/gim, '').trim(),
             image, mediaType, mediaUrl
           });
         });
       }
     } catch (e) { console.log('Feed failed:', feed.name); }
-  }
+  }));
+  items = _buckets.flat();
 
   btn.disabled = false; btn.textContent = '📰 Suggest from Trusted Sources';
 
@@ -1032,7 +1108,7 @@ let _artistPhotoUrl=null;
 document.addEventListener('DOMContentLoaded',()=>{
   const area=document.getElementById('artistPhotoArea');
   if(area){
-    area.addEventListener('click',()=>document.getElementById('artistPhotoIn').click());
+    area.addEventListener('click',e=>{if(e.target.tagName!=='INPUT')document.getElementById('artistPhotoIn').click();});
     document.getElementById('artistPhotoIn').addEventListener('change',function(e){
       const f=e.target.files[0];
       if(f){const p=document.getElementById('artistPhotoPrev');p.src=URL.createObjectURL(f);p.classList.remove('hidden');document.getElementById('artistPhotoPlaceholder').style.display='none';}
@@ -1040,7 +1116,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   const sarea=document.getElementById('songCoverArea');
   if(sarea){
-    sarea.addEventListener('click',()=>document.getElementById('songCoverIn').click());
+    sarea.addEventListener('click',e=>{if(e.target.tagName!=='INPUT')document.getElementById('songCoverIn').click();});
     document.getElementById('songCoverIn').addEventListener('change',function(e){
       const f=e.target.files[0];
       if(f){const p=document.getElementById('songCoverPrev');p.src=URL.createObjectURL(f);p.classList.remove('hidden');document.getElementById('songCoverPlaceholder').style.display='none';}
@@ -1049,61 +1125,89 @@ document.addEventListener('DOMContentLoaded',()=>{
   loadFacebookStatus();
 });
 
+/* FIXES-2 */
+function resetArtistForm(){
+  document.getElementById('artistEditId').value='';
+  document.getElementById('artistName').value='';
+  document.getElementById('artistBio').value='';
+  document.getElementById('artistPhotoIn').value='';
+  document.getElementById('artistPhotoPrev').classList.add('hidden');
+  document.getElementById('artistPhotoPlaceholder').style.display='';
+  document.getElementById('cancelArtistBtn').style.display='none';
+  window._pendingArtistPhotoUrl=null;
+}
+let _savingArtist=false;
 async function saveArtist(){
-  const db=await loadDB();db.artists=db.artists||[];
+  if(_savingArtist)return;
   const name=document.getElementById('artistName').value.trim();
   if(!name){alert('Name required');return;}
   const genre=document.getElementById('artistGenre').value;
   const bio=document.getElementById('artistBio').value.trim();
   const editId=document.getElementById('artistEditId').value;
-  let photo=window._pendingArtistPhotoUrl||null;
-  const f=document.getElementById('artistPhotoIn').files[0];
-  if(f)photo=await uploadCloud(f,'coverProg','coverBar').catch(()=>photo);
   const slug=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-  if(editId){
-    const idx=db.artists.findIndex(a=>a.id===editId);
-    if(idx>-1){
-      db.artists[idx]={...db.artists[idx],name,genre,bio,slug,photo:photo||db.artists[idx].photo};
+  if(!slug){alert('Name must contain letters or numbers');return;}
+  const btn=document.getElementById('saveArtistBtn');
+  const status=document.getElementById('artistSearchStatus');
+  _savingArtist=true;btn.disabled=true;btn.textContent='SAVING...';
+  try{
+    let photo=window._pendingArtistPhotoUrl||null;
+    const f=document.getElementById('artistPhotoIn').files[0];
+    if(f){
+      status.textContent='Uploading photo...';
+      photo=await uploadCloud(await compressImage(f,1000,0.85),null,null);
     }
-  } else {
-    db.artists.push({id:'art-'+Date.now(),name,genre,bio,slug,photo});
+    status.textContent='Saving...';
+    const db=await loadDB();db.artists=db.artists||[];
+    if(editId){
+      const idx=db.artists.findIndex(a=>a.id===editId);
+      if(idx<0)throw new Error('That artist no longer exists - refresh and try again.');
+      db.artists[idx]={...db.artists[idx],name,genre,bio,slug,photo:photo||db.artists[idx].photo};
+    } else {
+      if(db.artists.some(a=>a.slug===slug))throw new Error('"'+name+'" already exists - tap EDIT on it instead.');
+      db.artists.push({id:'art-'+Date.now(),name,genre,bio,slug,photo});
+    }
+    await saveDB(db);
+    resetArtistForm();
+    status.textContent='✓ Saved';
+    triggerPreviewGeneration();
+    loadArtists();
+    showToast('Artist saved ✓');
+  }catch(e){
+    status.textContent='';
+    alert('Could not save artist: '+e.message);
+  }finally{
+    _savingArtist=false;btn.disabled=false;btn.textContent='SAVE ARTIST';
   }
-  await saveDB(db);
-  document.getElementById('artistName').value='';document.getElementById('artistBio').value='';
-  document.getElementById('artistEditId').value='';
-  document.getElementById('artistPhotoPrev').classList.add('hidden');
-  document.getElementById('artistPhotoPlaceholder').style.display='';
-  document.getElementById('cancelArtistBtn').style.display='none';
-  loadArtists();
-  showToast('Artist saved ✓');
 }
 
 async function editArtist(id){
   const db=await loadDB();
-  const a=db.artists.find(x=>x.id===id);
+  const a=(db.artists||[]).find(x=>x.id===id);
   if(!a)return;
+  window._pendingArtistPhotoUrl=null;
+  document.getElementById('artistPhotoIn').value='';
   document.getElementById('artistEditId').value=a.id;
   document.getElementById('artistName').value=a.name;
-  document.getElementById('artistGenre').value=a.genre;
+  if(a.genre)document.getElementById('artistGenre').value=a.genre;
   document.getElementById('artistBio').value=a.bio||'';
-  if(a.photo){document.getElementById('artistPhotoPrev').src=a.photo;document.getElementById('artistPhotoPrev').classList.remove('hidden');document.getElementById('artistPhotoPlaceholder').style.display='none';}
+  const prev=document.getElementById('artistPhotoPrev');
+  if(a.photo){prev.src=a.photo;prev.classList.remove('hidden');document.getElementById('artistPhotoPlaceholder').style.display='none';}
+  else{prev.classList.add('hidden');document.getElementById('artistPhotoPlaceholder').style.display='';}
   document.getElementById('cancelArtistBtn').style.display='inline-block';
+  document.getElementById('artistName').scrollIntoView({behavior:'smooth',block:'center'});
 }
 
-function cancelArtistEdit(){
-  document.getElementById('artistEditId').value='';
-  document.getElementById('artistName').value='';document.getElementById('artistBio').value='';
-  document.getElementById('artistPhotoPrev').classList.add('hidden');
-  document.getElementById('artistPhotoPlaceholder').style.display='';
-  document.getElementById('cancelArtistBtn').style.display='none';
-}
+function cancelArtistEdit(){resetArtistForm();document.getElementById('artistSearchStatus').textContent='';}
 
 async function deleteArtist(id){
   if(!confirm('Delete this artist?'))return;
-  const db=await loadDB();
-  db.artists=(db.artists||[]).filter(a=>a.id!==id);
-  await saveDB(db);
-  loadArtists();
+  try{
+    const db=await loadDB();
+    db.artists=(db.artists||[]).filter(a=>a.id!==id);
+    await saveDB(db);
+    triggerPreviewGeneration();
+    loadArtists();
+  }catch(e){alert('Could not delete: '+e.message);}
 }
 
 async function loadSongsAdmin(){
@@ -1125,128 +1229,163 @@ async function loadSongsAdmin(){
   }).join('');
 }
 
+function resetSongForm(){
+  ['songTitle','songExcerpt','songDownloadUrl','songYoutubeUrl'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('songEditId').value='';
+  document.getElementById('songCoverIn').value='';
+  document.getElementById('songCoverPrev').classList.add('hidden');
+  document.getElementById('songCoverPlaceholder').style.display='';
+  document.getElementById('cancelSongBtn').style.display='none';
+  window._pendingSongCoverUrl=null;
+}
+let _savingSong=false;
 async function saveSong(){
-  const db=await loadDB();db.songs=db.songs||[];
+  if(_savingSong)return;
   const title=document.getElementById('songTitle').value.trim();
   const artistId=document.getElementById('songArtist').value;
-  if(!title||!artistId){alert('Title and artist required');return;}
+  if(!title||!artistId){alert('Title and artist required. If the artist list is empty, add the artist first.');return;}
   const type=document.getElementById('songType').value;
   const excerpt=document.getElementById('songExcerpt').value.trim();
   const downloadUrl=document.getElementById('songDownloadUrl').value.trim()||null;
   const youtubeUrl=document.getElementById('songYoutubeUrl').value.trim()||null;
   const editId=document.getElementById('songEditId').value;
-  let cover=window._pendingSongCoverUrl||null;
-  const f=document.getElementById('songCoverIn').files[0];
-  if(f)cover=await uploadCloud(f,'coverProg','coverBar').catch(()=>cover);
-  const slug=title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Date.now();
-  if(editId){
-    const idx=db.songs.findIndex(s=>s.id===editId);
-    if(idx>-1)db.songs[idx]={...db.songs[idx],title,artistId,type,excerpt,downloadUrl,youtubeUrl,cover:cover||db.songs[idx].cover};
-  } else {
-    db.songs.push({id:'song-'+Date.now(),title,artistId,type,excerpt,downloadUrl,youtubeUrl,cover,slug,createdAt:Date.now()});
+  const btn=document.getElementById('saveSongBtn');
+  const status=document.getElementById('songSearchStatus');
+  _savingSong=true;btn.disabled=true;btn.textContent='SAVING...';
+  try{
+    let cover=window._pendingSongCoverUrl||null;
+    const f=document.getElementById('songCoverIn').files[0];
+    if(f){
+      status.textContent='Uploading cover...';
+      cover=await uploadCloud(await compressImage(f,1200,0.85),null,null);
+    }
+    status.textContent='Saving...';
+    const db=await loadDB();db.songs=db.songs||[];
+    const slug=title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Date.now();
+    if(editId){
+      const idx=db.songs.findIndex(x=>x.id===editId);
+      if(idx<0)throw new Error('That song no longer exists - refresh and try again.');
+      db.songs[idx]={...db.songs[idx],title,artistId,type,excerpt,downloadUrl,youtubeUrl,cover:cover||db.songs[idx].cover};
+    } else {
+      db.songs.push({id:'song-'+Date.now(),title,artistId,type,excerpt,downloadUrl,youtubeUrl,cover,slug,createdAt:Date.now()});
+    }
+    await saveDB(db);
+    resetSongForm();
+    status.textContent='✓ Saved';
+    triggerPreviewGeneration();
+    loadSongsAdmin();
+    showToast('Song saved ✓');
+  }catch(e){
+    status.textContent='';
+    alert('Could not save song: '+e.message);
+  }finally{
+    _savingSong=false;btn.disabled=false;btn.textContent='SAVE SONG';
   }
-  await saveDB(db);
-  triggerPreviewGeneration();
-  ['songTitle','songExcerpt','songDownloadUrl','songYoutubeUrl'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('songEditId').value='';
-  document.getElementById('songCoverPrev').classList.add('hidden');
-  document.getElementById('songCoverPlaceholder').style.display='';
-  document.getElementById('cancelSongBtn').style.display='none';
-  loadSongsAdmin();
-  showToast('Song saved ✓');
 }
 
 async function editSong(id){
   const db=await loadDB();
-  const s=db.songs.find(x=>x.id===id);
-  if(!s)return;
-  document.getElementById('songEditId').value=s.id;
-  document.getElementById('songTitle').value=s.title;
-  document.getElementById('songArtist').value=s.artistId;
-  document.getElementById('songType').value=s.type;
-  document.getElementById('songExcerpt').value=s.excerpt||'';
-  document.getElementById('songDownloadUrl').value=s.downloadUrl||'';
-  document.getElementById('songYoutubeUrl').value=s.youtubeUrl||'';
-  if(s.cover){document.getElementById('songCoverPrev').src=s.cover;document.getElementById('songCoverPrev').classList.remove('hidden');document.getElementById('songCoverPlaceholder').style.display='none';}
+  const x=(db.songs||[]).find(v=>v.id===id);
+  if(!x)return;
+  window._pendingSongCoverUrl=null;
+  document.getElementById('songCoverIn').value='';
+  document.getElementById('songEditId').value=x.id;
+  document.getElementById('songTitle').value=x.title;
+  document.getElementById('songArtist').value=x.artistId;
+  document.getElementById('songType').value=x.type;
+  document.getElementById('songExcerpt').value=x.excerpt||'';
+  document.getElementById('songDownloadUrl').value=x.downloadUrl||'';
+  document.getElementById('songYoutubeUrl').value=x.youtubeUrl||'';
+  const prev=document.getElementById('songCoverPrev');
+  if(x.cover){prev.src=x.cover;prev.classList.remove('hidden');document.getElementById('songCoverPlaceholder').style.display='none';}
+  else{prev.classList.add('hidden');document.getElementById('songCoverPlaceholder').style.display='';}
   document.getElementById('cancelSongBtn').style.display='inline-block';
+  document.getElementById('songTitle').scrollIntoView({behavior:'smooth',block:'center'});
 }
 
-function cancelSongEdit(){
-  document.getElementById('songEditId').value='';
-  ['songTitle','songExcerpt','songDownloadUrl','songYoutubeUrl'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('songCoverPrev').classList.add('hidden');
-  document.getElementById('songCoverPlaceholder').style.display='';
-  document.getElementById('cancelSongBtn').style.display='none';
-}
+function cancelSongEdit(){resetSongForm();document.getElementById('songSearchStatus').textContent='';}
 
 async function deleteSong(id){
   if(!confirm('Delete this song?'))return;
-  const db=await loadDB();
-  db.songs=(db.songs||[]).filter(s=>s.id!==id);
-  await saveDB(db);
-  loadSongsAdmin();
+  try{
+    const db=await loadDB();
+    db.songs=(db.songs||[]).filter(v=>v.id!==id);
+    await saveDB(db);
+    triggerPreviewGeneration();
+    loadSongsAdmin();
+  }catch(e){alert('Could not delete: '+e.message);}
 }
 
 async function searchArtist(){
-  const name = document.getElementById('artistName').value.trim();
+  const name=document.getElementById('artistName').value.trim();
   if(!name){alert('Type a name first');return;}
-  const btn = document.getElementById('artistSearchBtn');
-  const status = document.getElementById('artistSearchStatus');
-  btn.disabled=true;btn.textContent='Searching...';status.textContent='';
+  const btn=document.getElementById('artistSearchBtn');
+  const status=document.getElementById('artistSearchStatus');
+  btn.disabled=true;btn.textContent='Searching...';
+  let wikiOk=false,wikiName=name,wikiBio='',imgUrl=null;
   try{
-    // Step 1: Wikipedia bio
-    const searchRes=await fetch('https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch='+encodeURIComponent(name+' musician singer')+'&format=json&origin=*');
-    const searchData=await searchRes.json();
-    const hit=searchData.query?.search?.[0];
-    let bio='',wikiName=name,imgUrl=null;
-    if(hit){
-      const sumRes=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(hit.title));
-      const sum=await sumRes.json();
-      wikiName=sum.title||name;
-      bio=sum.extract||'';
-      imgUrl=sum.originalimage?.source||sum.thumbnail?.source||null;
-    }
-    document.getElementById('artistName').value=wikiName;
-    document.getElementById('artistBio').value=bio;
+    status.textContent='Searching Wikipedia...';
+    try{
+      const sr=await fetch('https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch='+encodeURIComponent(name+' musician')+'&srlimit=3&format=json&origin=*');
+      const sd=await sr.json();
+      for(const hit of (sd.query&&sd.query.search)||[]){
+        const sum=await (await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(hit.title))).json();
+        if(sum.type==='disambiguation'||!sum.extract)continue;
+        wikiOk=true;wikiName=sum.title||name;wikiBio=sum.extract;
+        imgUrl=(sum.originalimage&&sum.originalimage.source)||(sum.thumbnail&&sum.thumbnail.source)||null;
+        break;
+      }
+    }catch(e){console.warn('wiki failed',e);}
 
-    // Step 2: iTunes for high quality artist/album image
+    status.textContent='✨ AI is checking and writing the bio...';
+    let ai=null;
+    try{
+      const prompt='You help run a Nigerian music blog. The editor typed the artist name "'+name+'".\n\nWikipedia lookup (may be empty or about the wrong person):\n'+(wikiOk?('Title: '+wikiName+'\n'+wikiBio.slice(0,1500)):'(nothing found)')+'\n\nReply with ONLY a JSON object, no markdown:\n{"match":true or false,"name":"correct stage name spelling","genre":"one of Afrobeats, Hip-Hop, Gospel, R&B, Amapiano, Highlife, Other","bio":"2-3 sentence factual bio, max 80 words"}\n\nRules: "match" is true only if the Wikipedia text is about a music artist matching that name; then base the bio strictly on it. If it does not match or nothing was found, write the bio only from facts you are sure about; if you do not know this artist set bio to "". Never invent dates, awards or albums.';
+      ai=await aiChat([{role:'user',content:prompt}],{maxTokens:700,temperature:0.3,parse:parseAiJson});
+    }catch(e){console.warn('AI failed',e);}
+    if(ai&&ai.match===false){wikiOk=false;imgUrl=null;}
+
+    const finalName=(ai&&ai.name&&String(ai.name).trim())||(wikiOk?wikiName:name);
+    const bio=(ai&&ai.bio&&String(ai.bio).trim())||(wikiOk?wikiBio:'');
+    document.getElementById('artistName').value=finalName;
+    document.getElementById('artistBio').value=bio;
+    if(ai&&ai.genre){
+      const sel=document.getElementById('artistGenre');
+      const g=[...sel.options].find(o=>o.text.toLowerCase()===String(ai.genre).trim().toLowerCase());
+      if(g)sel.value=g.value;
+    }
+
     if(!imgUrl){
       try{
-        const itRes=await fetch('https://itunes.apple.com/search?term='+encodeURIComponent(name)+'&entity=musicArtist&limit=1');
-        const itData=await itRes.json();
-        const artistId=itData.results?.[0]?.artistId;
+        const itData=await (await fetch('https://itunes.apple.com/search?term='+encodeURIComponent(finalName)+'&entity=musicArtist&limit=1')).json();
+        const artistId=itData.results&&itData.results[0]&&itData.results[0].artistId;
         if(artistId){
-          const alRes=await fetch('https://itunes.apple.com/lookup?id='+artistId+'&entity=album&limit=3');
-          const alData=await alRes.json();
-          const album=alData.results?.find(r=>r.wrapperType==='collection');
-          if(album?.artworkUrl100) imgUrl=album.artworkUrl100.replace('100x100bb','600x600bb');
+          const alData=await (await fetch('https://itunes.apple.com/lookup?id='+artistId+'&entity=album&limit=3')).json();
+          const album=(alData.results||[]).find(r=>r.wrapperType==='collection');
+          if(album&&album.artworkUrl100)imgUrl=album.artworkUrl100.replace('100x100bb','600x600bb');
         }
       }catch(e){}
     }
-
-    // Step 3: Wikimedia Commons fallback
-    if(!imgUrl){
+    if(!imgUrl&&wikiOk){
       try{
-        const cmRes=await fetch('https://commons.wikimedia.org/w/api.php?action=query&titles='+encodeURIComponent(wikiName)+'&prop=pageimages&format=json&pithumbsize=600&origin=*');
-        const cmData=await cmRes.json();
-        const pages=Object.values(cmData.query?.pages||{});
-        if(pages[0]?.thumbnail?.source) imgUrl=pages[0].thumbnail.source;
+        const cm=await (await fetch('https://commons.wikimedia.org/w/api.php?action=query&titles='+encodeURIComponent(wikiName)+'&prop=pageimages&format=json&pithumbsize=600&origin=*')).json();
+        const pg=Object.values((cm.query&&cm.query.pages)||{})[0];
+        if(pg&&pg.thumbnail&&pg.thumbnail.source)imgUrl=pg.thumbnail.source;
       }catch(e){}
     }
 
+    window._pendingArtistPhotoUrl=imgUrl||null;
     if(imgUrl){
       document.getElementById('artistPhotoPrev').src=imgUrl;
       document.getElementById('artistPhotoPrev').classList.remove('hidden');
       document.getElementById('artistPhotoPlaceholder').style.display='none';
-      window._pendingArtistPhotoUrl=imgUrl;
-      status.textContent='✓ Found — review before saving';
-    } else {
-      status.textContent='✓ Bio found — upload photo manually';
     }
+    const src=wikiOk?(ai?'Wikipedia + AI':'Wikipedia'):(bio?'AI only (no Wikipedia match) - double-check the facts':'nothing found');
+    status.textContent=(bio||imgUrl)?('✓ '+src+(imgUrl?' + photo':' - upload a photo yourself')+'. Review before saving.'):'Nothing found - fill in manually.';
   }catch(e){
-    status.textContent='Search failed — fill in manually.';
+    status.textContent='Search failed - fill in manually. ('+e.message+')';
   }
-  btn.disabled=false;btn.textContent='🔍 Search';
+  btn.disabled=false;btn.textContent='🔍 Search + AI';
 }
 
 async function generateSongDesc(title, artist, album, year, genre, type){
@@ -1833,7 +1972,7 @@ async function aiExpandContent(){
 }
 </script>
 <script>
-/* RSS image fix */
+/* RSS image fix v2 */
 function toHttps(u){return u?String(u).replace(/^http:\/\//i,'https://'):u;}
 function upscaleImage(url){
   if(!url)return url;
@@ -1843,61 +1982,102 @@ function upscaleImage(url){
   url=url.replace(/([?&])width=(\d+)/,(m,p1)=>p1+'width=1200');
   return url;
 }
+const CORS_PROXIES=[
+  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+  u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),
+  u=>'https://corsproxy.io/?'+encodeURIComponent(u)
+];
+async function proxyFetch(url,kind){
+  let last=null;
+  for(const mk of CORS_PROXIES){
+    try{
+      const r=await fetch(mk(url),typeof AbortSignal.timeout==='function'?{signal:AbortSignal.timeout(12000)}:{});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return kind==='blob'?await r.blob():await r.text();
+    }catch(e){last=e;}
+  }
+  throw last||new Error('all proxies failed');
+}
+async function cloudinaryImage(fileOrUrl,name){
+  const fd=new FormData();
+  if(name)fd.append('file',fileOrUrl,name);else fd.append('file',fileOrUrl);
+  fd.append('upload_preset',PRESET);
+  const r=await fetch('https://api.cloudinary.com/v1_1/'+CLOUD+'/image/upload',{method:'POST',body:fd});
+  const d=await r.json().catch(()=>({}));
+  if(d.secure_url)return d.secure_url;
+  throw new Error((d.error&&d.error.message)||('upload failed ('+r.status+')'));
+}
 async function rehostImage(urls){
   let lastErr='';
-  for(const rawUrl of urls){
-    if(!rawUrl)continue;
-    const u=toHttps(rawUrl);
+  for(const raw of urls){
+    if(!raw)continue;
+    const u=toHttps(raw);
+    try{return await cloudinaryImage(u);}catch(e){lastErr=e.message;}
     try{
-      const proxyRes=await fetch('/api/proxy-image?url='+encodeURIComponent(u));
-      if(!proxyRes.ok)throw new Error('proxy '+proxyRes.status);
-      const blob=await proxyRes.blob();
-      const fd=new FormData();
-      fd.append('file',blob,u.split('/').pop().split('?')[0]||'cover.jpg');
-      fd.append('upload_preset',PRESET);
-      const r=await fetch('https://api.cloudinary.com/v1_1/'+CLOUD+'/image/upload',{method:'POST',body:fd});
-      const d=await r.json();
-      if(d.secure_url)return d.secure_url;
-      lastErr=(d.error&&d.error.message)||'upload failed';
+      const blob=await proxyFetch(u,'blob');
+      if(!blob||!blob.size||(blob.type&&!/^image\//i.test(blob.type)))throw new Error('not an image');
+      const file=await compressImage(new File([blob],'cover.jpg',{type:blob.type||'image/jpeg'}),1600,0.88);
+      return await cloudinaryImage(file,file.name);
     }catch(e){lastErr=e.message;}
   }
   throw new Error(lastErr||'no image');
 }
 async function findOgImage(link){
-  const r=await fetch('https://corsproxy.io/?'+encodeURIComponent(link));
-  const html=await r.text();
-  const m=html.match(/property=["']og:image(?::secure_url)?["'][^>]*content=["']([^"']+)["']/i)||html.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
-  return m?m[1].replace(/&amp;/g,'&'):null;
+  const html=await proxyFetch(link,'text');
+  const pats=[
+    /<meta[^>]+(?:property|name)=["']og:image(?::secure_url)?["'][^>]*content=["']([^"']+)["']/i,
+    /<meta[^>]+content=["']([^"']+)["'][^>]*(?:property|name)=["']og:image(?::secure_url)?["']/i,
+    /<meta[^>]+(?:property|name)=["']twitter:image(?::src)?["'][^>]*content=["']([^"']+)["']/i,
+    /<meta[^>]+content=["']([^"']+)["'][^>]*(?:property|name)=["']twitter:image(?::src)?["']/i,
+    /<link[^>]+rel=["']image_src["'][^>]*href=["']([^"']+)["']/i
+  ];
+  for(const p of pats){
+    const m=html.match(p);
+    if(m&&m[1]){try{return new URL(m[1].replace(/&amp;/g,'&'),link).href;}catch(e){}}
+  }
+  return null;
 }
+let _useNewsToken=0;
 async function useNews(i){
   const item=window._newsItems[i];
+  const token=++_useNewsToken;
   document.getElementById('pTitle').value=item.title;
   document.getElementById('pExcerpt').value=item.excerpt;
   document.getElementById('pContent').value=(item.fullContent||item.excerpt)+'\n\nSource: '+item.link;
+  const ci=document.getElementById('coverIn');if(ci)ci.value='';
   const prev=document.getElementById('coverPrev');
   const fname=document.getElementById('coverFname');
+  const scanBtn=document.getElementById('scanCoverBtn');
   _rssImageUrl=null;
   prev.style.display='none';
   fname.textContent='Fetching image...';
-  const show=url=>{
+  const show=(url,label)=>{
+    if(token!==_useNewsToken)return;
     _rssImageUrl=url;
     prev.setAttribute('referrerpolicy','no-referrer');
     prev.src=url;prev.style.display='block';
-    fname.textContent='Image from '+item.source;
-    document.getElementById('scanCoverBtn').style.display='inline-block';
+    fname.textContent=label;
+    if(scanBtn)scanBtn.style.display='inline-block';
   };
-  let hosted=null;
+  let hosted=null,candidate=null;
   if(item.image){
-    try{hosted=await rehostImage([upscaleImage(item.image),toHttps(item.image)]);}catch(e){console.warn('feed image failed:',e.message);}
+    candidate=toHttps(item.image);
+    show(candidate,'Image from '+item.source+' (saving to WAVZO...)');
+    try{hosted=await rehostImage([upscaleImage(item.image),candidate]);}catch(e){console.warn('feed image failed:',e.message);}
   }
-  if(!hosted){
+  if(!hosted&&token===_useNewsToken){
+    if(!candidate)fname.textContent='Looking for the article image...';
     try{
       const og=await findOgImage(item.link);
-      if(og){try{hosted=await rehostImage([og]);}catch(e){hosted=og;}}
+      if(og){
+        if(!candidate){candidate=og;show(og,'Image from '+item.source+' (saving to WAVZO...)');}
+        try{hosted=await rehostImage([og]);}catch(e){console.warn('og rehost failed:',e.message);}
+      }
     }catch(e){console.warn('og:image failed:',e.message);}
   }
-  if(hosted)show(hosted);
-  else if(item.image)show(toHttps(item.image));
+  if(token!==_useNewsToken)return;
+  if(hosted)show(hosted,'Image from '+item.source+' ✓ saved');
+  else if(candidate)show(candidate,'Image from '+item.source+' (not re-hosted - may not show if source blocks it)');
   else fname.textContent='No image found - upload manually';
 }
 </script>
