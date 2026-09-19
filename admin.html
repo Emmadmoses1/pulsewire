@@ -1389,9 +1389,9 @@ async function convertYoutubeToMp3(){
     if(!vidMatch)throw new Error('Invalid YouTube URL');
     const videoId=vidMatch[1];
     if(status)status.textContent='Requesting MP3...';if(bar)bar.style.width='20%';
-    const initRes=await fetch('https://'+RAPIDAPI_HOST+'/api/v1/download?format=mp3&id='+videoId+'&audioQuality=128&addInfo=false&allowExtendedDuration=false',{
+    const initRes=await fetch('https://wavzo-ai.dakudinamoses.workers.dev/mp3-convert?id='+videoId,{
       method:'GET',
-      headers:{'x-rapidapi-key':RAPIDAPI_KEY,'x-rapidapi-host':RAPIDAPI_HOST,'Accept':'application/json'}
+      headers:{'Content-Type':'application/json'}
     });
     const initData=await initRes.json();
     console.error('RapidAPI response:',initRes.status,initData);
@@ -1400,7 +1400,7 @@ async function convertYoutubeToMp3(){
     let downloadUrl='';
     for(let i=0;i<30;i++){
       await new Promise(r=>setTimeout(r,3000));
-      const pollRes=await fetch('https://'+RAPIDAPI_HOST+'/api/v1/progress?id='+initData.progressId,{headers:{'x-rapidapi-key':RAPIDAPI_KEY,'x-rapidapi-host':RAPIDAPI_HOST}});
+      const pollRes=await fetch('https://wavzo-ai.dakudinamoses.workers.dev/mp3-progress?id='+initData.progressId);
       const pollData=await pollRes.json();
       if(pollData.finished&&pollData.downloadUrl){downloadUrl=pollData.downloadUrl;break;}
     }
