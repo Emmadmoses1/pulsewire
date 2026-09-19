@@ -1400,9 +1400,10 @@ async function convertYoutubeToMp3(){
     if(!vidMatch)throw new Error('Invalid YouTube URL');
     const videoId=vidMatch[1];
     if(status)status.textContent='Requesting MP3...';if(bar)bar.style.width='20%';
-    const initRes=await fetch('https://wavzo-ai.dakudinamoses.workers.dev/mp3-convert?id='+videoId,{
-      method:'GET',
-      headers:{'Content-Type':'application/json'}
+    const initRes=await fetch('https://pulsewire-ai.dakudinamoses.workers.dev/mp3-convert',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:videoId})
     });
     const initData=await initRes.json();
     console.error('RapidAPI response:',initRes.status,initData);
@@ -1412,7 +1413,7 @@ async function convertYoutubeToMp3(){
     if(!downloadUrl){
       for(let i=0;i<30;i++){
         await new Promise(r=>setTimeout(r,3000));
-        const pollRes=await fetch('https://wavzo-ai.dakudinamoses.workers.dev/mp3-progress?id='+initData.progressId);
+        const pollRes=await fetch('https://pulsewire-ai.dakudinamoses.workers.dev/mp3-progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:initData.progressId})});
         const pollData=await pollRes.json();
         if(pollData.finished&&pollData.downloadUrl){downloadUrl=pollData.downloadUrl;break;}
       }
