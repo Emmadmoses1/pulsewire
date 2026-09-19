@@ -780,31 +780,8 @@ async function useNews(i){
   document.getElementById('pExcerpt').value = item.excerpt;
   document.getElementById('pContent').value = (item.fullContent || item.excerpt) + '\n\nSource: ' + item.link;
 
-  document.getElementById('coverFname').textContent = 'Fetching image...';
-
-  if (!item.image) {
-    try{
-      const r = await Promise.race([
-        fetch('https://corsproxy.io/?' + encodeURIComponent(item.link)),
-        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))
-      ]);
-      const html = await r.text();
-      const m = html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/) ||
-                html.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/) ||
-                html.match(/<img[^>]+src=["'](https?:\/\/[^"'> ]+\.(?:jpg|jpeg|png|webp))["']/i);
-      if(m && m[1] && !m[1].includes('logo') && !m[1].includes('icon')) item.image = m[1];
-    }catch(e){
-      try{
-        const r2 = await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(item.link));
-        const d = await r2.json();
-        const m = d.contents.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/) ||
-                  d.contents.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/);
-        if(m && m[1]) item.image = m[1];
-      }catch(e2){}
-    }
-  }
-
-  if (item.image) {
+  // Show image immediately if we have it from RSS
+  if(item.image){
     _rssImageUrl = item.image;
     const prev = document.getElementById('coverPrev');
     prev.src = item.image;
@@ -812,7 +789,26 @@ async function useNews(i){
     document.getElementById('coverFname').textContent = 'Image from ' + item.source;
     document.getElementById('scanCoverBtn').style.display = 'inline-block';
   } else {
-    document.getElementById('coverFname').textContent = 'No image found — upload manually';
+    // Fetch in background without blocking
+    document.getElementById('coverFname').textContent = 'Fetching image...';
+    (async()=>{
+      try{
+        const r = await fetch('https://corsproxy.io/?'+encodeURIComponent(item.link));
+        const html = await r.text();
+        const m = html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/) ||
+                  html.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/);
+        if(m && m[1] && !m[1].includes('logo')){
+          _rssImageUrl = m[1];
+          const prev = document.getElementById('coverPrev');
+          prev.src = m[1]; prev.style.display='block';
+          document.getElementById('coverFname').textContent = 'Image from ' + item.source;
+        } else {
+          document.getElementById('coverFname').textContent = 'No image found — upload manually';
+        }
+      }catch(e){
+        document.getElementById('coverFname').textContent = 'No image found — upload manually';
+      }
+    })();
   }
 }
 
@@ -1393,7 +1389,10 @@ async function convertYoutubeToMp3(){
     if(!vidMatch)throw new Error('Invalid YouTube URL');
     const videoId=vidMatch[1];
     if(status)status.textContent='Requesting MP3...';if(bar)bar.style.width='20%';
-    const initRes=await fetch('https://'+RAPIDAPI_HOST+'/api/v1/download?format=mp3&id='+videoId+'&audioQuality=128&addInfo=false&allowExtendedDuration=false',{headers:{'x-rapidapi-key':RAPIDAPI_KEY,'x-rapidapi-host':RAPIDAPI_HOST}});
+    const initRes=await fetch('https://'+RAPIDAPI_HOST+'/api/v1/download?format=mp3&id='+videoId+'&audioQuality=128&addInfo=false&allowExtendedDuration=false',{
+      method:'GET',
+      headers:{'x-rapidapi-key':RAPIDAPI_KEY,'x-rapidapi-host':RAPIDAPI_HOST,'Accept':'application/json'}
+    });
     const initData=await initRes.json();
     console.error('RapidAPI response:',initRes.status,initData);
     if(!initData.progressId)throw new Error('Could not start conversion ('+initRes.status+'): '+JSON.stringify(initData));
