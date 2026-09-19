@@ -10,7 +10,7 @@ with open(env_path) as f:
 if not key:
     raise SystemExit("JSONBIN_KEY not found in functions/.env")
 
-BIN_URL = 'https://api.jsonbin.io/v3/b/6aa50e3aac6210605ac3c542/latest'
+BIN_URL = 'https://wavzo-db.dakudinamoses.workers.dev/v3/b/6aa50e3aac6210605ac3c542/latest'
 result = subprocess.run(
     ['curl', '-s', BIN_URL, '-H', f'X-Master-Key: {key}'],
     capture_output=True, text=True

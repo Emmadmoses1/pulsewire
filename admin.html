@@ -344,6 +344,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
   <div class="section" id="sec-settings">
     <div class="card">
+      <div class="card-title">Admin Password</div>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:14px">Change the password you use to sign in here. Use at least 8 characters.</p>
+      <div class="field"><label>New password</label><input type="password" id="newAdminPass" placeholder="New password" autocomplete="new-password"></div>
+      <div class="field"><label>Repeat new password</label><input type="password" id="newAdminPass2" placeholder="Repeat new password" autocomplete="new-password"></div>
+      <button class="btn" id="changePassBtn" onclick="changeAdminPassword()">CHANGE PASSWORD</button>
+    </div>
+    <div class="card">
       <div class="card-title">Facebook Page Connection</div>
       <p style="color:var(--muted);font-size:12px;margin-bottom:14px">Connect the Facebook account/Page that Posts should publish to.</p>
       <div id="fbStatusBox" style="padding:14px;border:1px solid #333;border-radius:8px;margin-bottom:14px">
@@ -455,10 +462,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 <script>
 const CLOUD='smg1blzu', PRESET='wavzo_uploads';
-const ADMIN_PASS='wavzo2026';
+/* admin password is now checked by the Cloudflare Worker */
 const BIN_ID='6aa50e3aac6210605ac3c542';
-const BIN_KEY='$2a$10$mdqVObTCy3dJ/mscdn./0.AscxgxHKCM0Mq.O7ApHHlKB1UVXsFy6';
-const BIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
+let BIN_KEY=localStorage.getItem('wz_key')||'';
+const BIN_URL=`https://wavzo-db.dakudinamoses.workers.dev/v3/b/${BIN_ID}`;
 const RAPIDAPI_KEY='161ee8b7acmsh5b2364ad0b1fc09p17dac7jsn59ce97db1ced';
 const RAPIDAPI_HOST='youtube-mp4-mp3-downloader.p.rapidapi.com';
 const OPENROUTER_KEY='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';
@@ -494,9 +501,15 @@ async function triggerPreviewGeneration(){
 }
 
 // ── Auth ──────────────────────────────────────────
-function doLogin(){
-  if(document.getElementById('loginPass').value===ADMIN_PASS){
-    localStorage.setItem('pw','1');
+async function doLogin(){
+  const pass=document.getElementById('loginPass').value;
+  let good=false;
+  try{
+    const r=await fetch(BIN_URL.replace(/\/v3\/b\/.*$/,'')+'/auth',{method:'POST',headers:{'X-Master-Key':pass}});
+    good=r.ok;
+  }catch(e){alert('Cannot reach the database server - check your internet.');return;}
+  if(good){
+    BIN_KEY=pass;localStorage.setItem('wz_key',pass);localStorage.setItem('pw','1');
     document.getElementById('loginPage').style.display='none';
     document.getElementById('adminPage').style.display='block';
     loadDash();renderPoster();
@@ -505,9 +518,24 @@ function doLogin(){
     e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2500);
   }
 }
-function doLogout(){localStorage.removeItem('pw');location.reload();}
+async function changeAdminPassword(){
+  const a=document.getElementById('newAdminPass').value,b=document.getElementById('newAdminPass2').value;
+  if(a.length<8){alert('Password must be at least 8 characters.');return;}
+  if(a!==b){alert('The two passwords do not match.');return;}
+  const btn=document.getElementById('changePassBtn');btn.disabled=true;btn.textContent='SAVING...';
+  try{
+    const r=await fetch(BIN_URL.replace(/\/v3\/b\/.*$/,'')+'/change-password',{method:'POST',headers:{'X-Master-Key':BIN_KEY,'Content-Type':'application/json'},body:JSON.stringify({new:a})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(d.message||('HTTP '+r.status));
+    BIN_KEY=a;localStorage.setItem('wz_key',a);
+    document.getElementById('newAdminPass').value='';document.getElementById('newAdminPass2').value='';
+    showToast('Password changed ✓ - use it next time you sign in',5000);
+  }catch(e){alert('Could not change password: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='CHANGE PASSWORD';}
+}
+function doLogout(){localStorage.removeItem('pw');localStorage.removeItem('wz_key');location.reload();}
 function showToast(msg,ms){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),ms||2500);}
-if(localStorage.getItem('pw')){
+if(localStorage.getItem('pw')&&BIN_KEY){
   document.getElementById('loginPage').style.display='none';
   document.getElementById('adminPage').style.display='block';
   /* FIXES-4 */ setTimeout(()=>{loadDash();renderPoster();},0);
@@ -538,11 +566,11 @@ window.addEventListener('unhandledrejection',ev=>{
 async function loadDB(){
   let r;
   try{r=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});}
-  catch(e){throw new Error('Cannot reach JSONBin - check your internet.');}
+  catch(e){throw new Error('Cannot reach Database - check your internet.');}
   let d=null;try{d=await r.json();}catch(e){}
-  if(!r.ok)throw new Error('JSONBin load failed ('+r.status+')'+((d&&d.message)?': '+d.message:''));
+  if(!r.ok)throw new Error('Database load failed ('+r.status+')'+((d&&d.message)?': '+d.message:''));
   const db=d&&d.record;
-  if(!db||typeof db!=='object')throw new Error('JSONBin returned empty data - stopped so nothing gets overwritten.');
+  if(!db||typeof db!=='object')throw new Error('Database returned empty data - stopped so nothing gets overwritten.');
   db.posts=db.posts||[];
   return db;
 }
@@ -550,9 +578,9 @@ async function saveDB(data){
   const body=JSON.stringify(data);
   let r;
   try{r=await fetch(BIN_URL,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':BIN_KEY},body});}
-  catch(e){throw new Error('Cannot reach JSONBin - check your internet.');}
+  catch(e){throw new Error('Cannot reach Database - check your internet.');}
   let d=null;try{d=await r.json();}catch(e){}
-  if(!r.ok)throw new Error('JSONBin save failed ('+r.status+')'+((d&&d.message)?': '+d.message:'')+' - database is '+Math.round(body.length/1024)+' KB (free limit 100 KB).');
+  if(!r.ok)throw new Error('Database save failed ('+r.status+')'+((d&&d.message)?': '+d.message:'')+' (database is '+Math.round(body.length/1024)+' KB)');
   return d;
 }
 async function compressImage(file,maxDim,quality){

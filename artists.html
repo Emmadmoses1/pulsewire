@@ -59,8 +59,8 @@ footer{text-align:center;padding:30px;color:#999;font-size:12px}
 
 <script>
 const BIN_ID='6aa50e3aac6210605ac3c542';
-const BIN_KEY='$2a$10$mdqVObTCy3dJ/mscdn./0.AscxgxHKCM0Mq.O7ApHHlKB1UVXsFy6';
-const BIN_URL='https://api.jsonbin.io/v3/b/'+BIN_ID;
+const BIN_KEY='public';
+const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 
 async function init(){
   const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
