@@ -646,7 +646,7 @@ async function uploadFromUrl(remoteUrl,filename){
 }
 
 // ── Publish ───────────────────────────────────────
-let _rssImageUrl = null;
+let _rssImageUrl = null, _rssMusicUrl = null, _rssVideoUrl = null;
 let _rssMusicUrl = null;
 let _rssVideoUrl = null;
 
@@ -784,24 +784,24 @@ async function useNews(i){
   document.getElementById('coverFname').textContent = 'Fetching image...';
 
   if (!item.image) {
-    // Try multiple proxies to get OG image
-    const proxies = [
-      'https://api.allorigins.win/get?url=',
-      'https://corsproxy.io/?',
-      'https://api.codetabs.com/v1/proxy?quest='
-    ];
-    for(const proxy of proxies){
+    try{
+      const r = await Promise.race([
+        fetch('https://corsproxy.io/?' + encodeURIComponent(item.link)),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))
+      ]);
+      const html = await r.text();
+      const m = html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/) ||
+                html.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/) ||
+                html.match(/<img[^>]+src=["'](https?:\/\/[^"'> ]+\.(?:jpg|jpeg|png|webp))["']/i);
+      if(m && m[1] && !m[1].includes('logo') && !m[1].includes('icon')) item.image = m[1];
+    }catch(e){
       try{
-        const r = await fetch(proxy + encodeURIComponent(item.link));
-        const html = proxy.includes('allorigins') ? (await r.json()).contents : await r.text();
-        const m = html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/) ||
-                  html.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/) ||
-                  html.match(/<img[^>]+src=["'](https?:\/\/[^"'> ]+\.(?:jpg|jpeg|png|webp))["']/i);
-        if(m && m[1] && !m[1].includes('logo') && !m[1].includes('icon')){
-          item.image = m[1];
-          break;
-        }
-      }catch(e){}
+        const r2 = await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(item.link));
+        const d = await r2.json();
+        const m = d.contents.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/) ||
+                  d.contents.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/);
+        if(m && m[1]) item.image = m[1];
+      }catch(e2){}
     }
   }
 
