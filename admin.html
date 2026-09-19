@@ -1243,6 +1243,29 @@ async function searchArtist(){
   btn.disabled=false;btn.textContent='🔍 Search';
 }
 
+async function generateSongDesc(title, artist, album, year, genre, type){
+  try{
+    const prompt = `Write a professional music blog description for this song. Make it engaging, unique and suitable for a Nigerian music/gospel blog. Include key song details naturally in the text. End with a "Song Details" section.
+
+Song: ${title}
+Artist: ${artist}
+${album ? 'Album: ' + album : ''}
+${year ? 'Year: ' + year : ''}
+${genre ? 'Genre: ' + genre : ''}
+${type ? 'Type: ' + type : 'Single'}
+
+Write 2-3 paragraphs then the Song Details block. English only. Do not use placeholder text.`;
+
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENROUTER_KEY},
+      body:JSON.stringify({model:OPENROUTER_MODEL,max_tokens:300,messages:[{role:'user',content:prompt}]})
+    });
+    const d = await r.json();
+    return d.choices?.[0]?.message?.content?.trim()||'';
+  }catch(e){return '';}
+}
+
 async function searchSong(){
   const title = document.getElementById('songTitle').value.trim();
   if(!title){alert('Type a song/album title first');return;}
@@ -1332,7 +1355,14 @@ async function searchYoutube(){
     const youtubeUrl='https://www.youtube.com/watch?v='+vid;
     document.getElementById('songYoutubeUrl').value=youtubeUrl;
     window._selectedYoutube={url:youtubeUrl,title:hit.snippet.title,thumbnail:hit.snippet.thumbnails?.medium?.url||''};
-    window._songMeta=window._songMeta||{};
+    window._songMeta = {
+      artist: artistName,
+      title: hit.snippet.title,
+    };
+    // Generate AI description for YouTube song
+    generateSongDesc(hit.snippet.title, artistName, '', '', '', 'Single').then(desc=>{
+      if(desc) document.getElementById('songExcerpt').value = desc;
+    });
     document.getElementById('ytPreview').innerHTML=`
       <div style="display:flex;gap:10px;align-items:center;border:1px solid #222;border-radius:8px;padding:9px">
         <img src="${window._selectedYoutube.thumbnail}" style="width:70px;height:52px;object-fit:cover;border-radius:5px">
