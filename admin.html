@@ -196,6 +196,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <option value="CULTURE">CULTURE</option>
           <option value="TRENDING">TRENDING</option>
           <option value="MUSIC">MUSIC</option>
+          <option value="GOSPEL">GOSPEL</option>
         </select>
       </div>
       <div class="field"><label>Excerpt <button type="button" class="btn btn-sm" style="background:#333;width:auto;padding:4px 10px;font-size:11px;margin-left:6px" onclick="aiGenExcerpt()">✨ AI Generate</button></label><input type="text" id="pExcerpt" placeholder="Short description..."></div>
@@ -677,15 +678,27 @@ async function loadNews(){
       { name: 'The Guardian Nigeria', url: 'https://guardian.ng/feed/' },
       { name: 'Pulse Nigeria', url: 'https://www.pulse.ng/rss' }
     ];
+  } else if (cat === 'GOSPEL') {
+    FEEDS = [
+      { name: 'Gospel Music', url: 'https://www.gospel-music.org/feed/' },
+      { name: 'NotJustOk Gospel', url: 'https://notjustok.com/category/gospel/feed/' },
+      { name: 'Tooxclusive Gospel', url: 'https://tooxclusive.com/category/gospel/feed/' },
+      { name: 'NaijaGospel', url: 'https://naijagospel.com.ng/feed/' },
+      { name: 'GospelHotspot', url: 'https://www.gospelhotspot.net/feed/' }
+    ];
   } else {
     FEEDS = [
       { name: 'BBC', url: 'http://feeds.bbci.co.uk/news/rss.xml' },
+      { name: 'Fox News', url: 'https://moxie.foxnews.com/google-publisher/latest.xml' },
       { name: 'The Guardian', url: 'https://www.theguardian.com/world/rss' },
       { name: 'Al Jazeera', url: 'https://www.aljazeera.com/xml/rss/all.xml' },
+      { name: 'CNN', url: 'http://rss.cnn.com/rss/edition.rss' },
       { name: 'Premium Times', url: 'https://www.premiumtimesng.com/feed' },
       { name: 'Daily Post Nigeria', url: 'https://dailypost.ng/feed' },
       { name: 'Punch', url: 'https://punchng.com/feed/' },
-      { name: 'Vanguard', url: 'https://www.vanguardngr.com/feed/' }
+      { name: 'Vanguard', url: 'https://www.vanguardngr.com/feed/' },
+      { name: 'Channels TV', url: 'https://www.channelstv.com/feed/' },
+      { name: 'ThisDay', url: 'https://www.thisdaylive.com/feed/' }
     ];
   }
 
@@ -703,11 +716,18 @@ async function loadNews(){
             else if (enc.type.startsWith('video')) { mediaType = 'video'; mediaUrl = enc.link; }
           }
           let image = item.thumbnail || null;
-          if (!image && enc.link && enc.type && enc.type.startsWith('image') && !enc.link.includes('logo')) image = enc.link;
+          if (!image && enc.link && enc.type && enc.type.startsWith('image') && !enc.link.includes('logo') && !enc.link.includes('icon')) image = enc.link;
           if (!image) {
             const html = item.content || item.description || '';
-            const m = html.match(/<img[^>]+src="(https?:\/\/[^">]+\.(jpg|jpeg|png|webp)[^"]*)"/i);
-            if (m && !m[1].includes('logo') && !m[1].includes('icon')) image = m[1];
+            const patterns = [
+              /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+              /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
+              /<img[^>]+src=["'](https?:\/\/[^"'> ]+\.(?:jpg|jpeg|png|webp)[^"'> ]*)["']/i
+            ];
+            for(const pat of patterns){
+              const m=html.match(pat);
+              if(m && !m[1].includes('logo') && !m[1].includes('icon') && !m[1].includes('avatar')){image=m[1];break;}
+            }
           }
 
           items.push({
@@ -733,7 +753,7 @@ async function loadNews(){
   window._newsItems = items;
   box.innerHTML = items.map((item, i) => `
     <div style="border:1px solid #222;border-radius:8px;padding:12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start">
-      ${item.image ? `<img src="${item.image}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0">` : ''}
+      ${item.image ? `<img src="${item.image}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">` : `<div style="width:60px;height:60px;border-radius:6px;background:#222;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📰</div>`}
       <div style="flex:1;min-width:0">
         <div style="font-size:11px;color:#e11;font-weight:700">${item.source}</div>
         <div style="font-size:13px;font-weight:600;margin:2px 0">${item.title}</div>
@@ -1434,7 +1454,12 @@ async function loadPosterSuggestions(){
   window._posterSuggestions=list;
 
   if(!list.length){
-    box.innerHTML='<p style="color:var(--muted);font-size:13px;padding:8px 0">No matching posts yet.</p>';
+    // fallback: show all posts
+    list=[...posts].reverse().slice(0,6);
+    window._posterSuggestions=list;
+  }
+  if(!list.length){
+    box.innerHTML='<p style="color:var(--muted);font-size:13px;padding:8px 0">No posts yet.</p>';
     return;
   }
 
