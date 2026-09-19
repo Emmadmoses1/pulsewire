@@ -709,15 +709,7 @@ async function loadNews(){
             const m = html.match(/<img[^>]+src="(https?:\/\/[^">]+\.(jpg|jpeg|png|webp)[^"]*)"/i);
             if (m && !m[1].includes('logo') && !m[1].includes('icon')) image = m[1];
           }
-          if (!image) {
-            try {
-              const ogRes = await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(item.link));
-              const ogData = await ogRes.json();
-              const ogM = ogData.contents.match(/property=["']og:image["'][^>]+content=["']([^"']+)["']/) ||
-                          ogData.contents.match(/content=["']([^"']+)["'][^>]+property=["']og:image["']/);
-              if (ogM) image = ogM[1];
-            } catch(e) {}
-          }
+
           items.push({
             source: feed.name,
             title: item.title,
