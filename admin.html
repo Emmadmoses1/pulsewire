@@ -510,7 +510,7 @@ function showToast(msg,ms){const t=document.getElementById('toast');if(!t)return
 if(localStorage.getItem('pw')){
   document.getElementById('loginPage').style.display='none';
   document.getElementById('adminPage').style.display='block';
-  loadDash();renderPoster();
+  /* FIXES-4 */ setTimeout(()=>{loadDash();renderPoster();},0);
 }
 
 // ── Nav ───────────────────────────────────────────
@@ -529,7 +529,7 @@ function showSec(name,el){
 
 // ── DB ────────────────────────────────────────────
 /* FIXES-1 */
-const VISION_MODELS=['openrouter/free','openrouter/free','nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free'];
+var VISION_MODELS=['openrouter/free','openrouter/free','nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free'];
 window.addEventListener('unhandledrejection',ev=>{
   const r=ev.reason;
   const m=(r&&(r.message||(r.error&&r.error.message)))||(typeof r==='string'?r:JSON.stringify(r));
@@ -1136,7 +1136,7 @@ function resetArtistForm(){
   document.getElementById('cancelArtistBtn').style.display='none';
   window._pendingArtistPhotoUrl=null;
 }
-let _savingArtist=false;
+var _savingArtist=false;
 async function saveArtist(){
   if(_savingArtist)return;
   const name=document.getElementById('artistName').value.trim();
@@ -1238,7 +1238,7 @@ function resetSongForm(){
   document.getElementById('cancelSongBtn').style.display='none';
   window._pendingSongCoverUrl=null;
 }
-let _savingSong=false;
+var _savingSong=false;
 async function saveSong(){
   if(_savingSong)return;
   const title=document.getElementById('songTitle').value.trim();
