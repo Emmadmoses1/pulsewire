@@ -754,19 +754,31 @@ function upscaleImage(url){
   return url;
 }
 
-function useNews(i){
+async function useNews(i){
   const item = window._newsItems[i];
   if(item.image)item.image=upscaleImage(item.image);
   document.getElementById('pTitle').value = item.title;
   document.getElementById('pExcerpt').value = item.excerpt;
   document.getElementById('pContent').value = (item.fullContent || item.excerpt) + '\n\nSource: ' + item.link;
 
+  if (!item.image) {
+    try {
+      const ogRes = await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(item.link));
+      const ogData = await ogRes.json();
+      const ogM = ogData.contents.match(/property=["']og:image["'][^>]+content=["']([^"']+)["']/) ||
+                  ogData.contents.match(/content=["']([^"']+)["'][^>]+property=["']og:image["']/);
+      if (ogM) item.image = ogM[1];
+    } catch(e) {}
+  }
+
   if (item.image) {
     _rssImageUrl = item.image;
     const prev = document.getElementById('coverPrev');
     prev.src = item.image;
     prev.style.display = 'block';
-    document.getElementById('coverFname').textContent = 'Using image from ' + item.source;
+    document.getElementById('coverFname').textContent = 'Image from ' + item.source;
+  } else {
+    document.getElementById('coverFname').textContent = 'No image found — upload manually';
   }
 }
 
