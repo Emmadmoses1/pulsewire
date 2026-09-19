@@ -414,12 +414,26 @@ function getCache(){try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'nul
 function setCache(d){try{localStorage.setItem(CACHE_KEY,JSON.stringify({...d,ts:Date.now()}));}catch(e){}}
 
 async function fetchAll(){
-  const r=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
-  const d=await r.json();
-  const rec=d.record||{};
-  const data={posts:[...(rec.posts||[])].reverse(),songs:rec.songs||[],artists:rec.artists||[]};
-  setCache(data);
-  return data;
+  try{
+    const r=await fetch('/data/db.json');
+    const rec=await r.json();
+    const data={posts:[...(rec.posts||[])].reverse(),songs:rec.songs||[],artists:rec.artists||[]};
+    setCache(data);
+    // refresh from JSONBin in background
+    fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}}).then(r=>r.json()).then(d=>{
+      const rec2=d.record||{};
+      const fresh={posts:[...(rec2.posts||[])].reverse(),songs:rec2.songs||[],artists:rec2.artists||[]};
+      setCache(fresh);
+    }).catch(()=>{});
+    return data;
+  }catch(e){
+    const r=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+    const d=await r.json();
+    const rec=d.record||{};
+    const data={posts:[...(rec.posts||[])].reverse(),songs:rec.songs||[],artists:rec.artists||[]};
+    setCache(data);
+    return data;
+  }
 }
 
 /* ── OG META UPDATER ── */

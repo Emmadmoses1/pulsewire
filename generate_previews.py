@@ -143,3 +143,10 @@ try:
     print('Google pinged successfully')
 except Exception as e:
     print(f'Google ping failed: {e}')
+
+# ── Save static db.json for fast homepage loading ──
+import json as _json
+_out = {'posts': posts, 'songs': songs, 'artists': artists}
+with open('data/db.json', 'w') as _f:
+    _json.dump(_out, _f)
+print(f'Static db.json saved: {len(posts)} posts, {len(songs)} songs')
