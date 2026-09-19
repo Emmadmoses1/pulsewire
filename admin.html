@@ -210,7 +210,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <input type="file" id="coverIn" accept="image/*" onchange="prevCover(this)">
           <div class="upload-icon">🖼️</div>
           <div class="upload-text">Tap to upload<br><strong>Image</strong></div>
-          <div class="upload-preview"><img id="coverPrev" style="display:none"></div>
+          <div class="upload-preview"><img id="coverPrev" referrerpolicy="no-referrer" style="display:none"></div>
           <div class="upload-fname" id="coverFname"></div>
           <div class="prog-wrap" id="coverProg"><div class="prog-fill" id="coverBar"></div></div>
         </div>
@@ -752,7 +752,7 @@ async function loadNews(){
   window._newsItems = items;
   box.innerHTML = items.map((item, i) => `
     <div style="border:1px solid #222;border-radius:8px;padding:12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start">
-      ${item.image ? `<img src="${item.image}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">` : `<div style="width:60px;height:60px;border-radius:6px;background:#222;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📰</div>`}
+      ${item.image ? `<img src="${item.image}" referrerpolicy="no-referrer" style="width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">` : `<div style="width:60px;height:60px;border-radius:6px;background:#222;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📰</div>`}
       <div style="flex:1;min-width:0">
         <div style="font-size:11px;color:#e11;font-weight:700">${item.source}</div>
         <div style="font-size:13px;font-weight:600;margin:2px 0">${item.title}</div>
@@ -1816,6 +1816,71 @@ async function aiExpandContent(){
     if(text)document.getElementById('pContent').value=text.trim();
   }catch(e){alert('AI error: '+e.message);}
   btn.disabled=false;btn.textContent='📝 AI Expand';
+}
+</script>
+<script>
+/* RSS image fix */
+function toHttps(u){return u?String(u).replace(/^http:\/\//i,'https://'):u;}
+function upscaleImage(url){
+  if(!url)return url;
+  url=toHttps(url);
+  if(/[?&]s=/.test(url))return url;
+  url=url.replace(/\/standard\/\d+\//,'/standard/976/');
+  url=url.replace(/([?&])width=(\d+)/,(m,p1)=>p1+'width=1200');
+  return url;
+}
+async function rehostImage(urls){
+  let lastErr='';
+  for(const u of urls){
+    if(!u)continue;
+    try{
+      const fd=new FormData();
+      fd.append('file',u);
+      fd.append('upload_preset',PRESET);
+      const r=await fetch('https://api.cloudinary.com/v1_1/'+CLOUD+'/image/upload',{method:'POST',body:fd});
+      const d=await r.json();
+      if(d.secure_url)return d.secure_url;
+      lastErr=(d.error&&d.error.message)||'upload failed';
+    }catch(e){lastErr=e.message;}
+  }
+  throw new Error(lastErr||'no image');
+}
+async function findOgImage(link){
+  const r=await fetch('https://corsproxy.io/?'+encodeURIComponent(link));
+  const html=await r.text();
+  const m=html.match(/property=["']og:image(?::secure_url)?["'][^>]*content=["']([^"']+)["']/i)||html.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
+  return m?m[1].replace(/&amp;/g,'&'):null;
+}
+async function useNews(i){
+  const item=window._newsItems[i];
+  document.getElementById('pTitle').value=item.title;
+  document.getElementById('pExcerpt').value=item.excerpt;
+  document.getElementById('pContent').value=(item.fullContent||item.excerpt)+'\n\nSource: '+item.link;
+  const prev=document.getElementById('coverPrev');
+  const fname=document.getElementById('coverFname');
+  _rssImageUrl=null;
+  prev.style.display='none';
+  fname.textContent='Fetching image...';
+  const show=url=>{
+    _rssImageUrl=url;
+    prev.setAttribute('referrerpolicy','no-referrer');
+    prev.src=url;prev.style.display='block';
+    fname.textContent='Image from '+item.source;
+    document.getElementById('scanCoverBtn').style.display='inline-block';
+  };
+  let hosted=null;
+  if(item.image){
+    try{hosted=await rehostImage([upscaleImage(item.image),toHttps(item.image)]);}catch(e){console.warn('feed image failed:',e.message);}
+  }
+  if(!hosted){
+    try{
+      const og=await findOgImage(item.link);
+      if(og){try{hosted=await rehostImage([og]);}catch(e){hosted=og;}}
+    }catch(e){console.warn('og:image failed:',e.message);}
+  }
+  if(hosted)show(hosted);
+  else if(item.image)show(toHttps(item.image));
+  else fname.textContent='No image found - upload manually';
 }
 </script>
 </body>
