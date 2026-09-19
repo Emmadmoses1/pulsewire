@@ -2037,13 +2037,23 @@ async function findOgImage(link){
   }
   return null;
 }
+/* FIXES-5 */
+function shortenNews(t,limit){
+  limit=limit||700;t=String(t||'').trim();
+  if(t.length<=limit+80)return t;
+  let cut=t.slice(0,limit);
+  const m=Math.max(cut.lastIndexOf('. '),cut.lastIndexOf('.\n'),cut.lastIndexOf('\n\n'));
+  if(m>limit*0.5)cut=cut.slice(0,m+1);
+  cut=cut.trim();
+  return cut+(/[.!?]$/.test(cut)?'':'…');
+}
 let _useNewsToken=0;
 async function useNews(i){
   const item=window._newsItems[i];
   const token=++_useNewsToken;
   document.getElementById('pTitle').value=item.title;
   document.getElementById('pExcerpt').value=item.excerpt;
-  document.getElementById('pContent').value=(item.fullContent||item.excerpt)+'\n\nSource: '+item.link;
+  document.getElementById('pContent').value=shortenNews(item.fullContent||item.excerpt)+'\n\nSource: '+item.link;
   const ci=document.getElementById('coverIn');if(ci)ci.value='';
   const prev=document.getElementById('coverPrev');
   const fname=document.getElementById('coverFname');
