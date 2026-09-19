@@ -464,7 +464,7 @@ const RAPIDAPI_HOST='youtube-mp4-mp3-downloader.p.rapidapi.com';
 const OPENROUTER_KEY='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';
 const OPENROUTER_MODEL='mistralai/mistral-7b-instruct';
 const VOICE_TAG_ID='wavzo-tag-v1';
-const FLYER_COVER_URL='https://res.cloudinary.com/smg1blzu/image/upload/v1789735632/qnoeruqv98mja55safgu.jpg';
+const FLYER_COVER_URL='https://res.cloudinary.com/smg1blzu/image/upload/v1789735632/qnoeruqv98mja55safgu.jpg'; // WAVZO cover art
 const GITHUB_TOKEN='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';
 const GITHUB_REPO='Emmadmoses1/pulsewire';
 
@@ -1431,7 +1431,7 @@ async function convertYoutubeToMp3(){
     const id3=new ID3Writer(songBuffer);
     id3.setFrame('TIT2',title||'WAVZO Song')
        .setFrame('TPE1',[artist||'WAVZO'])
-       .setFrame('TALB','wavzo.com.ng')
+       .setFrame('TALB','WAVZO | wavzo.com.ng')
        .setFrame('APIC',{type:3,data:coverBuffer,description:'Cover'});
     id3.addTag();
     const taggedBlob=id3.getBlob();
@@ -1934,7 +1934,7 @@ async function uploadOwnMp3(){
     try{const cr=await fetch(FLYER_COVER_URL);if(cr.ok)coverBuf=await cr.arrayBuffer();}catch(e){}
     stage='tagging';
     const id3=new ID3Writer(buf);
-    id3.setFrame('TIT2',title).setFrame('TPE1',[artist||'WAVZO']).setFrame('TALB','wavzo.com.ng');
+    id3.setFrame('TIT2',title).setFrame('TPE1',[artist||'WAVZO']).setFrame('TALB','WAVZO | wavzo.com.ng');
     if(coverBuf)id3.setFrame('APIC',{type:3,data:coverBuf,description:'Cover'});
     id3.addTag();
     const blob=id3.getBlob();
