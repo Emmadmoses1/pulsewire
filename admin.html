@@ -1188,25 +1188,57 @@ async function searchArtist(){
   const status = document.getElementById('artistSearchStatus');
   btn.disabled=true;btn.textContent='Searching...';status.textContent='';
   try{
-    const searchRes = await fetch('https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(name + ' musician') + '&format=json&origin=*');
-    const searchData = await searchRes.json();
-    const hit = searchData.query?.search?.[0];
-    if(!hit){status.textContent='No match found — fill in manually.';btn.disabled=false;btn.textContent='🔍 Search';return;}
-    const pageTitle = hit.title;
-    const sumRes = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(pageTitle));
-    const sum = await sumRes.json();
-    document.getElementById('artistName').value = sum.title || name;
-    document.getElementById('artistBio').value = sum.extract || '';
-    if(sum.thumbnail?.source){
-      const hiRes = sum.originalimage?.source || sum.thumbnail.source;
-      document.getElementById('artistPhotoPrev').src = hiRes;
+    // Step 1: Wikipedia bio
+    const searchRes=await fetch('https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch='+encodeURIComponent(name+' musician singer')+'&format=json&origin=*');
+    const searchData=await searchRes.json();
+    const hit=searchData.query?.search?.[0];
+    let bio='',wikiName=name,imgUrl=null;
+    if(hit){
+      const sumRes=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(hit.title));
+      const sum=await sumRes.json();
+      wikiName=sum.title||name;
+      bio=sum.extract||'';
+      imgUrl=sum.originalimage?.source||sum.thumbnail?.source||null;
+    }
+    document.getElementById('artistName').value=wikiName;
+    document.getElementById('artistBio').value=bio;
+
+    // Step 2: iTunes for high quality artist/album image
+    if(!imgUrl){
+      try{
+        const itRes=await fetch('https://itunes.apple.com/search?term='+encodeURIComponent(name)+'&entity=musicArtist&limit=1');
+        const itData=await itRes.json();
+        const artistId=itData.results?.[0]?.artistId;
+        if(artistId){
+          const alRes=await fetch('https://itunes.apple.com/lookup?id='+artistId+'&entity=album&limit=3');
+          const alData=await alRes.json();
+          const album=alData.results?.find(r=>r.wrapperType==='collection');
+          if(album?.artworkUrl100) imgUrl=album.artworkUrl100.replace('100x100bb','600x600bb');
+        }
+      }catch(e){}
+    }
+
+    // Step 3: Wikimedia Commons fallback
+    if(!imgUrl){
+      try{
+        const cmRes=await fetch('https://commons.wikimedia.org/w/api.php?action=query&titles='+encodeURIComponent(wikiName)+'&prop=pageimages&format=json&pithumbsize=600&origin=*');
+        const cmData=await cmRes.json();
+        const pages=Object.values(cmData.query?.pages||{});
+        if(pages[0]?.thumbnail?.source) imgUrl=pages[0].thumbnail.source;
+      }catch(e){}
+    }
+
+    if(imgUrl){
+      document.getElementById('artistPhotoPrev').src=imgUrl;
       document.getElementById('artistPhotoPrev').classList.remove('hidden');
       document.getElementById('artistPhotoPlaceholder').style.display='none';
-      window._pendingArtistPhotoUrl = hiRes;
+      window._pendingArtistPhotoUrl=imgUrl;
+      status.textContent='✓ Found — review before saving';
+    } else {
+      status.textContent='✓ Bio found — upload photo manually';
     }
-    status.textContent = '✓ Found on Wikipedia — review before saving';
   }catch(e){
-    status.textContent = 'Search failed — fill in manually.';
+    status.textContent='Search failed — fill in manually.';
   }
   btn.disabled=false;btn.textContent='🔍 Search';
 }
