@@ -1406,14 +1406,16 @@ async function convertYoutubeToMp3(){
     });
     const initData=await initRes.json();
     console.error('RapidAPI response:',initRes.status,initData);
-    if(!initData.progressId)throw new Error('Could not start conversion ('+initRes.status+'): '+JSON.stringify(initData));
+    if(!initData.progressId&&!initData.downloadUrl)throw new Error('Could not start conversion ('+initRes.status+'): '+JSON.stringify(initData));
     if(bar)bar.style.width='40%';if(status)status.textContent='Converting...';
-    let downloadUrl='';
-    for(let i=0;i<30;i++){
-      await new Promise(r=>setTimeout(r,3000));
-      const pollRes=await fetch('https://wavzo-ai.dakudinamoses.workers.dev/mp3-progress?id='+initData.progressId);
-      const pollData=await pollRes.json();
-      if(pollData.finished&&pollData.downloadUrl){downloadUrl=pollData.downloadUrl;break;}
+    let downloadUrl=initData.downloadUrl||'';
+    if(!downloadUrl){
+      for(let i=0;i<30;i++){
+        await new Promise(r=>setTimeout(r,3000));
+        const pollRes=await fetch('https://wavzo-ai.dakudinamoses.workers.dev/mp3-progress?id='+initData.progressId);
+        const pollData=await pollRes.json();
+        if(pollData.finished&&pollData.downloadUrl){downloadUrl=pollData.downloadUrl;break;}
+      }
     }
     if(!downloadUrl)throw new Error('Conversion timed out');
     if(bar)bar.style.width='60%';if(status)status.textContent='Tagging MP3...';
@@ -1842,11 +1844,15 @@ function upscaleImage(url){
 }
 async function rehostImage(urls){
   let lastErr='';
-  for(const u of urls){
-    if(!u)continue;
+  for(const rawUrl of urls){
+    if(!rawUrl)continue;
+    const u=toHttps(rawUrl);
     try{
+      const proxyRes=await fetch('/api/proxy-image?url='+encodeURIComponent(u));
+      if(!proxyRes.ok)throw new Error('proxy '+proxyRes.status);
+      const blob=await proxyRes.blob();
       const fd=new FormData();
-      fd.append('file',u);
+      fd.append('file',blob,u.split('/').pop().split('?')[0]||'cover.jpg');
       fd.append('upload_preset',PRESET);
       const r=await fetch('https://api.cloudinary.com/v1_1/'+CLOUD+'/image/upload',{method:'POST',body:fd});
       const d=await r.json();

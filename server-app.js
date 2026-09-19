@@ -493,6 +493,24 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+
+// Proxy remote images — avoids Cloudinary URL-fetch preset restrictions
+app.get('/api/proxy-image', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !/^https?:\/\//i.test(url)) return res.status(400).json({ error: 'Missing url' });
+  try {
+    const upstream = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': url } });
+    if (!upstream.ok) return res.status(502).json({ error: 'Upstream failed: ' + upstream.status });
+    const ct = upstream.headers.get('content-type') || 'image/jpeg';
+    if (!ct.startsWith('image/')) return res.status(400).json({ error: 'Not an image' });
+    res.setHeader('Content-Type', ct);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.send(Buffer.from(await upstream.arrayBuffer()));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = app;
 
 const PORT = process.env.PORT || 3000;
