@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+/* Inter font is now loaded by each page without blocking */
 
 * { box-sizing: border-box; }
 body { font-family: 'Inter', Arial, sans-serif; margin: 0; background: #f2efe9; color: #111; }
