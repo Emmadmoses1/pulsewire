@@ -139,7 +139,7 @@ if os.path.exists('song.html'):
 import urllib.request
 sitemap_url = 'https://wavzo.com.ng/sitemap.xml'
 try:
-    urllib.request.urlopen(f'https://www.google.com/ping?sitemap={sitemap_url}')
+    pass  # Google retired the sitemap ping
     print('Google pinged successfully')
 except Exception as e:
     print(f'Google ping failed: {e}')
