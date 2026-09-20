@@ -86,15 +86,16 @@ initDB();
 const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+app.use(express.static(path.join(__dirname, 'public'), { index: false, maxAge: '1d' })); // FAST-SERVER
 app.use('/posts', express.static(path.join(__dirname, 'posts'), { extensions: ['html'] }));
 app.use('/songs', express.static(path.join(__dirname, 'songs'), { extensions: ['html'] }));
 app.use('/artists', express.static(path.join(__dirname, 'artists'), { extensions: ['html'] }));
 app.use('/uploads', express.static(UPLOADS_DIR));
-app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/images', express.static(path.join(__dirname, 'images'), { maxAge: '7d' }));
 app.get('/sitemap.xml', (req, res) => res.sendFile(path.join(__dirname, 'sitemap.xml')));
-app.use('/data', require('express').static(path.join(__dirname, 'data')));
+app.use('/data', require('express').static(path.join(__dirname, 'data'), { maxAge: '60s' }));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'favicon.ico')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -122,6 +123,7 @@ app.use(session({
 }));
 
 app.use(async (req, res, next) => {
+  return next(); // visitor tracking is done by the pages + the Worker now; this made every home page load slow
   const skip = req.path.startsWith('/uploads') || req.path.startsWith('/css') ||
                req.path.startsWith('/js') || req.path.startsWith('/admin') ||
                req.path.startsWith('/api');
