@@ -8,11 +8,11 @@ with open(env_path) as f:
             key = line.strip().split('=', 1)[1]
             break
 if not key:
-    raise SystemExit("JSONBIN_KEY not found in functions/.env")
+    key = 'public'
 
 BIN_URL = 'https://wavzo-db.dakudinamoses.workers.dev/v3/b/6aa50e3aac6210605ac3c542/latest'
 result = subprocess.run(
-    ['curl', '-s', BIN_URL, '-H', f'X-Master-Key: {key}'],
+    ['curl', '-s', BIN_URL, '-H', 'X-Master-Key: public'],
     capture_output=True, text=True
 )
 data = json.loads(result.stdout)
