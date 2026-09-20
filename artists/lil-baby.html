@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lil Baby — WAVZO</title>
+  <meta name="description" content="Dominique Armani Jones, known professionally as Lil Baby, is an American rapper, singer, and songwriter. He rose to prominence following the release of his 2017 mixtapes Harder than Hard and Too Hard ">
+  <link rel="canonical" href="https://wavzo.com.ng/artists/lil-baby.html">
+  <meta property="og:type" content="profile">
+  <meta property="og:title" content="Lil Baby — WAVZO">
+  <meta property="og:description" content="Dominique Armani Jones, known professionally as Lil Baby, is an American rapper, singer, and songwriter. He rose to prominence following the release of his 2017 mixtapes Harder than Hard and Too Hard ">
+  <meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/4/46/Lil_Baby_2023.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled">
+  <meta property="og:url" content="https://wavzo.com.ng/artists/lil-baby.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Lil Baby — WAVZO">
+  <meta name="twitter:description" content="Dominique Armani Jones, known professionally as Lil Baby, is an American rapper, singer, and songwriter. He rose to prominence following the release of his 2017 mixtapes Harder than Hard and Too Hard ">
+  <meta name="twitter:image" content="https://upload.wikimedia.org/wikipedia/commons/4/46/Lil_Baby_2023.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled">
+<link rel="stylesheet" href="/css/style.css">
+
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<div class="ticker-bar">
+  <span class="ticker-live">LIVE</span>
+  <div class="ticker-viewport"><div class="ticker-track" id="tickerTrack"></div></div>
+</div>
+<header class="navbar" id="siteNav">
+  <div class="logo"><a href="/">WAV<span>ZO</span></a></div>
+  <nav><a href="/">HOME</a><a href="/artists.html">ARTISTS</a></nav>
+</header>
+
+<div class="article-wrap">
+  <div class="article-inner">
+    <div class="article-breadcrumb"><a href="/">Home</a> / <a href="/artists.html">Artists</a> / <span id="crumbArtist"></span></div>
+
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px">
+      <img id="artistPhoto" src="" alt="" style="width:96px;height:96px;border-radius:50%;object-fit:cover;flex-shrink:0;display:none">
+      <div>
+        <h1 class="article-title" id="artistName" style="margin-bottom:4px"></h1>
+        <span class="article-cat-tag" id="artistGenre"></span>
+      </div>
+    </div>
+    <p class="article-body" id="artistBio"></p>
+
+    <div class="media-block" id="songsBlock" style="display:none">
+      <div class="media-label">Songs</div>
+      <div id="artistSongsList" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>
+    </div>
+
+    <div class="article-back"><a href="/artists.html" class="back-link">&larr; Back to artists</a></div>
+  </div>
+</div>
+
+<footer>&copy; WAVZO</footer>
+
+<script>
+const BIN_ID='6aa50e3aac6210605ac3c542';
+const BIN_KEY='public';
+const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
+const artistId='art-1789886555804';
+const PREART={"artist": {"id": "art-1789886555804", "name": "Lil Baby", "genre": "Hip-Hop", "bio": "Dominique Armani Jones, known professionally as Lil Baby, is an American rapper, singer, and songwriter. He rose to prominence following the release of his 2017 mixtapes Harder than Hard and Too Hard — the former of which spawned his first Billboard Hot 100 entry with its lead single, \"My Dawg.\" He signed with Quality Control Music, an imprint of Motown and Capitol Records to release his debut studio album Harder Than Ever (2018), which peaked at number three on the Billboard 200 and was supported by the Billboard Hot 100-top ten single \"Yes Indeed\". Later that year, he released the collaborative mixtape Drip Harder with fellow Georgia-based rapper Gunna, and his solo mixtape Street Gossip; the former spawned his second top-ten single \"Drip Too Hard\", while the latter peaked at number two on the Billboard 200.", "slug": "lil-baby", "photo": "https://upload.wikimedia.org/wikipedia/commons/4/46/Lil_Baby_2023.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"}, "songs": [], "titles": ["Holy Ghost | Emma D Moses", "Reform receives record £36m donation from crypto billionaire", "Burnham and Badenoch revive red versus blue politics as Reform land 'gobsmacking' donation", "Lightning Houthi advance in Yemen may bring dangerous new dimension to Iran war", "Masked men, lorries and road blocks: How anti-migrant activists are changing tactics", "Trump says united Ireland would be 'fantastic' during visit to Dublin"]};
+
+async function init(){
+  /* FAST-ARTIST */
+  let db;
+  if(typeof PREART!=='undefined'&&PREART&&PREART.artist){
+    db={artists:[PREART.artist],songs:PREART.songs||[],posts:(PREART.titles||[]).map(t=>({title:t}))};
+  }else{
+    const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+    const data=await res.json();
+    db=data.record||{};
+  }
+  const artist=(db.artists||[]).find(a=>a.id===artistId);
+  if(!artist)return;
+
+  document.getElementById('crumbArtist').textContent=artist.name;
+  document.getElementById('artistName').textContent=artist.name;
+  document.getElementById('artistGenre').textContent=artist.genre||'';
+  document.getElementById('artistBio').textContent=artist.bio||'';
+  if(artist.photo){
+    const img=document.getElementById('artistPhoto');
+    img.src=artist.photo;
+    img.style.display='block';
+  }
+
+  const songs=(db.songs||[]).filter(s=>s.artistId===artistId);
+  if(songs.length){
+    const list=document.getElementById('artistSongsList');
+    document.getElementById('songsBlock').style.display='block';
+    songs.forEach(s=>{
+      const a=document.createElement('a');
+      a.href='/songs/'+s.slug+'.html';
+      a.style.cssText='display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;padding:8px;border:1px solid #eee;border-radius:6px';
+      a.innerHTML=(s.cover?`<img src="${s.cover}" style="width:48px;height:48px;object-fit:cover;border-radius:4px">`:'')+
+        `<span style="font-weight:600">${s.title}</span>`;
+      list.appendChild(a);
+    });
+  }
+
+  const track=document.getElementById('tickerTrack');
+  [...(db.posts||[]).slice(0,6),...(db.posts||[]).slice(0,6)].forEach(p=>{const t=document.createElement('span');t.textContent=p.title;track.appendChild(t);});
+}
+init();
+window.addEventListener('scroll',()=>{document.getElementById('siteNav').classList.toggle('scrolled',window.scrollY>10);});
+</script>
+</body>
+</html>
