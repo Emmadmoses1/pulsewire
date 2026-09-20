@@ -58,9 +58,15 @@ function youtubeId(url){
 }
 
 async function init(){
-  const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
-  const data=await res.json();
-  const db=data.record||{};
+  /* FAST-SONG */
+  let db;
+  if(typeof PRE!=='undefined'&&PRE&&PRE.song){
+    db={songs:[PRE.song],artists:PRE.artist?[PRE.artist]:[],posts:(PRE.titles||[]).map(t=>({title:t}))};
+  }else{
+    const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+    const data=await res.json();
+    db=data.record||{};
+  }
   const song=(db.songs||[]).find(s=>s.id===songId);
   if(!song)return;
   const artist=(db.artists||[]).find(a=>a.id===song.artistId);

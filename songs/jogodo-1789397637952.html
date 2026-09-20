@@ -62,6 +62,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const songId='song-1789397637954';
+const PRE={"song": {"id": "song-1789397637954", "title": "Jogodo", "artistId": "art-1789367524925", "type": "Single", "excerpt": "From the release \"REAL, Vol. 1 - EP\" by Wizkid & Asake (2026).", "downloadUrl": "https://res.cloudinary.com/smg1blzu/video/upload/l_video:wavzo-tag-v1,fl_splice,e_volume:200/fl_layer_apply,so_0,du_3/jogodo-1789718996675.mp3", "youtubeUrl": "https://www.youtube.com/watch?v=4IuUYpS9RjE", "cover": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/f0/d9/fb/f0d9fbd9-4fb2-0b9f-4178-97c2b865f22d/199316437584_cover.jpg/1000x1000bb.jpg", "slug": "jogodo-1789397637952", "createdAt": 1789397637954}, "artist": {"id": "art-1789367524925", "name": "Wizkid", "genre": "Afrobeats", "bio": "Ayodeji Ibrahim Balogun, known professionally as Wizkid, is a Nigerian singer and songwriter. Born in the Ojuelegba suburb of Surulere, Lagos, Wizkid is a voice in the emerging Afrobeats movement. His music is a blend of Afrobeats, afropop, R&B, afrobeat, reggae, dancehall, and pop. He began recording music at the age of 11 and released a collaborative album with the Glorious Five, a group he and a few of his church friends formed. In 2009, Wizkid signed a record deal with Banky W's Empire Mates Entertainment (E.M.E). He gained recognition after releasing \"Holla at Your Boy\", the lead single from his debut studio album, Superstar (2011), which also spawned the singles \"Tease Me/Bad Guys\" and \"Don't Dull\".", "slug": "wizkid", "photo": "https://upload.wikimedia.org/wikipedia/commons/b/b6/Artworks-UWHjOik17qMFy0Sb-64tibA-t500x500.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"}, "titles": ["Holy Ghost | Emma D Moses", "Reform receives record £36m donation from crypto billionaire", "Burnham and Badenoch revive red versus blue politics as Reform land 'gobsmacking' donation", "Lightning Houthi advance in Yemen may bring dangerous new dimension to Iran war", "Masked men, lorries and road blocks: How anti-migrant activists are changing tactics", "Trump says united Ireland would be 'fantastic' during visit to Dublin"]};
 
 function youtubeId(url){
   const m=url.match(/(?:youtu\.be\/|v=)([a-zA-Z0-9_-]{11})/);
@@ -69,9 +70,15 @@ function youtubeId(url){
 }
 
 async function init(){
-  const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
-  const data=await res.json();
-  const db=data.record||{};
+  /* FAST-SONG */
+  let db;
+  if(typeof PRE!=='undefined'&&PRE&&PRE.song){
+    db={songs:[PRE.song],artists:PRE.artist?[PRE.artist]:[],posts:(PRE.titles||[]).map(t=>({title:t}))};
+  }else{
+    const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+    const data=await res.json();
+    db=data.record||{};
+  }
   const song=(db.songs||[]).find(s=>s.id===songId);
   if(!song)return;
   const artist=(db.artists||[]).find(a=>a.id===song.artistId);

@@ -62,6 +62,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const songId='song-1789720934184';
+const PRE={"song": {"id": "song-1789720934184", "title": "B4 B4", "artistId": "art-1789345277107", "type": "Single", "excerpt": "From the release \"Oriadé\" by Davido, FOLA & Mayorkun (2026).", "downloadUrl": "https://res.cloudinary.com/smg1blzu/video/upload/l_video:wavzo-tag-v1,fl_splice,e_volume:200/fl_layer_apply,so_0,du_3/b4-b4-1789720902572.mp3", "youtubeUrl": "https://www.youtube.com/watch?v=rRjtTx49hkc", "cover": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a8/fb/21/a8fb21ed-2106-199e-75dc-f01099c29394/196874507544.jpg/1000x1000bb.jpg", "slug": "b4-b4-1789720934183", "createdAt": 1789720934184}, "artist": {"id": "art-1789345277107", "name": "Davido", "genre": "Afrobeats", "bio": "David Adedeji Adeleke, known professionally as Davido, is a Nigerian-American singer, songwriter, and record producer. Davido was born in Atlanta, U.S, and raised in Lagos, Nigeria. He made his music debut as a member of the group KB International. Davido studied business administration at Oakwood University before dropping out to make beats and record vocal references. He rose to fame after releasing \"Dami Duro\", the second single from his debut studio album Omo Baba Olowo (2012), from which six additional singles—\"Back When\", \"Ekuro\", \"Overseas\", \"All of You\", \"Gbon Gbon\" and \"Feel Alright\"—were taken. In 2012, Davido won the Next Rated award at The Headies. Between 2013 and 2015, he released the singles \"Gobe\", \"One of a Kind\", \"Skelewu\", \"Aye\", \"Tchelete (Goodlife)\", \"Naughty\", \"Owo Ni Koko\", \"The Sound\" and \"The Money\".", "slug": "davido", "photo": "https://upload.wikimedia.org/wikipedia/commons/7/77/Davido_2024_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"}, "titles": ["Holy Ghost | Emma D Moses", "Reform receives record £36m donation from crypto billionaire", "Burnham and Badenoch revive red versus blue politics as Reform land 'gobsmacking' donation", "Lightning Houthi advance in Yemen may bring dangerous new dimension to Iran war", "Masked men, lorries and road blocks: How anti-migrant activists are changing tactics", "Trump says united Ireland would be 'fantastic' during visit to Dublin"]};
 
 function youtubeId(url){
   const m=url.match(/(?:youtu\.be\/|v=)([a-zA-Z0-9_-]{11})/);
@@ -69,9 +70,15 @@ function youtubeId(url){
 }
 
 async function init(){
-  const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
-  const data=await res.json();
-  const db=data.record||{};
+  /* FAST-SONG */
+  let db;
+  if(typeof PRE!=='undefined'&&PRE&&PRE.song){
+    db={songs:[PRE.song],artists:PRE.artist?[PRE.artist]:[],posts:(PRE.titles||[]).map(t=>({title:t}))};
+  }else{
+    const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+    const data=await res.json();
+    db=data.record||{};
+  }
   const song=(db.songs||[]).find(s=>s.id===songId);
   if(!song)return;
   const artist=(db.artists||[]).find(a=>a.id===song.artistId);

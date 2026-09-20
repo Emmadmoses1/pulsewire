@@ -130,6 +130,12 @@ if os.path.exists('song.html'):
   <meta name="twitter:image" content="{cover}">'''
         )
         page = page.replace("const songId='__SONG_ID__';", f"const songId='{song.get('id','')}';")
+        # FAST-SONG: bake data into the page so it shows instantly
+        _pre = json.dumps({'song': song, 'artist': artist or None,
+                           'titles': [p.get('title', '') for p in posts[:6]]}, ensure_ascii=False)
+        _pre = _pre.replace('</', '<\\/').replace('\u2028', '\\u2028').replace('\u2029', '\\u2029')
+        page = page.replace("const songId='" + str(song.get('id', '')) + "';",
+                            "const songId='" + str(song.get('id', '')) + "';\nconst PRE=" + _pre + ";", 1)
 
         with open(f'songs/{slug}.html', 'w') as f:
             f.write(page)
@@ -140,7 +146,6 @@ import urllib.request
 sitemap_url = 'https://wavzo.com.ng/sitemap.xml'
 try:
     pass  # Google retired the sitemap ping
-    print('Google pinged successfully')
 except Exception as e:
     print(f'Google ping failed: {e}')
 
