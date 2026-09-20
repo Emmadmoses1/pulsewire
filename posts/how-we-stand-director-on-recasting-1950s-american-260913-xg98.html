@@ -101,6 +101,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
+const PREPOST={"post": {"title": "‘How We Stand’ Director on Recasting 1950s American Indians Relocation Legacy: “It’s Such an Epic Story”", "slug": "how-we-stand-director-on-recasting-1950s-american-260913-xg98", "category": "ENTERTAINMENT", "excerpt": "Marie Clements' drama about a single mother and three daughters separated by tragedy after resettling for new lives in 1950s Los Angeles will world premiere at the Toronto Film Festival.", "content": "Marie Clements' drama about a single mother and three daughters separated by tragedy after resettling for new lives in 1950s Los Angeles will world premiere at the Toronto Film Festival.\n\nSource: https://www.hollywoodreporter.com/movies/movie-news/how-we-stand-film-director-interview-toronto-2026-tiff-1236683328/", "coverImage": null, "musicFile": null, "videoFile": null, "date": "Sep 13, 2026", "createdAt": 1789314228802, "views": 1}, "related": [{"slug": "melissa-rivers-on-her-glorious-return-to-the-260913-rwfs", "title": "Melissa Rivers on Her Glorious Return to the Emmys Carpet, Remembering Her Mom Joan and Why ‘It’s Been Really Hard’ to Watch ‘Hacks’", "category": "ENTERTAINMENT", "coverImage": "https://variety.com/wp-content/uploads/2020/06/joan-rivers-melissa-rivers-tribute.jpg", "date": "Sep 13, 2026"}, {"slug": "kaelen-ohm-talks-bringing-inner-extreme-skier-to-260913-40kz", "title": "Kaelen Ohm Talks Bringing Inner Extreme Skier to Film Roles: “I Want to Find the Steeper Hill to Go Down”", "category": "ENTERTAINMENT", "coverImage": null, "date": "Sep 13, 2026"}]};
 
 function getCache(){
   try{
@@ -424,11 +425,15 @@ async function init(){
   }
   if(!slug)return;
 
-  // Try cache first for instant load
-  const cached=getCache();
-  if(cached){
-    const post=cached.find(p=>p.slug===slug);
-    if(post){renderPost(post,cached);}
+  /* FAST-POST */
+  if(typeof PREPOST!=='undefined'&&PREPOST&&PREPOST.post){
+    renderPost(PREPOST.post,[...(PREPOST.related||[]),PREPOST.post]);
+  }else{
+    const cached=getCache();
+    if(cached){
+      const post=cached.find(p=>p.slug===slug);
+      if(post){renderPost(post,cached);}
+    }
   }
 
   // Always fetch fresh in background for accurate views/downloads

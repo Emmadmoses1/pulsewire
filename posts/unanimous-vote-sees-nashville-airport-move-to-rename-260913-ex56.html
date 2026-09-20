@@ -101,6 +101,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
+const PREPOST={"post": {"title": "Unanimous vote sees Nashville Airport move to rename itself after Dolly Parton", "slug": "unanimous-vote-sees-nashville-airport-move-to-rename-260913-ex56", "category": "TRENDING", "excerpt": "“At a place where Tennessee welcomes the world, it is fitting that Nashville International Airport would bear the name of our state’s favourite daughter\"The post Unanimous vote sees Nashville Airpo", "content": "Nashville International Airport is set to be renamed in honour of Dolly Parton following a unanimous vote by the governing board.\n\nREAD MORE: Dolly Parton, 1946-2026: the Queen of Country was a unifying force in a divided world\n\nOn Friday (September 11), the Metropolitan Nashville Airport Authority board of commissioners voted 6-0 to start the process of changing the airport’s name in memory of the late country icon.\nNews of Dolly’s death emerged last month, with her cause of death revealed as a “brief battle with cancer” a few days later.\n\nSource: https://www.nme.com/news/music/unanimous-vote-sees-nashville-airport-move-to-rename-itself-after-dolly-parton-3968563?utm_source=rss&utm_medium=rss&utm_campaign=unanimous-vote-sees-nashville-airport-move-to-rename-itself-after-dolly-parton", "coverImage": "https://www.nme.com/wp-content/uploads/2026/09/live-dolly-parton.jpg", "musicFile": null, "videoFile": null, "date": "Sep 13, 2026", "createdAt": 1789315807571, "views": 3, "reactions": {"love": 1}}, "related": [{"slug": "ala-bekee-lyrics-by-yemi-alade-amp-don-260913-5xpu", "title": "Ala Bekee Lyrics by Yemi Alade &amp; Don Jazzy", "category": "TRENDING", "coverImage": "https://notjustok.com/wp-content/uploads/2026/09/IMG_1044.jpeg", "date": "Sep 13, 2026"}, {"slug": "carter-efe-slams-comparisons-to-dj-tunez-over-260913-rmyp", "title": "Carter Efe Slams Comparisons To DJ Tunez Over Hygiene Allegations", "category": "TRENDING", "coverImage": "https://hub.tooxclusive.com/wp-content/uploads/2025/11/wizkid.jpg", "date": "Sep 13, 2026"}, {"slug": "2026-27-5-things-to-expect-from-manchester-260913-77x3", "title": "2026/27: 5 things to expect from Manchester United vs Manchester City", "category": "TRENDING", "coverImage": null, "date": "Sep 13, 2026"}]};
 
 function getCache(){
   try{
@@ -424,11 +425,15 @@ async function init(){
   }
   if(!slug)return;
 
-  // Try cache first for instant load
-  const cached=getCache();
-  if(cached){
-    const post=cached.find(p=>p.slug===slug);
-    if(post){renderPost(post,cached);}
+  /* FAST-POST */
+  if(typeof PREPOST!=='undefined'&&PREPOST&&PREPOST.post){
+    renderPost(PREPOST.post,[...(PREPOST.related||[]),PREPOST.post]);
+  }else{
+    const cached=getCache();
+    if(cached){
+      const post=cached.find(p=>p.slug===slug);
+      if(post){renderPost(post,cached);}
+    }
   }
 
   // Always fetch fresh in background for accurate views/downloads

@@ -101,6 +101,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
+const PREPOST={"post": {"title": "Therapy Lyrics by Lordeyang", "slug": "therapy-lyrics-by-lordeyang-260913-ldrr", "category": "MUSIC", "excerpt": "Lordeyang Lyrics Lordeyang’s Therapy is a vulnerable reflection on how hardship can change a person emotionally, leaving them fearful and withdrawn while still trying to survive, heal, and remain gra", "content": "Korean Lyrics Korean’s Therapy is a vulnerable reflection on how hardship can change a person emotionally, leaving them fearful and withdrawn while still trying to survive, heal, and remain GRA\n\nSource: https://notjustok.com/lyrics/therapy-lyrics-by-lordeyang/", "coverImage": "https://notjustok.com/wp-content/uploads/2026/09/IMG_1046.jpeg", "musicFile": null, "videoFile": null, "date": "Sep 13, 2026", "createdAt": 1789314115468, "views": 1}, "related": [{"slug": "afrobeats-update-july-2026-mix-260914-79ff", "title": "Afrobeats Update July 2026 Mix", "category": "MUSIC", "coverImage": "https://i1.sndcdn.com/artworks-VDVHvPR2v54ml0do-ArEAXA-t3000x3000.jpg", "date": "Sep 14, 2026"}, {"slug": "davido-mayorkun-amp-fola-s-b4-b4-returns-260914-ynf0", "title": "Davido, Mayorkun &amp; FOLA’s B4 B4 Returns to No. 1 on Apple Music Nigeria", "category": "MUSIC", "coverImage": "https://hub.tooxclusive.com/wp-content/uploads/2026/07/Davido-Mayorkun-FOLA.jpg", "date": "Sep 14, 2026"}, {"slug": "testimony-song-bro-george-mp3-download-260914-pld3", "title": "Testimony Song | Bro George - Mp3 Download", "category": "MUSIC", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789374072/m3zxmwaldom3x8a8qsxb.jpg", "date": "Sep 14, 2026"}]};
 
 function getCache(){
   try{
@@ -424,11 +425,15 @@ async function init(){
   }
   if(!slug)return;
 
-  // Try cache first for instant load
-  const cached=getCache();
-  if(cached){
-    const post=cached.find(p=>p.slug===slug);
-    if(post){renderPost(post,cached);}
+  /* FAST-POST */
+  if(typeof PREPOST!=='undefined'&&PREPOST&&PREPOST.post){
+    renderPost(PREPOST.post,[...(PREPOST.related||[]),PREPOST.post]);
+  }else{
+    const cached=getCache();
+    if(cached){
+      const post=cached.find(p=>p.slug===slug);
+      if(post){renderPost(post,cached);}
+    }
   }
 
   // Always fetch fresh in background for accurate views/downloads

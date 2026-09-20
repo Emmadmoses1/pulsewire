@@ -58,11 +58,18 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const artistId='art-1789345522209';
+const PREART={"artist": {"id": "art-1789345522209", "name": "Frank Edwards (gospel musician)", "genre": "Gospel", "bio": "Frank Ugochukwu Edwards is a Nigerian musician, record producer, sound engineer, worship singer and songwriter from Enugu State. He is the founder and owner of the record label Rocktown Records, which is home to recording artists such as Edwards himself, Gil Joe, King BAS, Nkay, Dudu and, among others. He lives in Lagos, Nigeria.", "slug": "frank-edwards-gospel-musician", "photo": "https://upload.wikimedia.org/wikipedia/commons/5/53/Frank_Edwards_Frank_Edwards.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"}, "songs": [], "titles": ["Holy Ghost | Emma D Moses", "Reform receives record £36m donation from crypto billionaire", "Burnham and Badenoch revive red versus blue politics as Reform land 'gobsmacking' donation", "Lightning Houthi advance in Yemen may bring dangerous new dimension to Iran war", "Masked men, lorries and road blocks: How anti-migrant activists are changing tactics", "Trump says united Ireland would be 'fantastic' during visit to Dublin"]};
 
 async function init(){
-  const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
-  const data=await res.json();
-  const db=data.record||{};
+  /* FAST-ARTIST */
+  let db;
+  if(typeof PREART!=='undefined'&&PREART&&PREART.artist){
+    db={artists:[PREART.artist],songs:PREART.songs||[],posts:(PREART.titles||[]).map(t=>({title:t}))};
+  }else{
+    const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+    const data=await res.json();
+    db=data.record||{};
+  }
   const artist=(db.artists||[]).find(a=>a.id===artistId);
   if(!artist)return;
 

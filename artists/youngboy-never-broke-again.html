@@ -58,11 +58,18 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const artistId='art-1789345315569';
+const PREART={"artist": {"id": "art-1789345315569", "name": "YoungBoy Never Broke Again", "genre": "R&B", "bio": "Kentrell DeSean Gaulden, known professionally as YoungBoy Never Broke Again or NBA YoungBoy, is an American rapper, singer, and songwriter. Gaulden released eight mixtapes from 2015 to 2017, and garnered a regional following for his work. He signed with Atlantic Records and Artist Partner Group in the latter year to release the singles \"Untouchable\" and \"No Smoke\", both of which marked his first entries on the Billboard Hot 100. Released in January 2018, his single \"Outside Today\" became his first to peak within the chart's top 40, and received quadruple platinum certification by the Recording Industry Association of America (RIAA). It served as both his mainstream breakthrough and the lead single for his debut studio album, Until Death Call My Name (2018), which peaked at number seven on the US Billboard 200 despite mixed critical reception.", "slug": "youngboy-never-broke-again", "photo": "https://upload.wikimedia.org/wikipedia/commons/8/8b/NBA_YoungBoy_2023.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"}, "songs": [{"id": "song-1789364401410", "title": "Big Truck", "artistId": "art-1789345315569", "type": "Single", "excerpt": "From the release \"Don't Try This At Home\" by YoungBoy Never Broke Again (2023).", "downloadUrl": "https://res.cloudinary.com/smg1blzu/video/upload/l_video:pulsewire-tag-v2,fl_splice,e_volume:200/fl_layer_apply,so_0/Big Truck.mp3", "youtubeUrl": "https://www.youtube.com/watch?v=KljvA0Arzx8", "cover": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/42/99/01/429901f9-d554-a9e1-dbce-5b4db5de6f2f/23UMGIM36443.rgb.jpg/1000x1000bb.jpg", "slug": "big-truck-1789364401410", "createdAt": 1789364401410}, {"id": "song-1789364689356", "title": "Kacey Talk", "artistId": "art-1789345315569", "type": "Single", "excerpt": "From the release \"Top\" by YoungBoy Never Broke Again (2020).", "downloadUrl": "https://res.cloudinary.com/smg1blzu/video/upload/l_video:pulsewire-tag,fl_splice,du_5/fl_layer_apply/Kacey Talk.mp3", "youtubeUrl": "https://www.youtube.com/watch?v=0C80BSgjb8M", "cover": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e7/d8/80/e7d880c5-0a13-0da1-036c-2a35fca4c59d/075679803573.jpg/1000x1000bb.jpg", "slug": "kacey-talk-1789364689355", "createdAt": 1789364689356}], "titles": ["Holy Ghost | Emma D Moses", "Reform receives record £36m donation from crypto billionaire", "Burnham and Badenoch revive red versus blue politics as Reform land 'gobsmacking' donation", "Lightning Houthi advance in Yemen may bring dangerous new dimension to Iran war", "Masked men, lorries and road blocks: How anti-migrant activists are changing tactics", "Trump says united Ireland would be 'fantastic' during visit to Dublin"]};
 
 async function init(){
-  const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
-  const data=await res.json();
-  const db=data.record||{};
+  /* FAST-ARTIST */
+  let db;
+  if(typeof PREART!=='undefined'&&PREART&&PREART.artist){
+    db={artists:[PREART.artist],songs:PREART.songs||[],posts:(PREART.titles||[]).map(t=>({title:t}))};
+  }else{
+    const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+    const data=await res.json();
+    db=data.record||{};
+  }
   const artist=(db.artists||[]).find(a=>a.id===artistId);
   if(!artist)return;
 

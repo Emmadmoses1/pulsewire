@@ -101,6 +101,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
+const PREPOST={"post": {"title": "Gunmen abduct six imams in Zamfara – Police", "slug": "gunmen-abduct-six-imams-in-zamfara-police-260913-fcr9", "category": "NEWS", "excerpt": "An army spokesperson also confirmed the kidnapping to PREMIUM TIMES.The post Gunmen abduct six imams in Zamfara – Police appeared first on Premium Times Nigeria.", "content": "An army spokesperson also confirmed the kidnapping to PREMIUM TIMES.\nThe post Gunmen abduct six imams in Zamfara – Police appeared first on Premium Times Nigeria.\n\nSource: https://www.premiumtimesng.com/news/headlines/909177-gunmen-abduct-six-imams-in-zamfara-police.html", "coverImage": "https://i0.wp.com/media.premiumtimesng.com/wp-content/files/2025/10/output-11-e1772014388303.jpg?fit=640%2C400&amp;ssl=1", "musicFile": null, "videoFile": null, "date": "Sep 13, 2026", "createdAt": 1789322080206}, "related": [{"slug": "abia-govt-denies-imposing-n50-000-tax-on-260915-sh18", "title": "Abia Govt denies imposing N50,000 tax on akara sellers", "category": "NEWS", "coverImage": "https://dailypost.ng/wp-content/uploads/2026/09/Okey-Kanu.jpg", "date": "Sep 15, 2026"}, {"slug": "harry-and-meghan-s-media-treatment-echoes-what-260920-hl29", "title": "Harry and Meghan's media treatment echoes what happened to Diana, Earl Spencer tells BBC", "category": "NEWS", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789883615/el1mqbwvacl2ekcv7n3e.jpg", "date": "Sep 20, 2026"}, {"slug": "akwa-ibom-govt-silent-as-compensation-disputes-swirl-260920-6t9e", "title": "Akwa Ibom govt silent as compensation disputes swirl around N117.5bn Medical City project", "category": "NEWS", "coverImage": "https://i0.wp.com/media.premiumtimesng.com/wp-content/files/2026/09/Edet-Etok-at-his-four-bedroom-bungalow.jpg?fit=1920%2C1080&ssl=1", "date": "Sep 20, 2026"}]};
 
 function getCache(){
   try{
@@ -424,11 +425,15 @@ async function init(){
   }
   if(!slug)return;
 
-  // Try cache first for instant load
-  const cached=getCache();
-  if(cached){
-    const post=cached.find(p=>p.slug===slug);
-    if(post){renderPost(post,cached);}
+  /* FAST-POST */
+  if(typeof PREPOST!=='undefined'&&PREPOST&&PREPOST.post){
+    renderPost(PREPOST.post,[...(PREPOST.related||[]),PREPOST.post]);
+  }else{
+    const cached=getCache();
+    if(cached){
+      const post=cached.find(p=>p.slug===slug);
+      if(post){renderPost(post,cached);}
+    }
   }
 
   // Always fetch fresh in background for accurate views/downloads

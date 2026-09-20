@@ -413,11 +413,15 @@ async function init(){
   }
   if(!slug)return;
 
-  // Try cache first for instant load
-  const cached=getCache();
-  if(cached){
-    const post=cached.find(p=>p.slug===slug);
-    if(post){renderPost(post,cached);}
+  /* FAST-POST */
+  if(typeof PREPOST!=='undefined'&&PREPOST&&PREPOST.post){
+    renderPost(PREPOST.post,[...(PREPOST.related||[]),PREPOST.post]);
+  }else{
+    const cached=getCache();
+    if(cached){
+      const post=cached.find(p=>p.slug===slug);
+      if(post){renderPost(post,cached);}
+    }
   }
 
   // Always fetch fresh in background for accurate views/downloads

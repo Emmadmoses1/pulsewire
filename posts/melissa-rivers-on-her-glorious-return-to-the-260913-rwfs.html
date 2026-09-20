@@ -101,6 +101,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
+const PREPOST={"post": {"title": "Melissa Rivers on Her Glorious Return to the Emmys Carpet, Remembering Her Mom Joan and Why ‘It’s Been Really Hard’ to Watch ‘Hacks’", "slug": "melissa-rivers-on-her-glorious-return-to-the-260913-rwfs", "category": "ENTERTAINMENT", "excerpt": "Melissa Rivers is returning to the red carpet. Fashion expert and author Rivers — who rose to fame reporting outside awards-shows with her late mother, the comedian Joan Rivers — will be joining Varie", "content": "Melissa Rivers is returning to the red carpet. Fashion expert and author Rivers — who rose to fame reporting outside awards-shows with her late mother, the comedian Joan Rivers — will be joining Varie\n\nSource: https://variety.com/2026/tv/features/melissa-rivers-emmys-2026-cnn-variety-1236858878/", "coverImage": "https://variety.com/wp-content/uploads/2020/06/joan-rivers-melissa-rivers-tribute.jpg", "musicFile": null, "videoFile": null, "date": "Sep 13, 2026", "createdAt": 1789314202325}, "related": [{"slug": "kaelen-ohm-talks-bringing-inner-extreme-skier-to-260913-40kz", "title": "Kaelen Ohm Talks Bringing Inner Extreme Skier to Film Roles: “I Want to Find the Steeper Hill to Go Down”", "category": "ENTERTAINMENT", "coverImage": null, "date": "Sep 13, 2026"}, {"slug": "how-we-stand-director-on-recasting-1950s-american-260913-xg98", "title": "‘How We Stand’ Director on Recasting 1950s American Indians Relocation Legacy: “It’s Such an Epic Story”", "category": "ENTERTAINMENT", "coverImage": null, "date": "Sep 13, 2026"}]};
 
 function getCache(){
   try{
@@ -424,11 +425,15 @@ async function init(){
   }
   if(!slug)return;
 
-  // Try cache first for instant load
-  const cached=getCache();
-  if(cached){
-    const post=cached.find(p=>p.slug===slug);
-    if(post){renderPost(post,cached);}
+  /* FAST-POST */
+  if(typeof PREPOST!=='undefined'&&PREPOST&&PREPOST.post){
+    renderPost(PREPOST.post,[...(PREPOST.related||[]),PREPOST.post]);
+  }else{
+    const cached=getCache();
+    if(cached){
+      const post=cached.find(p=>p.slug===slug);
+      if(post){renderPost(post,cached);}
+    }
   }
 
   // Always fetch fresh in background for accurate views/downloads

@@ -63,9 +63,17 @@ const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 
 async function init(){
-  const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
-  const data=await res.json();
-  const db=data.record||{};
+  /* FAST-ARTISTS */
+  let db;
+  try{
+    const r=await fetch('/data/db.json');
+    if(!r.ok)throw new Error('static db missing');
+    db=await r.json();
+  }catch(e){
+    const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+    const data=await res.json();
+    db=data.record||{};
+  }
   const artists=db.artists||[];
 
   if(!artists.length){

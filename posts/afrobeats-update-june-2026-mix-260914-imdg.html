@@ -101,6 +101,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
+const PREPOST={"post": {"title": "Afrobeats Update June 2026 Mix", "slug": "afrobeats-update-june-2026-mix-260914-imdg", "category": "MUSIC", "excerpt": "Best new Afrobeats songs all in one DJ mix every month. This month’s cover artists is Asake who is dominating the global Afrobeats scene.Tracklist- Amadi Blue - Billings ft ChayTekno - MatterAsak", "content": "Best new Afrobeats songs all in one DJ mix every month. This month’s cover artists is Asake who is dominating the global Afrobeats scene.\n\nTracklist- \nAmadi Blue - Billings ft Chay\nTekno - Matter\nAsake - MCBH  \nLarry Gaaga - Come On ft Olamide &amp; MaVo\nZerrydl - Follow My Lead\nAsake - Asambe\nAsake - Forgiveness\nAsake - Amen\nMasterkraft - Asanwa ft Ayanfe &amp; Magnito\nKel-P - Enjoy and Party\nAsake - Gratitude\nOlamide - Rock Me Gentle\nODUMODUBLVCK - MOTION SICKNESS ft Zlatan\nAdekunle Gold - Shake Shake ft Tml Vibez\nTiwa Savage - Energy ft Wande Coal &amp; MaVo\nYoung Jonn - Elumelu\nCKay - AFRICAN GIRLS ft Kidd Carder\nDJ Tunez - STATE OF MIND ft Wizkid\nPatoranking - Shake That ft Ruger\nBNXN -…\n\nSource: https://soundcloud.com/djholup/afrobeats-update-june-2026-mix", "coverImage": "https://i1.sndcdn.com/artworks-anN7pknKHQy1PfMb-KRdpsA-t3000x3000.jpg", "musicFile": "https://res.cloudinary.com/smg1blzu/video/upload/v1789343059/tm8yr9b7hvci5n04uuij.mp3", "videoFile": null, "date": "Sep 14, 2026", "createdAt": 1789343078831, "views": 2}, "related": [{"slug": "afrobeats-update-july-2026-mix-260914-79ff", "title": "Afrobeats Update July 2026 Mix", "category": "MUSIC", "coverImage": "https://i1.sndcdn.com/artworks-VDVHvPR2v54ml0do-ArEAXA-t3000x3000.jpg", "date": "Sep 14, 2026"}, {"slug": "davido-mayorkun-amp-fola-s-b4-b4-returns-260914-ynf0", "title": "Davido, Mayorkun &amp; FOLA’s B4 B4 Returns to No. 1 on Apple Music Nigeria", "category": "MUSIC", "coverImage": "https://hub.tooxclusive.com/wp-content/uploads/2026/07/Davido-Mayorkun-FOLA.jpg", "date": "Sep 14, 2026"}, {"slug": "testimony-song-bro-george-mp3-download-260914-pld3", "title": "Testimony Song | Bro George - Mp3 Download", "category": "MUSIC", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789374072/m3zxmwaldom3x8a8qsxb.jpg", "date": "Sep 14, 2026"}]};
 
 function getCache(){
   try{
@@ -424,11 +425,15 @@ async function init(){
   }
   if(!slug)return;
 
-  // Try cache first for instant load
-  const cached=getCache();
-  if(cached){
-    const post=cached.find(p=>p.slug===slug);
-    if(post){renderPost(post,cached);}
+  /* FAST-POST */
+  if(typeof PREPOST!=='undefined'&&PREPOST&&PREPOST.post){
+    renderPost(PREPOST.post,[...(PREPOST.related||[]),PREPOST.post]);
+  }else{
+    const cached=getCache();
+    if(cached){
+      const post=cached.find(p=>p.slug===slug);
+      if(post){renderPost(post,cached);}
+    }
   }
 
   // Always fetch fresh in background for accurate views/downloads

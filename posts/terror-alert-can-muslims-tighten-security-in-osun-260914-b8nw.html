@@ -101,6 +101,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
+const PREPOST={"post": {"title": "Terror Alert: CAN, Muslims tighten security in Osun", "slug": "terror-alert-can-muslims-tighten-security-in-osun-260914-b8nw", "category": "NEWS", "excerpt": "By Shina Abubakar, Osogbo Following an alert by the Department of State Services, DSS, over an alleged plan to attack worship centres in Osun State, the Christian Association of Nigeria, CAN, and the", "content": "By Shina Abubakar, Osogbo\n\n\n\nFollowing an alert by the Department of State Services, DSS, over an alleged plan to attack worship centres in Osun State, the Christian Association of Nigeria, CAN, and the Muslim community have adopted measures to prevent possible attacks.\n\n\n\n\n\n\n\nThe development followed separate meetings between the DSS and religious leaders in Osogbo last week, where they were reportedly advised to take precautionary measures against possible attacks.\n\nSource: https://www.vanguardngr.com/2026/09/terror-alert-can-muslims-tighten-security-in-osun/", "coverImage": "https://cdn.vanguardngr.com/wp-content/uploads/2026/09/CAN.png", "musicFile": null, "videoFile": null, "date": "Sep 14, 2026", "createdAt": 1789373956393, "views": 2}, "related": [{"slug": "abia-govt-denies-imposing-n50-000-tax-on-260915-sh18", "title": "Abia Govt denies imposing N50,000 tax on akara sellers", "category": "NEWS", "coverImage": "https://dailypost.ng/wp-content/uploads/2026/09/Okey-Kanu.jpg", "date": "Sep 15, 2026"}, {"slug": "harry-and-meghan-s-media-treatment-echoes-what-260920-hl29", "title": "Harry and Meghan's media treatment echoes what happened to Diana, Earl Spencer tells BBC", "category": "NEWS", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789883615/el1mqbwvacl2ekcv7n3e.jpg", "date": "Sep 20, 2026"}, {"slug": "akwa-ibom-govt-silent-as-compensation-disputes-swirl-260920-6t9e", "title": "Akwa Ibom govt silent as compensation disputes swirl around N117.5bn Medical City project", "category": "NEWS", "coverImage": "https://i0.wp.com/media.premiumtimesng.com/wp-content/files/2026/09/Edet-Etok-at-his-four-bedroom-bungalow.jpg?fit=1920%2C1080&ssl=1", "date": "Sep 20, 2026"}]};
 
 function getCache(){
   try{
@@ -424,11 +425,15 @@ async function init(){
   }
   if(!slug)return;
 
-  // Try cache first for instant load
-  const cached=getCache();
-  if(cached){
-    const post=cached.find(p=>p.slug===slug);
-    if(post){renderPost(post,cached);}
+  /* FAST-POST */
+  if(typeof PREPOST!=='undefined'&&PREPOST&&PREPOST.post){
+    renderPost(PREPOST.post,[...(PREPOST.related||[]),PREPOST.post]);
+  }else{
+    const cached=getCache();
+    if(cached){
+      const post=cached.find(p=>p.slug===slug);
+      if(post){renderPost(post,cached);}
+    }
   }
 
   // Always fetch fresh in background for accurate views/downloads

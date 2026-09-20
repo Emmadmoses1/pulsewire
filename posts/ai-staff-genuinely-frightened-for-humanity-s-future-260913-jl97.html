@@ -101,6 +101,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
+const PREPOST={"post": {"title": "AI staff 'genuinely frightened' for humanity's future, ex-Anthropic researcher tells BBC", "slug": "ai-staff-genuinely-frightened-for-humanity-s-future-260913-jl97", "category": "NEWS", "excerpt": "It comes as the AI firm's boss has called for the technology's development to be slowed down, citing \"serious\" risks.", "content": "It comes as the AI firm's boss has called for the technology's development to be slowed down, citing \"serious\" risks.\n\nSource: https://www.bbc.co.uk/news/articles/c1kx0gyje9wo?at_medium=RSS&at_campaign=rss", "coverImage": "https://ichef.bbci.co.uk/ace/standard/1600/cpsprodpb/09f1/live/aaa670e0-af38-11f1-a540-61c3f7fc4e6c.jpg", "musicFile": null, "videoFile": null, "date": "Sep 13, 2026", "createdAt": 1789310595069, "views": 4}, "related": [{"slug": "abia-govt-denies-imposing-n50-000-tax-on-260915-sh18", "title": "Abia Govt denies imposing N50,000 tax on akara sellers", "category": "NEWS", "coverImage": "https://dailypost.ng/wp-content/uploads/2026/09/Okey-Kanu.jpg", "date": "Sep 15, 2026"}, {"slug": "harry-and-meghan-s-media-treatment-echoes-what-260920-hl29", "title": "Harry and Meghan's media treatment echoes what happened to Diana, Earl Spencer tells BBC", "category": "NEWS", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789883615/el1mqbwvacl2ekcv7n3e.jpg", "date": "Sep 20, 2026"}, {"slug": "akwa-ibom-govt-silent-as-compensation-disputes-swirl-260920-6t9e", "title": "Akwa Ibom govt silent as compensation disputes swirl around N117.5bn Medical City project", "category": "NEWS", "coverImage": "https://i0.wp.com/media.premiumtimesng.com/wp-content/files/2026/09/Edet-Etok-at-his-four-bedroom-bungalow.jpg?fit=1920%2C1080&ssl=1", "date": "Sep 20, 2026"}]};
 
 function getCache(){
   try{
@@ -424,11 +425,15 @@ async function init(){
   }
   if(!slug)return;
 
-  // Try cache first for instant load
-  const cached=getCache();
-  if(cached){
-    const post=cached.find(p=>p.slug===slug);
-    if(post){renderPost(post,cached);}
+  /* FAST-POST */
+  if(typeof PREPOST!=='undefined'&&PREPOST&&PREPOST.post){
+    renderPost(PREPOST.post,[...(PREPOST.related||[]),PREPOST.post]);
+  }else{
+    const cached=getCache();
+    if(cached){
+      const post=cached.find(p=>p.slug===slug);
+      if(post){renderPost(post,cached);}
+    }
   }
 
   // Always fetch fresh in background for accurate views/downloads

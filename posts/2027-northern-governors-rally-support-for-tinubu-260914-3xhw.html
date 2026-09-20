@@ -101,6 +101,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
+const PREPOST={"post": {"title": "2027: Northern governors rally support for Tinubu", "slug": "2027-northern-governors-rally-support-for-tinubu-260914-3xhw", "category": "CULTURE", "excerpt": "By Ibrahim Hassan-Wuyo KADUNA — Governors from Northern states and senior members of the Federal Executive Council on Sunday converged on Kaduna to mobilise support for the re-election of President B", "content": "By Ibrahim Hassan-Wuyo\n\n\n\nKADUNA — Governors from Northern states and senior members of the Federal Executive Council on Sunday converged on Kaduna to mobilise support for the re-election of President Bola Ahmed Tinubu and Kaduna State Governor, Senator Uba Sani, ahead of the 2027 general elections.\n\n\n\n\n\n\n\nThe high-powered gathering, which brought together political stakeholders from the 19 Northern states, was held at the Umaru Musa Yar’Adua Conference Centre, Kaduna, as part of efforts to strengthen support for the Tinubu administration in the region.\n\nSource: https://www.vanguardngr.com/2026/09/2027-northern-governors-rally-support-for-tinubu/", "coverImage": "https://cdn.vanguardngr.com/wp-content/uploads/2026/07/Bola-Ahmed-Tinubu-1024x683.jpg", "musicFile": null, "videoFile": null, "date": "Sep 14, 2026", "createdAt": 1789343282418}, "related": []};
 
 function getCache(){
   try{
@@ -424,11 +425,15 @@ async function init(){
   }
   if(!slug)return;
 
-  // Try cache first for instant load
-  const cached=getCache();
-  if(cached){
-    const post=cached.find(p=>p.slug===slug);
-    if(post){renderPost(post,cached);}
+  /* FAST-POST */
+  if(typeof PREPOST!=='undefined'&&PREPOST&&PREPOST.post){
+    renderPost(PREPOST.post,[...(PREPOST.related||[]),PREPOST.post]);
+  }else{
+    const cached=getCache();
+    if(cached){
+      const post=cached.find(p=>p.slug===slug);
+      if(post){renderPost(post,cached);}
+    }
   }
 
   // Always fetch fresh in background for accurate views/downloads

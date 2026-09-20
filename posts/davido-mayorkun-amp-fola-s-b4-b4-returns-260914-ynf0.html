@@ -101,6 +101,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
+const PREPOST={"post": {"title": "Davido, Mayorkun &amp; FOLA’s B4 B4 Returns to No. 1 on Apple Music Nigeria", "slug": "davido-mayorkun-amp-fola-s-b4-b4-returns-260914-ynf0", "category": "MUSIC", "excerpt": "Davido, Mayorkun &amp; FOLA’s Hit Collaboration, B4 B4, Reclaims No. 1 on Apple Music Nigeria After 42 Days on the Chart Nigerian superstars Davido, Mayorkun, and rising sensation FOLA are back at th", "content": "Davido, Mayorkun &amp; FOLADavido, Mayorkun &amp; FOLA’s Hit Collaboration, B4 B4, Reclaims No. 1 on Apple Music Nigeria After 42 Days on the Chart\nNigerian superstars Davido, Mayorkun, and rising sensation FOLA are back at the summit as their hit collaboration, B4 B4, returns to No. 1 on the Apple Music Nigeria Top Songs Chart.\nThe chart-topping comeback comes as the record marks its 42nd day on the chart, further highlighting its remarkable staying power and continued popularity among listeners across the country.\n\nSource: https://tooxclusive.com/news/davido-mayorkun-fola-b4-b4-apple-music-3/", "coverImage": "https://hub.tooxclusive.com/wp-content/uploads/2026/07/Davido-Mayorkun-FOLA.jpg", "musicFile": null, "videoFile": null, "date": "Sep 14, 2026", "createdAt": 1789349384711}, "related": [{"slug": "afrobeats-update-june-2026-mix-260914-imdg", "title": "Afrobeats Update June 2026 Mix", "category": "MUSIC", "coverImage": "https://i1.sndcdn.com/artworks-anN7pknKHQy1PfMb-KRdpsA-t3000x3000.jpg", "date": "Sep 14, 2026"}, {"slug": "afrobeats-update-july-2026-mix-260914-79ff", "title": "Afrobeats Update July 2026 Mix", "category": "MUSIC", "coverImage": "https://i1.sndcdn.com/artworks-VDVHvPR2v54ml0do-ArEAXA-t3000x3000.jpg", "date": "Sep 14, 2026"}, {"slug": "testimony-song-bro-george-mp3-download-260914-pld3", "title": "Testimony Song | Bro George - Mp3 Download", "category": "MUSIC", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789374072/m3zxmwaldom3x8a8qsxb.jpg", "date": "Sep 14, 2026"}]};
 
 function getCache(){
   try{
@@ -424,11 +425,15 @@ async function init(){
   }
   if(!slug)return;
 
-  // Try cache first for instant load
-  const cached=getCache();
-  if(cached){
-    const post=cached.find(p=>p.slug===slug);
-    if(post){renderPost(post,cached);}
+  /* FAST-POST */
+  if(typeof PREPOST!=='undefined'&&PREPOST&&PREPOST.post){
+    renderPost(PREPOST.post,[...(PREPOST.related||[]),PREPOST.post]);
+  }else{
+    const cached=getCache();
+    if(cached){
+      const post=cached.find(p=>p.slug===slug);
+      if(post){renderPost(post,cached);}
+    }
   }
 
   // Always fetch fresh in background for accurate views/downloads

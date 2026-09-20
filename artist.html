@@ -49,9 +49,15 @@ const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const artistId='__ARTIST_ID__';
 
 async function init(){
-  const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
-  const data=await res.json();
-  const db=data.record||{};
+  /* FAST-ARTIST */
+  let db;
+  if(typeof PREART!=='undefined'&&PREART&&PREART.artist){
+    db={artists:[PREART.artist],songs:PREART.songs||[],posts:(PREART.titles||[]).map(t=>({title:t}))};
+  }else{
+    const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+    const data=await res.json();
+    db=data.record||{};
+  }
   const artist=(db.artists||[]).find(a=>a.id===artistId);
   if(!artist)return;
 

@@ -1,5 +1,9 @@
 import json, os, subprocess
 
+def _js(o):
+    # JSON that is safe to place inside a <script> tag
+    return json.dumps(o, ensure_ascii=False).replace('</', '<\\/').replace('\u2028', '\\u2028').replace('\u2029', '\\u2029')
+
 env_path = os.path.expanduser('~/pulsewire-static/.env')
 key = None
 with open(env_path) as f:
@@ -53,6 +57,12 @@ for post in posts:
         f"const slug='{slug}';"
     )
 
+    # FAST-POST: bake the article into the page so it shows instantly
+    _same = [p for p in posts if p.get('slug') != slug and p.get('category') == post.get('category')][-3:]
+    _rel = [{k: p.get(k) for k in ('slug', 'title', 'category', 'coverImage', 'date')} for p in _same]
+    page = page.replace("const CACHE_KEY='pw_posts';",
+                        "const CACHE_KEY='pw_posts';\nconst PREPOST=" + _js({'post': post, 'related': _rel}) + ";", 1)
+
     with open(f'posts/{slug}.html', 'w') as f:
         f.write(page)
 
@@ -91,6 +101,12 @@ if os.path.exists('artist.html'):
   <meta name="twitter:image" content="{photo}">'''
         )
         page = page.replace("const artistId='__ARTIST_ID__';", f"const artistId='{artist.get('id','')}';")
+
+        # FAST-ARTIST: bake the artist, their songs and 6 headlines into the page
+        _aid = str(artist.get('id', ''))
+        _songs = [s_ for s_ in data.get('record', {}).get('songs', []) if s_.get('artistId') == artist.get('id')]
+        page = page.replace("const artistId='" + _aid + "';",
+                            "const artistId='" + _aid + "';\nconst PREART=" + _js({'artist': artist, 'songs': _songs, 'titles': [p_.get('title', '') for p_ in posts[:6]]}) + ";", 1)
 
         with open(f'artists/{slug}.html', 'w') as f:
             f.write(page)

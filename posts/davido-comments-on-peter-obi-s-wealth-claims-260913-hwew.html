@@ -101,6 +101,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
+const PREPOST={"post": {"title": "Davido Comments on Peter Obi’s Wealth Claims in Viral Video", "slug": "davido-comments-on-peter-obi-s-wealth-claims-260913-hwew", "category": "TRENDING", "excerpt": "Davido responds to Peter Obi's remarks about his wealth in an old video.The post Davido Comments on Peter Obi’s Wealth Claims in Viral Video appeared first on tooXclusive.", "content": "Davido responds to Peter Obi's remarks about his wealth in an old video.\nThe post Davido Comments on Peter Obi’s Wealth Claims in Viral Video appeared first on tooXclusive.\n\n\nSource: https://tooxclusive.com/entertainment/davido-comments-on-peter-obis-wealth-claims-in-viral-video/", "coverImage": "https://hub.tooxclusive.com/wp-content/uploads/2026/07/Davido.jpg", "musicFile": null, "videoFile": null, "date": "Sep 13, 2026", "createdAt": 1789314005649, "views": 1}, "related": [{"slug": "carter-efe-slams-comparisons-to-dj-tunez-over-260913-rmyp", "title": "Carter Efe Slams Comparisons To DJ Tunez Over Hygiene Allegations", "category": "TRENDING", "coverImage": "https://hub.tooxclusive.com/wp-content/uploads/2025/11/wizkid.jpg", "date": "Sep 13, 2026"}, {"slug": "2026-27-5-things-to-expect-from-manchester-260913-77x3", "title": "2026/27: 5 things to expect from Manchester United vs Manchester City", "category": "TRENDING", "coverImage": null, "date": "Sep 13, 2026"}, {"slug": "unanimous-vote-sees-nashville-airport-move-to-rename-260913-ex56", "title": "Unanimous vote sees Nashville Airport move to rename itself after Dolly Parton", "category": "TRENDING", "coverImage": "https://www.nme.com/wp-content/uploads/2026/09/live-dolly-parton.jpg", "date": "Sep 13, 2026"}]};
 
 function getCache(){
   try{
@@ -424,11 +425,15 @@ async function init(){
   }
   if(!slug)return;
 
-  // Try cache first for instant load
-  const cached=getCache();
-  if(cached){
-    const post=cached.find(p=>p.slug===slug);
-    if(post){renderPost(post,cached);}
+  /* FAST-POST */
+  if(typeof PREPOST!=='undefined'&&PREPOST&&PREPOST.post){
+    renderPost(PREPOST.post,[...(PREPOST.related||[]),PREPOST.post]);
+  }else{
+    const cached=getCache();
+    if(cached){
+      const post=cached.find(p=>p.slug===slug);
+      if(post){renderPost(post,cached);}
+    }
   }
 
   // Always fetch fresh in background for accurate views/downloads

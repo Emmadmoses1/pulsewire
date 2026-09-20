@@ -58,11 +58,18 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const artistId='art-1789883669845';
+const PREART={"artist": {"id": "art-1789883669845", "name": "Seyi Vibez", "genre": "Afrobeats", "bio": "Balogun Afolabi Oluwaloseyi known professionally as Seyi Vibez, is a Nigerian singer and songwriter. He is known for his breakthrough single \"Chance \" from his second studio album Billion Dollar Baby which debuted at No. 19 on the UK Afrobeats singles chart and peaked number 7 on the TurnTable Top 100 chart.", "slug": "seyi-vibez", "photo": "https://upload.wikimedia.org/wikipedia/commons/4/48/Seyi_Vibez.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"}, "songs": [{"id": "song-1789883953236", "title": "99 (feat. Daecolm)", "artistId": "art-1789883669845", "type": "Single", "excerpt": "From the release \"Olamidé\" by Olamide, Seyi Vibez, Asake & Young Jonn (2025).", "downloadUrl": "https://res.cloudinary.com/smg1blzu/video/upload/l_video:wavzo-tag-v1,fl_splice,e_volume:200/fl_layer_apply,so_0,du_3/im1x095rquqaccmxugid.mp3", "youtubeUrl": "https://www.youtube.com/watch?v=AKdFb0ljCJ0", "cover": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ba/6d/fb/ba6dfb0f-3eb5-d02a-79f6-6a4483231e13/199316074352_cover.jpg/1000x1000bb.jpg", "slug": "99-feat-daecolm-1789883953236", "createdAt": 1789883953236}], "titles": ["Holy Ghost | Emma D Moses", "Reform receives record £36m donation from crypto billionaire", "Burnham and Badenoch revive red versus blue politics as Reform land 'gobsmacking' donation", "Lightning Houthi advance in Yemen may bring dangerous new dimension to Iran war", "Masked men, lorries and road blocks: How anti-migrant activists are changing tactics", "Trump says united Ireland would be 'fantastic' during visit to Dublin"]};
 
 async function init(){
-  const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
-  const data=await res.json();
-  const db=data.record||{};
+  /* FAST-ARTIST */
+  let db;
+  if(typeof PREART!=='undefined'&&PREART&&PREART.artist){
+    db={artists:[PREART.artist],songs:PREART.songs||[],posts:(PREART.titles||[]).map(t=>({title:t}))};
+  }else{
+    const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+    const data=await res.json();
+    db=data.record||{};
+  }
   const artist=(db.artists||[]).find(a=>a.id===artistId);
   if(!artist)return;
 
