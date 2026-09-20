@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>WAVZO — Nigerian Music, News & Culture</title>
-  <link rel="icon" type="image/png" href="/images/wavzo-favicon-32.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/wavzo-icon-192.png">
+  <link rel="apple-touch-icon" href="/images/wavzo-icon-192.png">
   
   <meta name="description" content="Breaking news, trending topics, entertainment & culture from Nigeria.">
   <link rel="canonical" href="https://wavzo.com.ng/">
@@ -402,6 +404,16 @@
 <button id="backToTop" title="Back to top">↑</button>
 
 <script>
+/* FAST-IMG */
+function IMG(u,w){
+  try{
+    if(!u||!/^https?:\/\//i.test(u)||u.indexOf('wsrv.nl')>-1)return u;
+    var m=u.match(/^(https?:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/)(v\d+\/.*)$/);
+    if(m)return m[1]+'f_auto,q_auto,w_'+w+'/'+m[2];
+    return 'https://wsrv.nl/?url='+encodeURIComponent(u)+'&w='+w+'&output=webp&q=75&we';
+  }catch(e){return u;}
+}
+function IMGFB(el){el.onerror=null;if(el.dataset&&el.dataset.o)el.src=el.dataset.o;}
 const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
@@ -456,7 +468,7 @@ function buildHero(posts){
   updateOG({image:first.coverImage||DEFAULT_OG});
   document.getElementById('heroSlides').innerHTML=slides.map((p,i)=>`
     <div class="hero-slide${i===0?' active':''}">
-      <img src="${p.coverImage}" alt="${p.title}" loading="${i===0?'eager':'lazy'}">
+      <img src="${IMG(p.coverImage,900)}" data-o="${p.coverImage}" onerror="IMGFB(this)" alt="${p.title}" loading="${i===0?'eager':'lazy'}">
       <div class="hero-slide-overlay"></div>
       <div class="hero-slide-content">
         <span class="hero-slide-cat">${p.category}</span>
@@ -489,7 +501,7 @@ function buildArtists(artists){
   track.innerHTML=doubled.map(a=>`
     <a class="artist-card" href="/artists.html">
       <div class="artist-img-wrap">
-        ${a.photo?`<img src="${a.photo}" alt="${a.name}" loading="lazy">`:`<div class="artist-img-placeholder">🎤</div>`}
+        ${a.photo?`<img src="${IMG(a.photo,640)}" data-o="${a.photo}" onerror="IMGFB(this)" alt="${a.name}" loading="lazy">`:`<div class="artist-img-placeholder">🎤</div>`}
       </div>
       <div class="artist-name">${a.name}</div>
     </a>`).join('');
@@ -504,7 +516,7 @@ function buildFeatured(posts){
   const[main,...side]=fp;
   grid.innerHTML=`
     <div class="featured-main">
-      <img src="${main.coverImage}" alt="${main.title}" loading="eager">
+      <img src="${IMG(main.coverImage,900)}" data-o="${main.coverImage}" onerror="IMGFB(this)" alt="${main.title}" loading="eager">
       <div class="featured-main-overlay"></div>
       <div class="featured-main-content">
         <span class="f-cat">${main.category}</span>
@@ -514,7 +526,7 @@ function buildFeatured(posts){
     <div class="featured-side">
       ${side.map(p=>`
         <div class="featured-side-item">
-          <img src="${p.coverImage}" alt="${p.title}" loading="lazy">
+          <img src="${IMG(p.coverImage,640)}" data-o="${p.coverImage}" onerror="IMGFB(this)" alt="${p.title}" loading="lazy">
           <div class="featured-side-overlay"></div>
           <div class="featured-side-content">
             <span class="f-cat">${p.category}</span>
@@ -532,7 +544,7 @@ function buildMusic(songs,artists){
   document.getElementById('musicSecHeader').style.display='flex';
   document.getElementById('musicScroll').innerHTML=[...songs].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,12).map(s=>`
     <a class="music-card" href="/songs/${s.slug}.html">
-      ${s.cover?`<img class="music-card-img" src="${s.cover}" alt="${s.title}" loading="lazy">`:`<div class="music-card-placeholder">🎵</div>`}
+      ${s.cover?`<img class="music-card-img" src="${IMG(s.cover,640)}" data-o="${s.cover}" onerror="IMGFB(this)" alt="${s.title}" loading="lazy">`:`<div class="music-card-placeholder">🎵</div>`}
       <div class="music-card-body">
         <div class="music-card-type">${s.type||'Single'}</div>
         <div class="music-card-title">${s.title}</div>
@@ -561,7 +573,7 @@ function applyFilters(){
   empty.style.display='none';
   grid.innerHTML=filtered.map(p=>`
     <a class="post-card" href="/posts/${p.slug}.html">
-      ${p.coverImage?`<img class="post-card-img" src="${p.coverImage}" alt="${p.title}" loading="lazy">`:`<div class="post-card-placeholder">${p.category==='MUSIC'?'🎵':'📰'}</div>`}
+      ${p.coverImage?`<img class="post-card-img" src="${IMG(p.coverImage,640)}" data-o="${p.coverImage}" onerror="IMGFB(this)" alt="${p.title}" loading="lazy">`:`<div class="post-card-placeholder">${p.category==='MUSIC'?'🎵':'📰'}</div>`}
       <div class="post-card-body">
         <div class="post-card-cat ${catColor(p.category)}">${p.category}</div>
         <h3 class="post-card-title">${p.title}</h3>

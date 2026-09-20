@@ -37,6 +37,9 @@ a{text-decoration:none;color:inherit}
 .empty-msg{max-width:1100px;margin:60px auto;padding:0 20px;text-align:center;color:#888}
 footer{text-align:center;padding:30px;color:#999;font-size:12px}
 </style>
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/wavzo-icon-192.png">
+  <link rel="apple-touch-icon" href="/images/wavzo-icon-192.png">
 </head>
 <body>
 <div class="ticker-bar">
@@ -58,6 +61,16 @@ footer{text-align:center;padding:30px;color:#999;font-size:12px}
 <footer>&copy; WAVZO</footer>
 
 <script>
+/* FAST-IMG */
+function IMG(u,w){
+  try{
+    if(!u||!/^https?:\/\//i.test(u)||u.indexOf('wsrv.nl')>-1)return u;
+    var m=u.match(/^(https?:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/)(v\d+\/.*)$/);
+    if(m)return m[1]+'f_auto,q_auto,w_'+w+'/'+m[2];
+    return 'https://wsrv.nl/?url='+encodeURIComponent(u)+'&w='+w+'&output=webp&q=75&we';
+  }catch(e){return u;}
+}
+function IMGFB(el){el.onerror=null;if(el.dataset&&el.dataset.o)el.src=el.dataset.o;}
 const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
@@ -83,7 +96,7 @@ async function init(){
     grid.innerHTML=artists.map(a=>`
       <a class="artist-grid-card" href="/artists/${a.slug}.html">
         <div class="artist-grid-img">
-          ${a.photo?`<img src="${a.photo}" alt="${a.name}" loading="lazy">`:`<div class="artist-grid-img-placeholder">🎤</div>`}
+          ${a.photo?`<img src="${IMG(a.photo,640)}" data-o="${a.photo}" onerror="IMGFB(this)" alt="${a.name}" loading="lazy">`:`<div class="artist-grid-img-placeholder">🎤</div>`}
         </div>
         <div class="artist-grid-name">${a.name}</div>
         <div class="artist-grid-genre">${a.genre||''}</div>

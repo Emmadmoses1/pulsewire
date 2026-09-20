@@ -15,8 +15,10 @@
   <meta name="twitter:title" content="Ed Sheeran admits 'mistakes' as he addresses Macklemore controversy at Philadelphia show">
   <meta name="twitter:description" content="The mega-star spoke about Israel and Gaza at his first concert since rapper Macklemore was removed from his tour.">
   <meta name="twitter:image" content="https://res.cloudinary.com/smg1blzu/image/upload/v1789886121/pdioyte35f8vksbqzqvw.jpg">
-  <link rel="icon" type="image/png" href="/images/wavzo-favicon-32.png">
-  <link rel="icon" type="image/png" href="/images/wavzo-favicon-32.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/wavzo-icon-192.png">
+  <link rel="apple-touch-icon" href="/images/wavzo-icon-192.png">
+  
   <link rel="stylesheet" href="/css/style.css">
   <style>
     .views-bar{display:flex;gap:16px;align-items:center;margin:10px 0 16px;flex-wrap:wrap}
@@ -97,6 +99,16 @@
 <button id="backToTop">&uarr;</button>
 
 <script>
+/* FAST-IMG */
+function IMG(u,w){
+  try{
+    if(!u||!/^https?:\/\//i.test(u)||u.indexOf('wsrv.nl')>-1)return u;
+    var m=u.match(/^(https?:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/)(v\d+\/.*)$/);
+    if(m)return m[1]+'f_auto,q_auto,w_'+w+'/'+m[2];
+    return 'https://wsrv.nl/?url='+encodeURIComponent(u)+'&w='+w+'&output=webp&q=75&we';
+  }catch(e){return u;}
+}
+function IMGFB(el){el.onerror=null;if(el.dataset&&el.dataset.o)el.src=el.dataset.o;}
 const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
@@ -355,7 +367,7 @@ function renderPost(post,posts){
       <button class="share-btn-x" onclick="sharePost('copy')">🔗 Copy Link</button>
     </div>
     <div class="ad-slot">Advertisement</div>
-    ${post.coverImage?`<img src="${post.coverImage}" class="article-cover" alt="${post.title}">`:''}
+    ${post.coverImage?`<img src="${IMG(post.coverImage,900)}" data-o="${post.coverImage}" onerror="IMGFB(this)" class="article-cover" alt="${post.title}">`:''}
     ${post.videoFile?`
       <div class="media-block">
         <div class="media-label">🎬 Video</div>
@@ -393,7 +405,7 @@ function renderPost(post,posts){
         <div class="related-grid">
           ${related.map(r=>`
             <a href="/post.html?slug=${r.slug}" class="related-card">
-              ${r.coverImage?`<img src="${r.coverImage}" class="related-thumb" loading="lazy">`:'<div class="related-thumb-placeholder"></div>'}
+              ${r.coverImage?`<img src="${IMG(r.coverImage,400)}" data-o="${r.coverImage}" onerror="IMGFB(this)" class="related-thumb" loading="lazy">`:'<div class="related-thumb-placeholder"></div>'}
               <div class="related-card-body">
                 <span class="related-cat">${r.category}</span>
                 <p class="related-card-title">${r.title}</p>

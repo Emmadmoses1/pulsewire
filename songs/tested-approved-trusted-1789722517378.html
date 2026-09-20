@@ -15,8 +15,10 @@
   <meta name="twitter:title" content="Tested, Approved & Trusted — Burna Boy">
   <meta name="twitter:description" content="From the release 'I Told Them...' by Burna Boy (2023).">
   <meta name="twitter:image" content="https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/b5/76/9c/b5769caf-9441-ac6b-e1d5-3aa82f3f1fa7/075679673787.jpg/1000x1000bb.jpg">
-  <link rel="icon" type="image/png" href="/images/wavzo-favicon-32.png">
-  <link rel="icon" type="image/png" href="/images/wavzo-favicon-32.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/wavzo-icon-192.png">
+  <link rel="apple-touch-icon" href="/images/wavzo-icon-192.png">
+  
 <link rel="stylesheet" href="/css/style.css">
 
   <meta name="twitter:card" content="summary_large_image">
@@ -58,6 +60,16 @@
 <footer>&copy; WAVZO</footer>
 
 <script>
+/* FAST-IMG */
+function IMG(u,w){
+  try{
+    if(!u||!/^https?:\/\//i.test(u)||u.indexOf('wsrv.nl')>-1)return u;
+    var m=u.match(/^(https?:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/)(v\d+\/.*)$/);
+    if(m)return m[1]+'f_auto,q_auto,w_'+w+'/'+m[2];
+    return 'https://wsrv.nl/?url='+encodeURIComponent(u)+'&w='+w+'&output=webp&q=75&we';
+  }catch(e){return u;}
+}
+function IMGFB(el){el.onerror=null;if(el.dataset&&el.dataset.o)el.src=el.dataset.o;}
 const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
@@ -86,7 +98,7 @@ async function init(){
   document.getElementById('songType').textContent=song.type;
   document.getElementById('songTitle').textContent=song.title;
   document.getElementById('songExcerpt').textContent=song.excerpt||'';
-  if(song.cover)document.getElementById('songCover').src=song.cover;
+  if(song.cover){const el=document.getElementById('songCover');el.dataset.o=song.cover;el.onerror=function(){IMGFB(el)};el.src=IMG(song.cover,900);}
 
   if(artist){
     document.getElementById('crumbArtist').textContent=artist.name;
