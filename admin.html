@@ -2175,5 +2175,312 @@ async function uploadOwnMp3(){
   if(btn.textContent==='✓ Done')setTimeout(()=>{btn.textContent='🎵 Tag & Upload MP3';},3000);
 }
 </script>
+<script>
+
+/* TAGEDIT-1 */
+(function(){
+  var LS_COVER='wz_default_cover', LS_TE='wz_tag_defaults';
+  function ls(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+  function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
+  function el(id){return document.getElementById(id);}
+  function defaultCoverUrl(){return ls(LS_COVER)||FLYER_COVER_URL;}
+  function asJpegUrl(u){
+    var m=String(u).match(/^(https?:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/)(v\d+\/.*)$/);
+    return m?m[1]+'f_jpg,w_800,q_85/'+m[2]:u;
+  }
+  async function imgToJpegBlob(file,max,q){
+    var src;
+    if(window.createImageBitmap){src=await createImageBitmap(file);}
+    else{src=await new Promise(function(res,rej){var i=new Image();i.onload=function(){res(i);};i.onerror=rej;i.src=URL.createObjectURL(file);});}
+    var sc=Math.min(1,max/Math.max(src.width,src.height));
+    var c=document.createElement('canvas');c.width=Math.round(src.width*sc);c.height=Math.round(src.height*sc);
+    var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(src,0,0,c.width,c.height);
+    return await new Promise(function(res){c.toBlob(res,'image/jpeg',q);});
+  }
+  function stripId3(buf){
+    var b=new Uint8Array(buf);
+    if(b.length>10&&b[0]===0x49&&b[1]===0x44&&b[2]===0x33){
+      var size=((b[6]&0x7f)<<21)|((b[7]&0x7f)<<14)|((b[8]&0x7f)<<7)|(b[9]&0x7f);
+      return buf.slice(10+size);
+    }
+    return buf;
+  }
+  function looksLikeMp3(buf){
+    if(buf.byteLength<10000)return false;
+    var b=new Uint8Array(buf.slice(0,4));
+    return (b[0]===0x49&&b[1]===0x44&&b[2]===0x33)||(b[0]===0xFF&&(b[1]&0xE0)===0xE0);
+  }
+  async function fetchRetry(url,tries,onWait){
+    var last='';
+    for(var i=0;i<tries;i++){
+      try{
+        var r=await fetch(url);
+        if(r.ok)return r;
+        last='HTTP '+r.status;
+        var retry=[420,423,429,500,502,503,504].indexOf(r.status)>=0||(r.status===404&&i<3);
+        if(!retry)break;
+      }catch(e){last=(e&&e.message)||'network error';}
+      if(onWait)onWait(i+1,tries);
+      await new Promise(function(r){setTimeout(r,(window._teWait!=null?window._teWait:4000));});
+    }
+    throw new Error('Could not get the audio with your voice tag ('+last+'). Check that the voice-tag file "'+VOICE_TAG_ID+'" exists in your Cloudinary.');
+  }
+  async function getCoverBuffer(coverFile){
+    try{
+      if(coverFile){var jb=await imgToJpegBlob(coverFile,800,0.85);return await jb.arrayBuffer();}
+      var r=await fetch(asJpegUrl(defaultCoverUrl()));
+      if(r.ok)return await r.arrayBuffer();
+    }catch(e){console.warn('cover failed',e);}
+    return null;
+  }
+  async function tagBuffer(buf,meta,coverBuf){
+    var mod=await import('https://cdn.jsdelivr.net/npm/browser-id3-writer@6.3.1/dist/browser-id3-writer.mjs');
+    var w=new mod.ID3Writer(stripId3(buf));
+    function set(k,v){try{w.setFrame(k,v);}catch(e){console.warn('tag frame skipped',k,e);}}
+    set('TIT2',meta.title);
+    set('TPE1',[meta.artist||'WAVZO']);
+    set('TPE2',meta.artist||'WAVZO');
+    set('TALB',meta.album||'WAVZO | wavzo.com.ng');
+    if(meta.year&&/^\d{4}$/.test(meta.year))set('TYER',parseInt(meta.year,10));
+    if(meta.genre)set('TCON',[meta.genre]);
+    if(meta.comment)set('COMM',{description:'',text:meta.comment,language:'eng'});
+    if(coverBuf)set('APIC',{type:3,data:coverBuf,description:'Cover'});
+    w.addTag();
+    return w.getBlob();
+  }
+  async function buildFinalMp3(o){
+    var say=o.say||function(){};
+    function setBar(p){var b=el(o.bar);if(b)b.style.width=p+'%';}
+    var file=o.file;
+    if(!file){
+      say('Downloading the converted MP3...');setBar(10);
+      var sr=await fetch(o.url);
+      if(!sr.ok)throw new Error('Could not fetch the converted MP3');
+      file=new File([await sr.arrayBuffer()],'source.mp3',{type:'audio/mpeg'});
+    }
+    var buf;
+    if(o.voice){
+      say('Uploading the original...');setBar(20);
+      var pubId=await uploadCloudPublicId(file,o.prog,o.bar);
+      var spliced='https://res.cloudinary.com/'+CLOUD+'/video/upload/l_video:'+VOICE_TAG_ID+',fl_splice,e_volume:200/fl_layer_apply,so_0,du_3/'+pubId+'.mp3';
+      say('Adding your voice tag (this can take a minute)...');setBar(45);
+      var r=await fetchRetry(spliced,25,function(i,n){say('Adding your voice tag... waiting ('+i+'/'+n+')');});
+      buf=await r.arrayBuffer();
+      if(!looksLikeMp3(buf))throw new Error('Cloudinary did not return an MP3 with the voice tag.');
+    }else{
+      buf=await file.arrayBuffer();
+    }
+    say('Adding tags and cover art...');setBar(60);
+    var cover=await getCoverBuffer(o.coverFile);
+    var blob=await tagBuffer(buf,o.meta,cover);
+    say('Uploading the final MP3...');setBar(70);
+    var safe=(o.meta.title||'song').replace(/[^a-z0-9]/gi,'-').toLowerCase()+'-'+Date.now();
+    var url=await uploadCloud(new File([blob],safe+'.mp3',{type:'audio/mpeg'}),o.prog,o.bar);
+    setBar(100);
+    return {url:url,cover:!!cover};
+  }
+  function readMeta(){
+    var sel=el('songArtist');
+    var m={
+      title:(el('songTitle').value||'').trim(),
+      artist:((sel&&sel.options[sel.selectedIndex]&&sel.options[sel.selectedIndex].text)||'').trim(),
+      album:((el('teAlbum')&&el('teAlbum').value)||'').trim()||'WAVZO | wavzo.com.ng',
+      year:((el('teYear')&&el('teYear').value)||'').trim(),
+      genre:((el('teGenre')&&el('teGenre').value)||'').trim(),
+      comment:((el('teComment')&&el('teComment').value)||'').trim()
+    };
+    lsSet(LS_TE,JSON.stringify({album:m.album,genre:m.genre,comment:m.comment}));
+    return m;
+  }
+  function refreshCoverNote(){
+    var custom=!!ls(LS_COVER);
+    var n=el('teCoverNote'),p=el('teCoverPrev');
+    if(p&&!(el('teCover')&&el('teCover').files[0]))p.src=asJpegUrl(defaultCoverUrl());
+    if(n)n.textContent=custom?'Default cover: the one you saved. It goes on every song.':'Default cover: the WAVZO flyer. Pick an image above and tick the box to change it.';
+    var rb=el('teReset');if(rb)rb.style.display=custom?'inline-block':'none';
+  }
+  function buildEditor(){
+    var box=el('ownMp3Box'),btn=el('ownMp3Btn');
+    if(!box||!btn||el('tagEditor'))return;
+    var d={};try{d=JSON.parse(ls(LS_TE)||'{}');}catch(e){}
+    var w=document.createElement('div');w.id='tagEditor';
+    w.style.cssText='margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)';
+    w.innerHTML=
+      '<div style="font-size:12px;font-weight:700;margin-bottom:8px">🏷️ Tag editor (saved inside the MP3)</div>'+
+      '<div class="field"><label>Album</label><input type="text" id="teAlbum" placeholder="WAVZO | wavzo.com.ng"></div>'+
+      '<div class="field"><label>Year</label><input type="text" id="teYear" inputmode="numeric" maxlength="4" placeholder="'+new Date().getFullYear()+'"></div>'+
+      '<div class="field"><label>Genre</label><input type="text" id="teGenre" placeholder="Afrobeats"></div>'+
+      '<div class="field"><label>Comment</label><input type="text" id="teComment" placeholder="Downloaded from wavzo.com.ng"></div>'+
+      '<div class="field"><label>Cover art inside the MP3</label>'+
+        '<div style="display:flex;gap:10px;align-items:center"><img id="teCoverPrev" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;background:#222"><input type="file" id="teCover" accept="image/*"></div>'+
+        '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:12px;text-transform:none;letter-spacing:0"><input type="checkbox" id="teRemember" style="width:auto;margin-top:2px"><span>Use this cover on every song from now on</span></label>'+
+        '<div id="teCoverNote" style="font-size:11px;color:#888;margin-top:6px"></div>'+
+        '<button type="button" id="teReset" class="btn btn-sm" style="display:none;width:auto;padding:6px 12px;margin-top:6px;background:#333">Reset to WAVZO flyer</button></div>'+
+      '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;text-transform:none;letter-spacing:0"><input type="checkbox" id="teVoice" checked style="width:auto;margin-top:2px"><span>Add the WAVZO voice tag</span></label>';
+    box.insertBefore(w,btn);
+    if(d.album)el('teAlbum').value=d.album;
+    if(d.genre)el('teGenre').value=d.genre;
+    if(d.comment)el('teComment').value=d.comment;
+    el('teCover').addEventListener('change',function(){
+      var f=this.files[0];if(f)el('teCoverPrev').src=URL.createObjectURL(f);
+    });
+    el('teReset').addEventListener('click',function(){lsDel(LS_COVER);refreshCoverNote();});
+    refreshCoverNote();
+  }
+
+  window.uploadOwnMp3=async function(){
+    var status=el('ownMp3Status'),bar=el('ownMp3Bar'),btn=el('ownMp3Btn');
+    function say(t,c){status.style.color=c||'#888';status.textContent=t;}
+    var file=el('ownMp3File').files[0];
+    if(!el('ownMp3Rights').checked){alert('Please confirm you own this audio or have permission to distribute it.');return;}
+    if(!file){alert('Choose an MP3 file first.');return;}
+    if(!/\.mp3$/i.test(file.name)&&file.type!=='audio/mpeg'){alert('Only MP3 files are supported.');return;}
+    if(file.size>100*1024*1024){alert('File is too large (max 100 MB).');return;}
+    var meta=readMeta();
+    if(!meta.title){alert('Enter the song title first.');return;}
+    btn.disabled=true;btn.textContent='⏳ Working...';
+    el('ownMp3Prog').style.display='block';bar.style.width='5%';
+    var stage='starting';
+    try{
+      var coverFile=(el('teCover')&&el('teCover').files[0])||null;
+      if(coverFile&&el('teRemember')&&el('teRemember').checked){
+        stage='saving your cover';say('Saving your cover as the default...');
+        var jb=await imgToJpegBlob(coverFile,1000,0.85);
+        var cu=await uploadCloud(new File([jb],'wavzo-cover-'+Date.now()+'.jpg',{type:'image/jpeg'}),'ownMp3Prog','ownMp3Bar');
+        lsSet(LS_COVER,cu);refreshCoverNote();
+      }
+      stage='tagging and uploading';
+      var r=await buildFinalMp3({file:file,meta:meta,coverFile:coverFile,voice:!el('teVoice')||el('teVoice').checked,prog:'ownMp3Prog',bar:'ownMp3Bar',say:say});
+      el('songDownloadUrl').value=r.url;
+      say('✓ Tagged MP3 ready'+(r.cover?' with cover art':' (the cover art could not be loaded)')+'. Download link filled in.',r.cover?'#22c55e':'#f59e0b');
+      btn.textContent='✓ Done';
+    }catch(e){
+      var msg=(e&&e.error&&e.error.message)||(e&&e.message)||JSON.stringify(e);
+      say('Failed while '+stage+': '+msg,'#ef4444');
+      btn.textContent='🎵 Tag & Upload MP3';
+      alert('Upload failed while '+stage+': '+msg);
+    }
+    btn.disabled=false;
+    if(btn.textContent==='✓ Done')setTimeout(function(){btn.textContent='🎵 Tag & Upload MP3';},3000);
+  };
+
+  window.convertYoutubeToMp3=async function(){
+    var url=el('songYoutubeUrl').value.trim();
+    if(!url){alert('Find a YouTube video first.');return;}
+    var sm=window._songMeta||{};
+    var m=readMeta();
+    if(sm.title)m.title=sm.title;
+    if(sm.artist)m.artist=sm.artist;
+    if(!m.title)m.title='WAVZO Song';
+    var btn=el('convertYoutubeBtn');
+    if(btn){btn.disabled=true;btn.textContent='⏳ Converting...';}
+    var preview=el('ytPreview');
+    if(!el('ytMp3Status')){
+      preview.insertAdjacentHTML('beforeend','<div id="ytMp3Status" style="font-size:11px;color:#888;margin-top:8px">Starting conversion...</div><div class="prog-wrap" id="ytMp3Prog" style="display:block;margin-top:6px"><div class="prog-fill" id="ytMp3Bar" style="width:5%"></div></div>');
+    }
+    var status=el('ytMp3Status'),bar=el('ytMp3Bar');
+    function say(t,c){if(status){status.style.color=c||'#888';status.textContent=t;}}
+    try{
+      var vm=url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      if(!vm)throw new Error('Invalid YouTube URL');
+      say('Requesting MP3...');if(bar)bar.style.width='10%';
+      var W='https://pulsewire-ai.dakudinamoses.workers.dev';
+      var initRes=await fetch(W+'/mp3-convert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:vm[1]})});
+      var init=await initRes.json();
+      if(!init.progressId&&!init.downloadUrl)throw new Error('Could not start conversion ('+initRes.status+'): '+JSON.stringify(init));
+      say('Converting...');if(bar)bar.style.width='20%';
+      var dl=init.downloadUrl||'';
+      if(!dl){
+        for(var i=0;i<30;i++){
+          await new Promise(function(r){setTimeout(r,3000);});
+          var pr=await fetch(W+'/mp3-progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:init.progressId})});
+          var pd=await pr.json();
+          if(pd.finished&&pd.downloadUrl){dl=pd.downloadUrl;break;}
+        }
+      }
+      if(!dl)throw new Error('Conversion timed out');
+      var coverFile=(el('teCover')&&el('teCover').files[0])||null;
+      var r=await buildFinalMp3({url:dl,meta:m,coverFile:coverFile,voice:!el('teVoice')||el('teVoice').checked,prog:'ytMp3Prog',bar:'ytMp3Bar',say:say});
+      el('songDownloadUrl').value=r.url;
+      if(bar)bar.style.width='100%';
+      say('✓ MP3 ready - tagged'+(r.cover?' with cover art':'')+'.','#22c55e');
+      if(btn){btn.disabled=false;btn.textContent='✓ MP3 Ready';}
+    }catch(e){
+      say('Failed: '+(e&&e.message),'#ef4444');
+      if(btn){btn.disabled=false;btn.textContent='🎵 Convert to MP3';}
+      alert('Conversion failed: '+(e&&e.message));
+    }
+  };
+
+  /* scanner: finds free vision models on OpenRouter right now instead of relying on a fixed list */
+  async function visionModels(){
+    if(window._vm&&Date.now()-window._vmAt<3600000)return window._vm;
+    var ids=['openrouter/free'];
+    try{
+      var r=await fetch('https://openrouter.ai/api/v1/models');
+      var d=await r.json();
+      var list=(d.data||[]).filter(function(m){
+        var mods=(m.architecture&&m.architecture.input_modalities)||[];
+        return String(m.id).slice(-5)===':free'&&mods.indexOf('image')>=0;
+      });
+      var pref=/gemini|qwen.*vl|llama.*vision|mistral|gemma|pixtral|nemotron/i;
+      list.sort(function(a,b){return (pref.test(b.id)?1:0)-(pref.test(a.id)?1:0)||(b.context_length||0)-(a.context_length||0);});
+      list.slice(0,6).forEach(function(m){ids.push(m.id);});
+    }catch(e){}
+    window._vm=ids;window._vmAt=Date.now();
+    return ids;
+  }
+  async function visionAsk(prompt,imgUrl){
+    var models=await visionModels(),errs=[];
+    for(var i=0;i<models.length;i++){
+      var model=models[i],ctl=new AbortController(),t=setTimeout(function(){ctl.abort();},30000);
+      try{
+        var r=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',signal:ctl.signal,
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENROUTER_KEY},
+          body:JSON.stringify({model:model,max_tokens:1500,temperature:0.3,messages:[{role:'user',content:[{type:'text',text:prompt},{type:'image_url',image_url:{url:imgUrl}}]}]})});
+        var raw=await r.text(),d=null;try{d=JSON.parse(raw);}catch(e){}
+        if(!r.ok||!d||d.error){errs.push(model.split('/').pop()+': '+((d&&d.error&&(d.error.message||JSON.stringify(d.error)))||('HTTP '+r.status)).slice(0,90));continue;}
+        var txt=d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
+        if(Array.isArray(txt))txt=txt.map(function(p){return p.text||'';}).join('');
+        txt=String(txt||'').replace(/```(?:json)?/gi,'').trim();
+        var a=txt.indexOf('{'),b=txt.lastIndexOf('}');
+        if(a<0||b<=a){errs.push(model.split('/').pop()+': unreadable reply');continue;}
+        return JSON.parse(txt.slice(a,b+1));
+      }catch(e){errs.push(model.split('/').pop()+': '+(e.name==='AbortError'?'timed out':e.message));}
+      finally{clearTimeout(t);}
+    }
+    throw new Error(errs.slice(0,4).join(' | ')||'no AI model answered');
+  }
+  window.scanCoverArt=async function(){
+    var file=el('coverIn').files[0];
+    var remote=(typeof _rssImageUrl==='string'&&_rssImageUrl)||'';
+    if(!file&&!remote){alert('Choose a cover image first.');return;}
+    var btn=el('scanCoverBtn');btn.disabled=true;btn.textContent='Scanning...';
+    try{
+      var imgUrl=remote;
+      if(file){
+        var jb=await imgToJpegBlob(file,800,0.8);
+        imgUrl=await new Promise(function(res,rej){var fr=new FileReader();fr.onload=function(){res(fr.result);};fr.onerror=function(){rej(new Error('Could not read the image'));};fr.readAsDataURL(jb);});
+      }
+      var prompt='You help run a Nigerian music blog. This image is cover art or a flyer for a music release. Read any visible text (artist name, song or album title). Reply with ONLY a JSON object, no markdown: {"title":"song or album title if visible, else empty","artist":"artist name if visible, else empty","excerpt":"one or two sentence teaser","content":"2-3 paragraph blog article about the release, paragraphs separated by \\n\\n. Do not invent facts like release dates, chart positions or awards."}';
+      var data=await visionAsk(prompt,imgUrl);
+      var title=(data.title||'').trim(),artist=(data.artist||'').trim();
+      if(title||artist)el('pTitle').value=(title&&artist)?(title+' — '+artist):(title||artist);
+      if(data.excerpt)el('pExcerpt').value=data.excerpt;
+      if(data.content)el('pContent').value=data.content;
+      el('pCat').value='MUSIC';
+      if(typeof showToast==='function')showToast('Cover scanned ✓ - review the text');
+    }catch(e){
+      alert('Scan failed: '+e.message);
+    }finally{
+      btn.disabled=false;btn.textContent='🎵 Scan Cover & Auto-Fill';
+    }
+  };
+
+  buildEditor();
+})();
+
+</script>
 </body>
 </html>
