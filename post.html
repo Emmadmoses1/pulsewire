@@ -350,8 +350,6 @@ function renderPost(post,posts){
     <div class="article-cat-tag">${post.category}</div>
     <h1 class="article-title">${post.title}</h1>
     <div class="views-bar">
-      <span>👁 <strong>${(post.views||0).toLocaleString()}</strong> views</span>
-      <span>⬇ <strong>${(post.downloads||0).toLocaleString()}</strong> downloads</span>
       <span>📅 ${post.date}</span>
     </div>
     <div class="reactions-bar" id="reactionsBar">${renderReactionsHTML(post.reactions||{},slug)}</div>

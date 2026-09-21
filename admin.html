@@ -1598,7 +1598,7 @@ async function convertYoutubeToMp3(){
     const id3=new ID3Writer(songBuffer);
     id3.setFrame('TIT2',title||'WAVZO Song')
        .setFrame('TPE1',[artist||'WAVZO'])
-       .setFrame('TALB','WAVZO | wavzo.com.ng')
+       .setFrame('TALB','wavzo.com.ng')
        .setFrame('APIC',{type:3,data:coverBuffer,description:'Cover'});
     id3.addTag();
     const taggedBlob=id3.getBlob();
@@ -2152,7 +2152,7 @@ async function uploadOwnMp3(){
     try{const cr=await fetch(FLYER_COVER_URL);if(cr.ok)coverBuf=await cr.arrayBuffer();}catch(e){}
     stage='tagging';
     const id3=new ID3Writer(buf);
-    id3.setFrame('TIT2',title).setFrame('TPE1',[artist||'WAVZO']).setFrame('TALB','WAVZO | wavzo.com.ng');
+    id3.setFrame('TIT2',title).setFrame('TPE1',[artist||'WAVZO']).setFrame('TALB','wavzo.com.ng');
     if(coverBuf)id3.setFrame('APIC',{type:3,data:coverBuf,description:'Cover'});
     id3.addTag();
     const blob=id3.getBlob();
@@ -2241,7 +2241,7 @@ async function uploadOwnMp3(){
     set('TIT2',meta.title);
     set('TPE1',[meta.artist||'WAVZO']);
     set('TPE2',meta.artist||'WAVZO');
-    set('TALB',meta.album||'WAVZO | wavzo.com.ng');
+    set('TALB',meta.album||'wavzo.com.ng');
     if(meta.year&&/^\d{4}$/.test(meta.year))set('TYER',parseInt(meta.year,10));
     if(meta.genre)set('TCON',[meta.genre]);
     if(meta.comment)set('COMM',{description:'',text:meta.comment,language:'eng'});
@@ -2285,12 +2285,12 @@ async function uploadOwnMp3(){
     var m={
       title:(el('songTitle').value||'').trim(),
       artist:((sel&&sel.options[sel.selectedIndex]&&sel.options[sel.selectedIndex].text)||'').trim(),
-      album:((el('teAlbum')&&el('teAlbum').value)||'').trim()||'WAVZO | wavzo.com.ng',
+      album:((el('teAlbum')&&el('teAlbum').value)||'').trim()||'wavzo.com.ng',
       year:((el('teYear')&&el('teYear').value)||'').trim(),
       genre:((el('teGenre')&&el('teGenre').value)||'').trim(),
       comment:((el('teComment')&&el('teComment').value)||'').trim()
     };
-    lsSet(LS_TE,JSON.stringify({album:m.album,genre:m.genre,comment:m.comment}));
+    lsSet(LS_TE,JSON.stringify({genre:m.genre,comment:m.comment})); /* wz_album_fixed */
     return m;
   }
   function refreshCoverNote(){
@@ -2308,7 +2308,7 @@ async function uploadOwnMp3(){
     w.style.cssText='margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)';
     w.innerHTML=
       '<div style="font-size:12px;font-weight:700;margin-bottom:8px">🏷️ Tag editor (saved inside the MP3)</div>'+
-      '<div class="field"><label>Album</label><input type="text" id="teAlbum" placeholder="WAVZO | wavzo.com.ng"></div>'+
+      '<div class="field"><label>Album</label><input type="text" id="teAlbum" placeholder="wavzo.com.ng"></div>'+
       '<div class="field"><label>Year</label><input type="text" id="teYear" inputmode="numeric" maxlength="4" placeholder="'+new Date().getFullYear()+'"></div>'+
       '<div class="field"><label>Genre</label><input type="text" id="teGenre" placeholder="Afrobeats"></div>'+
       '<div class="field"><label>Comment</label><input type="text" id="teComment" placeholder="Downloaded from wavzo.com.ng"></div>'+
@@ -2319,7 +2319,7 @@ async function uploadOwnMp3(){
         '<button type="button" id="teReset" class="btn btn-sm" style="display:none;width:auto;padding:6px 12px;margin-top:6px;background:#333">Reset to WAVZO flyer</button></div>'+
       '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;text-transform:none;letter-spacing:0"><input type="checkbox" id="teVoice" checked style="width:auto;margin-top:2px"><span>Add the WAVZO voice tag</span></label>';
     box.insertBefore(w,btn);
-    if(d.album)el('teAlbum').value=d.album;
+    el('teAlbum').value='wavzo.com.ng';
     if(d.genre)el('teGenre').value=d.genre;
     if(d.comment)el('teComment').value=d.comment;
     el('teCover').addEventListener('change',function(){
