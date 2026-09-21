@@ -468,11 +468,11 @@ let BIN_KEY=localStorage.getItem('wz_key')||'';
 const BIN_URL=`https://wavzo-db.dakudinamoses.workers.dev/v3/b/${BIN_ID}`;
 const RAPIDAPI_KEY='161ee8b7acmsh5b2364ad0b1fc09p17dac7jsn59ce97db1ced';
 const RAPIDAPI_HOST='youtube-mp4-mp3-downloader.p.rapidapi.com';
-const OPENROUTER_KEY='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';
+const OPENROUTER_KEY='';
 const OPENROUTER_MODEL='mistralai/mistral-7b-instruct';
 const VOICE_TAG_ID='wavzo-tag-v1';
 const FLYER_COVER_URL='https://res.cloudinary.com/smg1blzu/image/upload/v1789735632/qnoeruqv98mja55safgu.jpg'; // WAVZO cover art
-const GITHUB_TOKEN='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';
+const GITHUB_TOKEN='';
 const GITHUB_REPO='Emmadmoses1/pulsewire';
 
 async function indexNow(url){
@@ -2206,6 +2206,7 @@ async function uploadOwnMp3(){
     }
     return buf;
   }
+  function isMp3File(f){return /\.mp3$/i.test(f.name||'')||f.type==='audio/mpeg';}
   function looksLikeMp3(buf){
     if(buf.byteLength<10000)return false;
     var b=new Uint8Array(buf.slice(0,4));
@@ -2260,10 +2261,10 @@ async function uploadOwnMp3(){
       file=new File([await sr.arrayBuffer()],'source.mp3',{type:'audio/mpeg'});
     }
     var buf;
-    if(o.voice){
+    if(o.voice||!isMp3File(file)){
       say('Uploading the original...');setBar(20);
       var pubId=await uploadCloudPublicId(file,o.prog,o.bar);
-      var spliced='https://res.cloudinary.com/'+CLOUD+'/video/upload/l_video:'+VOICE_TAG_ID+',fl_splice,e_volume:200/fl_layer_apply,so_0,du_3/'+pubId+'.mp3';
+      var spliced='https://res.cloudinary.com/'+CLOUD+'/video/upload/'+(o.voice?'l_video:'+VOICE_TAG_ID+',fl_splice,e_volume:200/fl_layer_apply,so_0,du_3/':'')+pubId+'.mp3';
       say('Adding your voice tag (this can take a minute)...');setBar(45);
       var r=await fetchRetry(spliced,25,function(i,n){say('Adding your voice tag... waiting ('+i+'/'+n+')');});
       buf=await r.arrayBuffer();
@@ -2478,7 +2479,241 @@ async function uploadOwnMp3(){
     }
   };
 
+  window._wzBuild=async function(o){window._wzBusy=true;try{return await buildFinalMp3(o);}finally{window._wzBusy=false;}};
   buildEditor();
+})();
+
+</script>
+<script>
+
+/* ADMIN-2 */
+(function(){
+  function el(id){return document.getElementById(id);}
+  var WORKER=BIN_URL.replace(/\/v3\/b\/.*$/,'');
+  function key(){return BIN_KEY;}
+  function toast(m,ms){if(typeof showToast==='function')showToast(m,ms||3500);}
+  var rawFetch=window.fetch.bind(window);
+
+  /* 1) AI and site rebuilds go through the Worker, so no keys live in this page */
+  window.fetch=function(u,o){
+    try{
+      var s=typeof u==='string'?u:((u&&u.url)||'');
+      if(s.indexOf('https://openrouter.ai/api/v1/chat/completions')===0){
+        o=Object.assign({},o||{});
+        o.headers={'Content-Type':'application/json','X-Master-Key':key()};
+        return rawFetch(WORKER+'/ai/chat',o);
+      }
+      if(s.indexOf('https://api.github.com/repos/')===0&&s.indexOf('/dispatches')>0){
+        return rawFetch(WORKER+'/rebuild',{method:'POST',headers:{'X-Master-Key':key()}});
+      }
+    }catch(e){}
+    return rawFetch.apply(null,arguments);
+  };
+  var lastWarn=0;
+  window.triggerPreviewGeneration=async function(){
+    try{
+      var r=await rawFetch(WORKER+'/rebuild',{method:'POST',headers:{'X-Master-Key':key()}});
+      var d=await r.json().catch(function(){return {};});
+      if(!r.ok||d.ok===false){
+        if(Date.now()-lastWarn>60000){lastWarn=Date.now();toast('Site rebuild not started: '+(d.message||('HTTP '+r.status)),6000);}
+      }
+    }catch(e){console.log('rebuild failed',e);}
+  };
+
+  /* 2) paste a song link -> title, artist, cover, type and description are filled in */
+  function norm(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'');}
+  function cleanTitle(t){
+    return String(t||'')
+      .replace(/\s*[\(\[]\s*(official|lyric|lyrics|audio|video|music video|visuali[sz]er|hd|4k|explicit|prod\.?)[^\)\]]*[\)\]]/gi,'')
+      .replace(/\s*\|\s*(audiomack|boomplay|spotify|apple music|youtube|soundcloud|deezer|tidal).*$/i,'')
+      .replace(/\s+[-–—]\s+(youtube|topic)\s*$/i,'')
+      .replace(/\s+on\s+(apple music|spotify|audiomack|boomplay|soundcloud|deezer|tidal)\s*$/i,'')
+      .replace(/\s{2,}/g,' ').trim();
+  }
+  function splitArtistTitle(raw,channel){
+    var t=cleanTitle(raw),artist='',title=t,m;
+    if((m=t.match(/^(.+?)\s+[-–—]\s+(.+)$/))){artist=m[1];title=m[2];}
+    else if((m=t.match(/^(.+?)\s+by\s+(.+)$/i))){title=m[1];artist=m[2];}
+    else if(channel){artist=String(channel).replace(/\s*[-–—]\s*topic$/i,'').replace(/vevo$/i,'').replace(/\s*official(\s*channel)?$/i,'').trim();}
+    return {artist:artist.trim(),title:cleanTitle(title)};
+  }
+  function spotifyArtist(desc,title){
+    var parts=String(desc||'').split(/\s*[·•]\s*/),skip=/^(song|album|single|ep|playlist|\d{4})$/i;
+    for(var i=0;i<parts.length;i++){var p=parts[i].trim();if(p&&!skip.test(p)&&norm(p)!==norm(title))return p;}
+    return '';
+  }
+  function pickArtistOption(name){
+    var sel=el('songArtist');if(!sel||!name)return null;
+    var first=String(name).split(/\s*(?:,|&|\bx\b|\bfeat\.?|\bft\.?|\bwith\b)\s*/i)[0];
+    var want=[norm(name),norm(first)],hit=null;
+    for(var i=0;i<sel.options.length&&!hit;i++){
+      var o=norm(sel.options[i].text);
+      if(!o)continue;
+      for(var k=0;k<want.length;k++){if(want[k]&&(o===want[k])){hit=sel.options[i];break;}}
+    }
+    for(var j=0;j<sel.options.length&&!hit;j++){
+      var o2=norm(sel.options[j].text);
+      if(o2&&want[1]&&(o2.indexOf(want[1])>-1||want[1].indexOf(o2)>-1))hit=sel.options[j];
+    }
+    return hit;
+  }
+  function imageLoads(u){return new Promise(function(res){if(!u)return res(false);var i=new Image();i.onload=function(){res(i.naturalWidth>120);};i.onerror=function(){res(false);};i.src=u;});}
+  async function rehost(u){
+    try{
+      var r=await rawFetch('https://api.cloudinary.com/v1_1/'+CLOUD+'/image/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file:u,upload_preset:PRESET})});
+      var d=await r.json();
+      return d.secure_url||u;
+    }catch(e){return u;}
+  }
+  var userEditedExcerpt=false;
+  async function autofill(){
+    var inp=el('songLinkIn'),st=el('songLinkStatus'),btn=el('songLinkBtn');
+    var url=(inp.value||'').trim();
+    if(!/^https?:\/\//i.test(url)){st.style.color='#ef4444';st.textContent='Paste a full link that starts with https://';return;}
+    btn.disabled=true;btn.textContent='Reading...';st.style.color='#888';st.textContent='Reading the link...';
+    try{
+      var r=await rawFetch(WORKER+'/meta?url='+encodeURIComponent(url),{headers:{'X-Master-Key':key()}});
+      var d=await r.json().catch(function(){return {};});
+      if(!r.ok||!d.ok)throw new Error(d.message||('HTTP '+r.status));
+      var title=d.title||'',artist=d.artist||'';
+      if(!artist||d.provider==='youtube'){
+        var sp=splitArtistTitle(title,d.channel);
+        if(sp.artist&&(d.provider==='youtube'||!artist)){artist=sp.artist;title=sp.title||title;}
+        else title=cleanTitle(title);
+      }else title=cleanTitle(title);
+      if(!artist&&d.provider==='spotify')artist=spotifyArtist(d.description,title);
+      if(!artist&&d.description){var sp2=splitArtistTitle(d.title,'');if(sp2.artist){artist=sp2.artist;title=sp2.title;}}
+      if(title)el('songTitle').value=title;
+      var opt=pickArtistOption(artist),notes=[];
+      if(opt){el('songArtist').value=opt.value;}
+      else if(artist)notes.push('Artist "'+artist+'" is not in your Artists list - add them first, or pick one above.');
+      if(d.type)el('songType').value=d.type;
+      else if(d.description&&/\balbum\b/i.test(d.description)&&el('songType'))el('songType').value='Album';
+      // description
+      userEditedExcerpt=false;
+      var ex=d.album&&d.provider!=='youtube'?('From the '+((d.type||'release').toLowerCase())+' "'+d.album+'" by '+(artist||'the artist')+(d.year?' ('+d.year+')':'')+'.'):(title+(artist?' by '+artist:'')+(d.year?' ('+d.year+')':'')+'.');
+      el('songExcerpt').value=ex;
+      if(typeof generateSongDesc==='function'){
+        generateSongDesc(title,artist,d.album||'',d.year||'',d.genre||'',(el('songType')||{}).value||'Single').then(function(x){
+          if(x&&!userEditedExcerpt&&(el('songLinkIn').value||'').trim()===url)el('songExcerpt').value=x;
+        }).catch(function(){});
+      }
+      // cover
+      var img=(await imageLoads(d.image))?d.image:((await imageLoads(d.imageFallback))?d.imageFallback:'');
+      if(img){
+        window._pendingSongCoverUrl=img;
+        var pv=el('songCoverPrev');pv.src=img;pv.classList.remove('hidden');el('songCoverPlaceholder').style.display='none';
+        var fi=el('songCoverIn');if(fi)fi.value='';
+        rehost(img).then(function(nu){if(nu&&nu!==img&&window._pendingSongCoverUrl===img){window._pendingSongCoverUrl=nu;el('songCoverPrev').src=nu;}});
+      }else notes.push('No cover image found - upload one.');
+      // YouTube links also fill the video field and offer the MP3 converter
+      if(d.provider==='youtube'&&d.youtubeUrl){
+        el('songYoutubeUrl').value=d.youtubeUrl;
+        window._selectedYoutube={url:d.youtubeUrl,title:d.title,thumbnail:d.imageFallback||''};
+        window._songMeta={artist:artist,title:title};
+        var esc=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');};
+        el('ytPreview').innerHTML='<div style="display:flex;gap:10px;align-items:center;border:1px solid #222;border-radius:8px;padding:9px"><img src="'+esc(d.imageFallback||'')+'" style="width:70px;height:52px;object-fit:cover;border-radius:5px"><div style="flex:1;min-width:0"><div style="font-size:12px;color:#d1d5db;line-height:1.35">'+esc(d.title)+'</div><div style="font-size:10px;color:#777;margin-top:3px">YouTube video selected</div></div><button type="button" class="btn btn-sm btn-dark" id="convertYoutubeBtn" onclick="convertYoutubeToMp3()" style="white-space:nowrap;width:auto;padding:8px 14px">🎵 Convert to MP3</button></div>';
+      }
+      st.style.color=notes.length?'#f59e0b':'#22c55e';
+      st.textContent='✓ Filled from '+(d.provider||'the link')+': '+(title||'?')+(artist?' - '+artist:'')+(notes.length?'. '+notes.join(' '):'. Check the details, then save.');
+    }catch(e){
+      st.style.color='#ef4444';st.textContent='Could not read that link: '+(e&&e.message)+'. Fill the form in by hand.';
+    }
+    btn.disabled=false;btn.textContent='✨ Autofill';
+  }
+  window.songLinkAutofill=autofill;
+
+  function buildSongLink(){
+    var anchor=el('songEditId');if(!anchor||el('songLinkBox'))return;
+    var box=document.createElement('div');box.className='field';box.id='songLinkBox';
+    box.style.cssText='border:1px dashed var(--border);border-radius:10px;padding:12px';
+    box.innerHTML='<label>🔗 Paste a song link and autofill</label>'+
+      '<div style="display:flex;gap:8px"><input type="text" id="songLinkIn" placeholder="YouTube, Spotify, Apple Music, Audiomack, Boomplay..." style="flex:1"><button type="button" class="btn btn-sm btn-dark" id="songLinkBtn" style="width:auto">✨ Autofill</button></div>'+
+      '<p id="songLinkStatus" style="font-size:12px;color:#888;margin-top:6px;line-height:1.5"></p>';
+    anchor.parentNode.insertBefore(box,anchor.nextSibling);
+    el('songLinkBtn').addEventListener('click',autofill);
+    el('songLinkIn').addEventListener('paste',function(){setTimeout(autofill,80);});
+    el('songLinkIn').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();autofill();}});
+    var ex=el('songExcerpt');if(ex)ex.addEventListener('input',function(){userEditedExcerpt=true;});
+  }
+
+  /* 3) audio uploaded in Create Post gets the voice tag, tags and cover art too */
+  function buildPostAudio(){
+    var ain=el('audioIn');if(!ain||el('postAudioTag'))return;
+    var f=ain.closest?ain.closest('.field'):null;if(!f)return;
+    var box=document.createElement('div');box.className='field';box.id='postAudioTag';
+    box.style.cssText='border:1px dashed var(--border);border-radius:10px;padding:12px';
+    box.innerHTML='<label>🏷️ Audio tag editor (for the audio file above)</label>'+
+      '<div class="field"><label>Artist name</label><input type="text" id="paArtist" placeholder="e.g. Asake"></div>'+
+      '<div class="field"><label>Genre (optional)</label><input type="text" id="paGenre" placeholder="Afrobeats"></div>'+
+      '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;text-transform:none;letter-spacing:0"><input type="checkbox" id="paTag" checked style="width:auto;margin-top:2px"><span>Add the WAVZO voice tag, tags and cover art to this audio</span></label>'+
+      '<div style="font-size:11px;color:#888;margin-top:6px;line-height:1.5">Title = the post title. Album = wavzo.com.ng. Cover = the cover image above, or your default cover.</div>';
+    f.parentNode.insertBefore(box,f.nextSibling);
+    try{var last=localStorage.getItem('wz_pa_artist');if(last)el('paArtist').value=last;}catch(e){}
+  }
+  var rawUpload=window.uploadCloud;
+  window.uploadCloud=async function(file,progId,barId){
+    var isAudio=file&&(/^audio\//.test(file.type||'')||/\.(mp3|wav|aac|m4a)$/i.test(file.name||''));
+    if(progId==='audioProg'&&isAudio&&!window._wzBusy&&window._wzBuild&&(!el('paTag')||el('paTag').checked)){
+      var cf=(el('coverIn')&&el('coverIn').files[0])||null;
+      var artist=((el('paArtist')&&el('paArtist').value)||'').trim();
+      try{localStorage.setItem('wz_pa_artist',artist);}catch(e){}
+      var meta={title:((el('pTitle')&&el('pTitle').value)||'').trim()||'WAVZO',artist:artist||'WAVZO',album:'wavzo.com.ng',year:String(new Date().getFullYear()),genre:((el('paGenre')&&el('paGenre').value)||'').trim(),comment:'Downloaded from wavzo.com.ng'};
+      var fn=el('audioFname');
+      var r=await window._wzBuild({file:file,meta:meta,coverFile:cf,voice:true,prog:progId,bar:barId,say:function(t){if(fn)fn.textContent=t;}});
+      if(fn)fn.textContent='✓ Tagged audio ready';
+      return r.url;
+    }
+    return rawUpload.apply(this,arguments);
+  };
+
+  /* 4) after publishing: tell search engines, rebuild, and email subscribers */
+  function buildPublishOptions(){
+    var b=el('pubBtn');if(!b||el('pubEmail'))return;
+    var l=document.createElement('label');
+    l.style.cssText='display:flex;gap:8px;align-items:flex-start;font-size:12px;color:#aaa;margin:0 0 10px;text-transform:none;letter-spacing:0';
+    l.innerHTML='<input type="checkbox" id="pubEmail" checked style="width:auto;margin-top:2px"><span>Email my subscribers about this post</span>';
+    b.parentNode.insertBefore(l,b);
+  }
+  var rawPublish=window.publishPost;
+  window.publishPost=async function(){
+    var title=((el('pTitle')&&el('pTitle').value)||'').trim();
+    var editing=(typeof editingSlug!=='undefined')&&!!editingSlug;
+    var email=!el('pubEmail')||el('pubEmail').checked;
+    var t0=Date.now();
+    var out=await rawPublish.apply(this,arguments);
+    if(editing)return out;
+    try{
+      var suc=el('pubSuc');
+      if(!suc||!/published/i.test(suc.textContent||''))return out;
+      var db=await loadDB();
+      var post=(db.posts||[]).slice().reverse().find(function(p){return p.title===title&&(p.createdAt||0)>=t0-5000;});
+      if(!post)return out;
+      var path='/posts/'+post.slug+'.html';
+      rawFetch(WORKER+'/indexnow',{method:'POST',headers:{'X-Master-Key':key()},body:JSON.stringify({urls:['https://wavzo.com.ng'+path,'https://wavzo.com.ng/']})}).catch(function(){});
+      if(email){
+        var r=await rawFetch(WORKER+'/notify',{method:'POST',headers:{'X-Master-Key':key()},body:JSON.stringify({id:post.slug,title:post.title,excerpt:post.excerpt||'',image:post.coverImage||'',path:path})});
+        var d=await r.json().catch(function(){return {};});
+        toast(d.message||(r.ok?'Subscribers emailed.':'Email failed (HTTP '+r.status+')'),6000);
+      }
+    }catch(e){console.log('after-publish steps failed',e);}
+    return out;
+  };
+  var rawSaveSong=window.saveSong;
+  window.saveSong=async function(){
+    var editing=!!((el('songEditId')&&el('songEditId').value)||'');
+    var t0=Date.now();
+    var out=await rawSaveSong.apply(this,arguments);
+    if(editing)return out;
+    try{
+      var db=await loadDB();
+      var s=(db.songs||[]).slice().reverse().find(function(x){return (x.createdAt||0)>=t0-5000&&x.slug;});
+      if(s)rawFetch(WORKER+'/indexnow',{method:'POST',headers:{'X-Master-Key':key()},body:JSON.stringify({urls:['https://wavzo.com.ng/songs/'+s.slug+'.html']})}).catch(function(){});
+    }catch(e){}
+    return out;
+  };
+
+  buildSongLink();buildPostAudio();buildPublishOptions();
 })();
 
 </script>
