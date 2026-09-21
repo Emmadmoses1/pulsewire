@@ -83,6 +83,7 @@ async function initDB() {
 }
 initDB();
 
+const instant = require('./instant-pages'); // INSTANT-PAGES
 const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -92,8 +93,17 @@ app.use('/songs', express.static(path.join(__dirname, 'songs'), { extensions: ['
 app.use('/artists', express.static(path.join(__dirname, 'artists'), { extensions: ['html'] }));
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use('/images', express.static(path.join(__dirname, 'images'), { maxAge: '7d' }));
-app.get('/sitemap.xml', (req, res) => res.sendFile(path.join(__dirname, 'sitemap.xml')));
+app.get('/sitemap.xml', async (req, res) => {
+  try { res.set('Cache-Control', 'public, max-age=300').type('application/xml').send(await instant.sitemap()); }
+  catch (e) { res.sendFile(path.join(__dirname, 'sitemap.xml')); }
+});
+app.get('/data/db.json', async (req, res, next) => {
+  try { res.set('Cache-Control', 'public, max-age=20').json(await instant.dbJson()); } catch (e) { next(); }
+});
 app.use('/data', require('express').static(path.join(__dirname, 'data'), { maxAge: '60s' }));
+app.get('/posts/:slug', instant.handler('post'));
+app.get('/songs/:slug', instant.handler('song'));
+app.get('/artists/:slug', instant.handler('artist'));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 // FILE-ROUTES: root files that were returning 404
 ['ads.txt', 'robots.txt', 'wavzo2026indexnow.txt'].forEach((f) => {
