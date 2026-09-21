@@ -2717,5 +2717,881 @@ async function uploadOwnMp3(){
 })();
 
 </script>
+
+<script>
+/* ADMIN-3 */
+(function(){
+  function el(id){return document.getElementById(id);}
+  var WORKER=BIN_URL.replace(/\/v3\/b\/.*$/,'');
+  function hdr(){return {'X-Master-Key':BIN_KEY};}
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function num(n){return (n||0).toLocaleString();}
+  var dn=null;try{dn=new Intl.DisplayNames(['en'],{type:'region'});}catch(e){}
+  function cname(c){if(!c||c==='??')return 'Unknown';try{return (dn&&dn.of(c))||cname(c);}catch(e){return c;}}
+  var RANGES=[['t','Today'],['w','7 days'],['m','30 days'],['a','All time']];
+  var S={stats:null,db:null,subs:null,range:'w',type:'all',q:'',sort:'views',dir:-1,subq:''};
+
+  var css=document.createElement('style');
+  css.textContent=
+    '.wz-tabs{display:flex;gap:8px;margin-bottom:14px}.wz-tab{flex:1;padding:10px;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}.wz-tab.active{background:var(--red);border-color:var(--red);color:#fff}'+
+    '.wz-chips{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}.wz-chip{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}.wz-chip.active{background:#fff;color:#000;border-color:#fff}'+
+    '.wz-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}.wz-c{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 10px}.wz-c b{display:block;font-size:20px;font-weight:900}.wz-c span{font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;font-weight:600}'+
+    '.wz-filters{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}.wz-filters select,.wz-filters input{flex:1;min-width:110px;padding:9px 11px;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);border-radius:8px;font-size:13px;font-family:inherit}.wz-btn{padding:9px 13px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}'+
+    '.wz-note{font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5}.wz-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -6px}'+
+    '.wz-table{border-collapse:collapse;width:100%;font-size:12px;min-width:860px}.wz-table th{position:sticky;top:0;background:var(--surface2);color:var(--muted);font-size:10px;letter-spacing:.8px;text-transform:uppercase;text-align:right;padding:9px 8px;cursor:pointer;white-space:nowrap;border-bottom:1px solid var(--border)}.wz-table th:first-child,.wz-table td:first-child{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1;max-width:190px}.wz-table th:first-child{background:var(--surface2);z-index:2}'+
+    '.wz-table td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap}.wz-table td.l,.wz-table th.l{text-align:left}.wz-table td:first-child div{overflow:hidden;text-overflow:ellipsis;max-width:180px}.wz-table a{color:var(--text);text-decoration:none;font-weight:600}.wz-table small{color:var(--muted);display:block;font-size:10px}.wz-dim{color:var(--muted)}'+
+    '.wz-bars{display:flex;align-items:flex-end;gap:2px;height:90px}.wz-bars i{flex:1;background:var(--red);border-radius:2px 2px 0 0;min-height:2px;opacity:.9}.wz-axis{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:6px}'+
+    '.wz-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}.wz-row i{display:block;height:4px;background:var(--red);border-radius:2px;margin-top:5px}.wz-warn{background:#3a2a00;border:1px solid #6b4e00;color:#ffd27a;border-radius:10px;padding:12px;font-size:12px;line-height:1.5;margin-bottom:14px}';
+  document.head.appendChild(css);
+
+  function build(){
+    if(el('sec-stats'))return;
+    var main=document.querySelector('.main'),nav=document.querySelector('.bottom-nav');
+    if(!main||!nav)return;
+    var sec=document.createElement('div');sec.className='section';sec.id='sec-stats';
+    sec.innerHTML=
+      '<div class="wz-tabs"><button class="wz-tab active" data-t="an">📈 Analytics</button><button class="wz-tab" data-t="su">✉ Subscribers</button></div>'+
+      '<div id="wzAn">'+
+        '<div class="wz-chips" id="wzRange"></div><div id="wzMsg"></div><div class="wz-cards" id="wzCards"></div>'+
+        '<div class="card"><div class="card-title">Songs, posts and pages</div>'+
+          '<div class="wz-filters"><select id="wzType"><option value="all">Everything</option><option value="song">Songs</option><option value="post">Posts</option><option value="artist">Artists</option><option value="page">Pages</option></select><input id="wzQ" type="text" placeholder="Search title"></div>'+
+          '<div class="wz-filters"><button class="wz-btn" id="wzRefresh">↻ Refresh</button><button class="wz-btn" id="wzCsv">⬇ Download CSV</button></div>'+
+          '<div class="wz-note" id="wzNote"></div><div class="wz-scroll"><table class="wz-table" id="wzTable"></table></div></div>'+
+        '<div class="card"><div class="card-title">Views per day</div><div id="wzChartV"></div></div>'+
+        '<div class="card"><div class="card-title">Downloads per day</div><div id="wzChartD"></div></div>'+
+        '<div class="card"><div class="card-title">Top countries</div><div id="wzCountries"></div></div>'+
+        '<div class="card"><div class="card-title">Where visitors come from</div><div id="wzRefs"></div></div>'+
+      '</div>'+
+      '<div id="wzSu" style="display:none">'+
+        '<div id="wzSuWarn"></div><div class="wz-cards" id="wzSuCards"></div>'+
+        '<div class="card"><div class="card-title">Email subscribers about a post</div><div class="field"><select id="wzPostSel"></select></div><button class="btn" id="wzSend">✉ SEND EMAIL</button><div id="wzSendMsg" style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5"></div></div>'+
+        '<div class="card"><div class="card-title">Emails sent</div><div id="wzMailLog"></div></div>'+
+        '<div class="card"><div class="card-title">Subscribers</div><div class="wz-filters"><input id="wzSubQ" type="text" placeholder="Search email"><button class="wz-btn" id="wzSubCsv">⬇ CSV</button></div><div id="wzSubList"></div></div>'+
+      '</div>';
+    main.appendChild(sec);
+
+    var b=document.createElement('button');
+    b.className='bnav-item';
+    b.setAttribute('onclick',"showSec('stats',this)");
+    b.innerHTML='<span class="icon">📈</span>Stats';
+    nav.appendChild(b);
+
+    el('wzRange').innerHTML=RANGES.map(function(r){
+      return '<button class="wz-chip'+(r[0]===S.range?' active':'')+'" data-r="'+r[0]+'">'+r[1]+'</button>';
+    }).join('');
+
+    el('wzRange').addEventListener('click',function(e){
+      var r=e.target.getAttribute&&e.target.getAttribute('data-r');
+      if(!r)return;
+      S.range=r;
+      [].forEach.call(el('wzRange').children,function(c){
+        c.classList.toggle('active',c.getAttribute('data-r')===r);
+      });
+      renderAn();
+    });
+
+    sec.querySelector('.wz-tabs').addEventListener('click',function(e){
+      var t=e.target.getAttribute&&e.target.getAttribute('data-t');
+      if(!t)return;
+      [].forEach.call(sec.querySelectorAll('.wz-tab'),function(x){
+        x.classList.toggle('active',x.getAttribute('data-t')===t);
+      });
+      el('wzAn').style.display=t==='an'?'block':'none';
+      el('wzSu').style.display=t==='su'?'block':'none';
+      if(t==='su')loadSubs();
+    });
+
+    el('wzType').addEventListener('change',function(){
+      S.type=this.value;
+      renderTable();
+    });
+
+    el('wzQ').addEventListener('input',function(){
+      S.q=this.value.trim().toLowerCase();
+      renderTable();
+    });
+
+    el('wzRefresh').addEventListener('click',loadStats);
+    el('wzCsv').addEventListener('click',csvAnalytics);
+
+    el('wzSubQ').addEventListener('input',function(){
+      S.subq=this.value.trim().toLowerCase();
+      renderSubList();
+    });
+
+    el('wzSubCsv').addEventListener('click',csvSubs);
+    el('wzSend').addEventListener('click',sendEmail);
+
+    el('wzTable').addEventListener('click',function(e){
+      var th=e.target.closest&&e.target.closest('th');
+      if(!th)return;
+      var k=th.getAttribute('data-k');
+      if(!k)return;
+
+      if(S.sort===k){
+        S.dir=-S.dir;
+      }else{
+        S.sort=k;
+        S.dir=(k==='title'||k==='type'||k==='country'||k==='ref')?1:-1;
+      }
+
+      renderTable();
+    });
+  }
+
+  async function loadStats(){
+    var msg=el('wzMsg');
+    if(!msg)return;
+
+    msg.innerHTML='<div class="wz-note">Loading...</div>';
+
+    try{
+      var res=await Promise.all([
+        fetch(WORKER+'/stats',{headers:hdr()}),
+        loadDB()
+      ]);
+
+      var r=res[0];
+
+      if(r.status===401)
+        throw new Error('The admin key was refused. Log out and log in again.');
+
+      if(r.status===404)
+        throw new Error('Your Worker does not have the stats routes yet (it needs version 2 or newer).');
+
+      if(!r.ok)
+        throw new Error('The Worker answered HTTP '+r.status);
+
+      S.stats=await r.json();
+      S.db=res[1]||{};
+      msg.innerHTML='';
+      renderAn();
+
+    }catch(e){
+      msg.innerHTML='<div class="wz-warn">Could not load analytics: '+esc(e.message)+'</div>';
+    }
+  }
+
+  function buildRows(){
+    var st=S.stats,db=S.db||{},idx={},uv={};
+
+    st.totals.forEach(function(r){
+      var k=r.kind+':'+r.key;
+      (idx[k]=idx[k]||{})[r.ev]=r;
+    });
+
+    st.uv.forEach(function(r){
+      uv[r.key]=r;
+    });
+
+    var artistName={};
+    (db.artists||[]).forEach(function(a){
+      artistName[a.id]=a.name;
+    });
+
+    var out=[],seen={};
+
+    function val(k,ev){
+      var o=idx[k]&&idx[k][ev];
+      return o?(o[S.range]||0):0;
+    }
+
+    function add(kind,key,title,sub,oldV,oldD,url){
+      if(!key)return;
+
+      var k=kind+':'+key;
+      seen[k]=1;
+
+      var c=(st.countries[key]||[])[0],
+          rf=(st.refs[key]||[])[0],
+          dv=st.devices[key]||[];
+
+      var tot=dv.reduce(function(a,x){return a+x[1];},0),
+          mob=0;
+
+      dv.forEach(function(x){
+        if(x[0]==='mobile')mob=x[1];
+      });
+
+      var u=uv[key];
+
+      out.push({
+        kind:kind,
+        key:key,
+        title:title||key,
+        sub:sub||'',
+        url:url,
+        views:val(k,'view'),
+        vis:(S.range==='w'?(u?u.w:0):(S.range==='m'?(u?u.m:0):null)),
+        dl:val(k,'download'),
+        yt:val(k,'yt'),
+        play:val(k,'play'),
+        share:val(k,'share'),
+        click:val(k,'click'),
+        country:c?cname(c[0]):'',
+        countryN:c?c[1]:0,
+        ref:rf?rf[0]:'',
+        refN:rf?rf[1]:0,
+        mob:tot?Math.round(100*mob/tot):null,
+        oldV:oldV,
+        oldD:oldD
+      });
+    }
+
+    (db.songs||[]).forEach(function(s){
+      add(
+        'song',
+        s.slug,
+        s.title,
+        artistName[s.artistId]||'',
+        null,
+        s.downloads||0,
+        'https://wavzo.com.ng/songs/'+s.slug+'.html'
+      );
+    });
+
+    (db.posts||[]).forEach(function(p){
+      add(
+        'post',
+        p.slug,
+        p.title,
+        p.category||'',
+        p.views||0,
+        p.downloads||0,
+        'https://wavzo.com.ng/posts/'+p.slug+'.html'
+      );
+    });
+
+    (db.artists||[]).forEach(function(a){
+      add(
+        'artist',
+        a.slug,
+        a.name,
+        '',
+        null,
+        null,
+        'https://wavzo.com.ng/artists/'+a.slug+'.html'
+      );
+    });
+
+    add(
+      'page',
+      'home',
+      'Home page',
+      '',
+      null,
+      null,
+      'https://wavzo.com.ng/'
+    );
+
+    add(
+      'page',
+      'artists',
+      'Artists list',
+      '',
+      null,
+      null,
+      'https://wavzo.com.ng/artists.html'
+    );
+
+    Object.keys(idx).forEach(function(k){
+      if(!seen[k]){
+        var i=k.indexOf(':');
+        add(
+          k.slice(0,i),
+          k.slice(i+1),
+          k.slice(i+1)+' (deleted)',
+          '',
+          null,
+          null,
+          ''
+        );
+      }
+    });
+
+    return out;
+  }
+
+  function visibleRows(){
+    var rows=buildRows().filter(function(r){
+      return (S.type==='all'||r.kind===S.type)&&
+        (!S.q||(r.title+' '+r.sub).toLowerCase().indexOf(S.q)>-1);
+    });
+
+    var k=S.sort,d=S.dir;
+    var isText=(k==='title'||k==='type'||k==='country'||k==='ref');
+
+    rows.sort(function(a,b){
+      var x=k==='type'?a.kind:a[k],
+          y=k==='type'?b.kind:b[k];
+
+      if(isText){
+        x=String(x||'').toLowerCase();
+        y=String(y||'').toLowerCase();
+        return x<y?-d:(x>y?d:0);
+      }
+
+      x=x==null?-1:x;
+      y=y==null?-1:y;
+
+      return (x-y)*d;
+    });
+
+    return rows;
+  }
+
+  var COLS=[
+    ['title','Title'],
+    ['type','Type'],
+    ['views','Views'],
+    ['vis','Visitors'],
+    ['dl','Downloads'],
+    ['yt','YouTube'],
+    ['play','Plays'],
+    ['share','Shares'],
+    ['click','Clicks'],
+    ['country','Top country'],
+    ['ref','Top source'],
+    ['mob','Mobile'],
+    ['oldV','Before tracking']
+  ];
+
+  function renderTable(){
+    if(!S.stats)return;
+
+    var rows=visibleRows();
+
+    var head='<tr>'+
+      COLS.map(function(c){
+        var on=S.sort===c[0];
+        return '<th class="'+
+          (c[0]==='title'||c[0]==='type'||c[0]==='country'||c[0]==='ref'?'l':'')+
+          '" data-k="'+c[0]+'">'+
+          c[1]+
+          (on?(S.dir<0?' ▼':' ▲'):'')+
+          '</th>';
+      }).join('')+
+      '</tr>';
+
+    var body=rows.map(function(r){
+      var t=r.url?
+        '<a href="'+esc(r.url)+'" target="_blank">'+esc(r.title)+'</a>':
+        esc(r.title);
+
+      var old=(r.oldV==null&&r.oldD==null)?
+        '<span class="wz-dim">-</span>':
+        '<span class="wz-dim">'+
+        (r.oldV==null?'-':num(r.oldV))+
+        ' views / '+
+        num(r.oldD)+
+        ' dl</span>';
+
+      return '<tr>'+
+        '<td><div>'+t+'</div><small>'+esc(r.sub)+'</small></td>'+
+        '<td class="l wz-dim">'+r.kind+'</td>'+
+        '<td><b>'+num(r.views)+'</b></td>'+
+        '<td>'+(r.vis==null?'<span class="wz-dim">-</span>':num(r.vis))+'</td>'+
+        '<td>'+num(r.dl)+'</td>'+
+        '<td>'+num(r.yt)+'</td>'+
+        '<td>'+num(r.play)+'</td>'+
+        '<td>'+num(r.share)+'</td>'+
+        '<td>'+num(r.click)+'</td>'+
+        '<td class="l">'+
+          (r.country?
+            esc(r.country)+' <span class="wz-dim">('+num(r.countryN)+')</span>':
+            '<span class="wz-dim">-</span>')+
+        '</td>'+
+        '<td class="l">'+
+          (r.ref?
+            esc(r.ref)+' <span class="wz-dim">('+num(r.refN)+')</span>':
+            '<span class="wz-dim">-</span>')+
+        '</td>'+
+        '<td>'+
+          (r.mob==null?
+            '<span class="wz-dim">-</span>':
+            r.mob+'%')+
+        '</td>'+
+        '<td>'+old+'</td>'+
+      '</tr>';
+    }).join('');
+
+    el('wzTable').innerHTML=
+      '<thead>'+head+'</thead>'+
+      '<tbody>'+
+      (body||'<tr><td colspan="13" class="l wz-dim" style="padding:20px">Nothing matches.</td></tr>')+
+      '</tbody>';
+
+    var label=(RANGES.filter(function(r){
+      return r[0]===S.range;
+    })[0]||[])[1];
+
+    el('wzNote').textContent=
+      rows.length+
+      ' rows - '+
+      label+
+      '. Visitors are counted per day and shown for 7 and 30 days. "Before tracking" is the old counter from before this system started.';
+  }
+
+  function bars(id,ev){
+    var by={};
+
+    S.stats.daily.forEach(function(r){
+      if(r.ev===ev)by[r.day]=r.n;
+    });
+
+    var days=[],
+        max=1,
+        now=new Date();
+
+    for(var i=29;i>=0;i--){
+      var d=new Date(
+        now.getTime()-i*86400000
+      ).toISOString().slice(0,10);
+
+      var n=by[d]||0;
+
+      days.push([d,n]);
+
+      if(n>max)max=n;
+    }
+
+    el(id).innerHTML=
+      '<div class="wz-bars">'+
+      days.map(function(x){
+        return '<i title="'+x[0]+': '+x[1]+'" style="height:'+
+          Math.max(2,Math.round(90*x[1]/max))+
+          'px"></i>';
+      }).join('')+
+      '</div>'+
+      '<div class="wz-axis">'+
+        '<span>'+days[0][0].slice(5)+'</span>'+
+        '<span>peak '+num(max===1&&!Object.keys(by).length?0:max)+' / day</span>'+
+        '<span>'+days[29][0].slice(5)+'</span>'+
+      '</div>';
+  }
+
+  function list(id,arr,nameFn){
+    var max=(arr[0]&&arr[0].n)||1;
+
+    el(id).innerHTML=arr.length?
+      arr.map(function(r){
+        return '<div class="wz-row">'+
+          '<div style="flex:1">'+
+            '<div>'+esc(nameFn(r))+'</div>'+
+            '<i style="width:'+Math.max(3,Math.round(100*r.n/max))+'%"></i>'+
+          '</div>'+
+          '<b>'+num(r.n)+'</b>'+
+        '</div>';
+      }).join(''):
+      '<div class="wz-note">Nothing recorded yet.</div>';
+  }
+
+  function renderAn(){
+    if(!S.stats)return;
+
+    var sum={
+      view:0,
+      download:0,
+      yt:0,
+      play:0,
+      share:0,
+      click:0
+    };
+
+    S.stats.totals.forEach(function(r){
+      if(r.ev in sum)
+        sum[r.ev]+=(r[S.range]||0);
+    });
+
+    el('wzCards').innerHTML=[
+      ['Views',sum.view],
+      ['Downloads',sum.download],
+      ['YouTube taps',sum.yt],
+      ['Plays',sum.play],
+      ['Shares',sum.share],
+      ['Link clicks',sum.click]
+    ].map(function(c){
+      return '<div class="wz-c"><b>'+
+        num(c[1])+
+        '</b><span>'+
+        c[0]+
+        '</span></div>';
+    }).join('');
+
+    if(!S.stats.totals.length)
+      el('wzMsg').innerHTML=
+        '<div class="wz-warn">No visits recorded yet. Tracking is live, so numbers appear as people visit. Visits from a browser where you are logged into admin are not counted.</div>';
+    else if(el('wzMsg'))
+      el('wzMsg').innerHTML='';
+
+    renderTable();
+
+    bars('wzChartV','view');
+    bars('wzChartD','download');
+
+    list(
+      'wzCountries',
+      S.stats.siteCountries,
+      function(r){return cname(r.country);}
+    );
+
+    list(
+      'wzRefs',
+      S.stats.siteRefs,
+      function(r){
+        return r.ref==='direct'?
+          'Direct / WhatsApp / apps':
+          (r.ref==='internal'?'Inside WAVZO':r.ref);
+      }
+    );
+  }
+
+  function download(name,text){
+    var a=document.createElement('a');
+
+    a.href=URL.createObjectURL(
+      new Blob(
+        ['\ufeff'+text],
+        {type:'text/csv;charset=utf-8'}
+      )
+    );
+
+    a.download=name;
+    document.body.appendChild(a);
+    a.click();
+
+    setTimeout(function(){
+      URL.revokeObjectURL(a.href);
+      a.remove();
+    },500);
+  }
+
+  function csvCell(v){
+    v=v==null?'':String(v);
+    return /[",\n]/.test(v)?
+      '"'+v.replace(/"/g,'""')+'"':
+      v;
+  }
+
+  function csvAnalytics(){
+    if(!S.stats)return;
+
+    var rows=visibleRows();
+
+    var label=(RANGES.filter(function(r){
+      return r[0]===S.range;
+    })[0]||[])[1];
+
+    var head=[
+      'Title',
+      'Type',
+      'Artist or category',
+      'Views',
+      'Visitors',
+      'Downloads',
+      'YouTube taps',
+      'Plays',
+      'Shares',
+      'Link clicks',
+      'Top country',
+      'Top source',
+      'Mobile %',
+      'Old views (before tracking)',
+      'Old downloads (before tracking)',
+      'Link'
+    ];
+
+    var lines=[head.join(',')].concat(
+      rows.map(function(r){
+        return [
+          r.title,
+          r.kind,
+          r.sub,
+          r.views,
+          r.vis==null?'':r.vis,
+          r.dl,
+          r.yt,
+          r.play,
+          r.share,
+          r.click,
+          r.country,
+          r.ref,
+          r.mob==null?'':r.mob,
+          r.oldV==null?'':r.oldV,
+          r.oldD==null?'':r.oldD,
+          r.url
+        ].map(csvCell).join(',');
+      })
+    );
+
+    download(
+      'wavzo-analytics-'+
+      label.replace(/\s+/g,'-').toLowerCase()+
+      '-'+
+      new Date().toISOString().slice(0,10)+
+      '.csv',
+      lines.join('\n')
+    );
+  }
+
+  /* ---- subscribers ---- */
+
+  async function loadSubs(){
+    var w=el('wzSuWarn');
+
+    w.innerHTML='<div class="wz-note">Loading...</div>';
+
+    try{
+      var res=await Promise.all([
+        fetch(WORKER+'/subscribers',{headers:hdr()}),
+        loadDB()
+      ]);
+
+      var r=res[0];
+
+      if(r.status===401)
+        throw new Error('The admin key was refused. Log out and log in again.');
+
+      if(r.status===404)
+        throw new Error('Your Worker does not have the subscriber routes yet (it needs version 2 or newer).');
+
+      if(!r.ok)
+        throw new Error('The Worker answered HTTP '+r.status);
+
+      S.subs=await r.json();
+      S.db=res[1]||S.db||{};
+
+      w.innerHTML=S.subs.emailReady?
+        '':
+        '<div class="wz-warn"><b>Email sending is not set up yet.</b> Subscribers are being saved, but no emails go out until you add the RESEND_API_KEY and MAIL_FROM secrets to your Cloudflare Worker.</div>';
+
+      renderSubs();
+
+    }catch(e){
+      w.innerHTML=
+        '<div class="wz-warn">Could not load subscribers: '+
+        esc(e.message)+
+        '</div>';
+    }
+  }
+
+  function ago(ms){
+    var d=Math.floor((Date.now()-ms)/86400000);
+
+    if(d<1)return 'today';
+    if(d===1)return 'yesterday';
+    if(d<30)return d+' days ago';
+
+    return new Date(ms).toISOString().slice(0,10);
+  }
+
+  function renderSubs(){
+    var s=S.subs;
+
+    el('wzSuCards').innerHTML=[
+      ['Active',s.active],
+      ['Total',s.total],
+      ['Unsubscribed',s.total-s.active]
+    ].map(function(c){
+      return '<div class="wz-c"><b>'+
+        num(c[1])+
+        '</b><span>'+
+        c[0]+
+        '</span></div>';
+    }).join('');
+
+    var posts=((S.db&&S.db.posts)||[])
+      .slice()
+      .reverse()
+      .slice(0,40);
+
+    el('wzPostSel').innerHTML=posts.length?
+      posts.map(function(p,i){
+        return '<option value="'+i+'">'+
+          esc(p.title)+
+          '</option>';
+      }).join(''):
+      '<option value="">No posts yet</option>';
+
+    S._posts=posts;
+
+    el('wzMailLog').innerHTML=
+      (s.mailLog||[]).length?
+      s.mailLog.map(function(m){
+        return '<div class="wz-row">'+
+          '<div style="flex:1">'+
+            '<div>'+esc(m.subject||m.slug)+'</div>'+
+            '<small class="wz-dim">'+ago(m.ts)+'</small>'+
+          '</div>'+
+          '<div style="text-align:right">'+
+            '<b>'+num(m.sent)+' sent</b>'+
+            (m.failed?
+              '<small style="color:#ef4444;display:block">'+
+              num(m.failed)+
+              ' failed</small>':
+              '')+
+          '</div>'+
+        '</div>';
+      }).join(''):
+      '<div class="wz-note">No emails sent yet.</div>';
+
+    renderSubList();
+  }
+
+  function renderSubList(){
+    if(!S.subs)return;
+
+    var q=S.subq;
+
+    var rows=S.subs.list.filter(function(r){
+      return !q||r.email.indexOf(q)>-1;
+    }).slice(0,200);
+
+    el('wzSubList').innerHTML=
+      rows.length?
+      rows.map(function(r){
+        return '<div class="wz-row">'+
+          '<div style="flex:1;word-break:break-all">'+
+            esc(r.email)+
+            '<small class="wz-dim" style="display:block">'+
+              ago(r.ts)+
+              (r.src?' - '+esc(r.src):'')+
+            '</small>'+
+          '</div>'+
+          '<span style="color:'+
+            (r.active?'#22c55e':'#888')+
+          '">'+
+            (r.active?'active':'unsubscribed')+
+          '</span>'+
+        '</div>';
+      }).join('')+
+      (S.subs.list.length>200&&!q?
+        '<div class="wz-note" style="margin-top:8px">Showing the first 200. Download the CSV for everyone.</div>':
+        ''):
+      '<div class="wz-note">No subscribers yet. The Subscribe form on your homepage saves emails here.</div>';
+  }
+
+  function csvSubs(){
+    if(!S.subs)return;
+
+    download(
+      'wavzo-subscribers-'+
+      new Date().toISOString().slice(0,10)+
+      '.csv',
+      [
+        'Email,Status,Signed up,Source'
+      ].concat(
+        S.subs.list.map(function(r){
+          return [
+            r.email,
+            r.active?'active':'unsubscribed',
+            new Date(r.ts).toISOString().slice(0,10),
+            r.src||''
+          ].map(csvCell).join(',');
+        })
+      ).join('\n')
+    );
+  }
+
+  async function sendEmail(){
+    var msg=el('wzSendMsg'),
+        btn=el('wzSend'),
+        p=(S._posts||[])[+el('wzPostSel').value];
+
+    if(!p){
+      msg.textContent='Pick a post first.';
+      return;
+    }
+
+    if(!S.subs||!S.subs.active){
+      msg.textContent='You have no active subscribers yet.';
+      return;
+    }
+
+    if(!confirm(
+      'Email "'+
+      p.title+
+      '" to '+
+      S.subs.active+
+      ' subscribers?'
+    ))return;
+
+    btn.disabled=true;
+    btn.textContent='SENDING...';
+    msg.style.color='#888';
+    msg.textContent='Sending...';
+
+    async function go(force){
+      var r=await fetch(
+        WORKER+'/notify',
+        {
+          method:'POST',
+          headers:Object.assign(
+            {'Content-Type':'application/json'},
+            hdr()
+          ),
+          body:JSON.stringify({
+            id:p.slug,
+            title:p.title,
+            excerpt:p.excerpt||'',
+            image:p.coverImage||'',
+            path:'/posts/'+p.slug+'.html',
+            force:!!force
+          })
+        }
+      );
+
+      return {
+        status:r.status,
+        d:await r.json().catch(function(){return {};})
+      };
+    }
+
+    try{
+      var x=await go(false);
+
+      if(
+        x.status===409&&
+        confirm(
+          'Subscribers were already emailed about this post. Send it again?'
+        )
+      )
+        x=await go(true);
+
+      msg.style.color=
+        x.d.ok?'#22c55e':'#ef4444';
+
+      msg.textContent=
+        x.d.message||('HTTP '+x.status);
+
+      loadSubs();
+
+    }catch(e){
+      msg.style.color='#ef4444';
+      msg.textContent='Could not send: '+e.message;
+    }
+
+    btn.disabled=false;
+    btn.textContent='✉ SEND EMAIL';
+  }
+
+  var rawShow=window.showSec;
+
+  window.showSec=function(name,elm){
+    rawShow.apply(this,arguments);
+
+    if(name==='stats'){
+      if(el('wzAn').style.display!=='none')
+        loadStats();
+      else
+        loadSubs();
+    }
+  };
+
+  build();
+
+})();
+
+</script>
 </body>
 </html>
