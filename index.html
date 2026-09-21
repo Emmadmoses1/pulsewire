@@ -366,7 +366,7 @@
   <div class="newsletter-inner">
     <span class="newsletter-tag">Newsletter</span>
     <h2>Never Miss a Headline</h2>
-    <p>One email a day — the stories everyone's talking about, none of the noise.</p>
+    <p>Get an email whenever we publish new music and news.</p>
     <form id="subForm">
       <input type="email" id="subEmail" placeholder="Enter your email address" required>
       <button type="submit">Subscribe</button>
@@ -636,14 +636,97 @@ window.addEventListener('scroll',()=>{
 });
 document.getElementById('backToTop').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
 document.getElementById('postSearch').addEventListener('input',applyFilters);
-document.getElementById('subForm').addEventListener('submit',e=>{
+document.getElementById('subForm').addEventListener('submit',async e=>{
   e.preventDefault();
   const btn=document.querySelector('#subForm button');
-  btn.textContent='Subscribed ✓';
-  btn.style.background='#0f9960';
-  document.getElementById('subEmail').value='';
-  setTimeout(()=>{btn.textContent='Subscribe';btn.style.background='';},3000);
+  const inp=document.getElementById('subEmail');
+  const email=inp.value.trim();
+  let msg=document.getElementById('subMsg');
+  if(!msg){msg=document.createElement('div');msg.id='subMsg';msg.style.cssText='margin-top:14px;font-size:13px;color:#aaa;min-height:18px';document.getElementById('subForm').insertAdjacentElement('afterend',msg);}
+  btn.disabled=true;btn.textContent='Subscribing...';
+  try{
+    const r=await fetch('https://wavzo-db.dakudinamoses.workers.dev/subscribe',{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({email:email,src:'home'})});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok&&d.ok){btn.textContent='Subscribed ✓';btn.style.background='#0f9960';inp.value='';msg.style.color='#7ddc9d';msg.textContent=d.message||'Thanks for subscribing!';}
+    else{btn.textContent='Subscribe';msg.style.color='#ff7b7b';msg.textContent=d.message||'Could not subscribe. Please try again.';}
+  }catch(err){btn.textContent='Subscribe';msg.style.color='#ff7b7b';msg.textContent='No connection. Please try again.';}
+  btn.disabled=false;
+  setTimeout(()=>{btn.textContent='Subscribe';btn.style.background='';},4000);
 });
+</script>
+<script>
+/* WZ-TRACK */
+(function(){
+  var API='https://wavzo-db.dakudinamoses.workers.dev/track';
+  var host=location.hostname;
+  var live=(host==='wavzo.com.ng'||host==='www.wavzo.com.ng');
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  function send(ev,kind,key){
+    try{
+      if(!live||owner||!key||!/^[\w.\-:~%]{1,120}$/.test(key))return;
+      var body=JSON.stringify({ev:ev,kind:kind,key:key,ref:document.referrer||''});
+      if(navigator.sendBeacon){navigator.sendBeacon(API,new Blob([body],{type:'text/plain'}));return;}
+      fetch(API,{method:'POST',body:body,keepalive:true,headers:{'Content-Type':'text/plain'}});
+    }catch(e){}
+  }
+  window.WZ={track:send};
+  function pathSlug(dir){
+    var m=location.pathname.match(new RegExp('^/'+dir+'/([^/]+?)(?:\\.html)?$'));
+    if(!m)return '';
+    try{return decodeURIComponent(m[1]);}catch(e){return m[1];}
+  }
+  function wrap(name,fn){
+    var old=window[name];
+    if(typeof old!=='function')return;
+    window[name]=function(){try{fn.apply(null,arguments);}catch(e){} return old.apply(this,arguments);};
+  }
+  var path=location.pathname,kind='',key='';
+  if(pathSlug('posts')){kind='post';key=pathSlug('posts');}
+  else if(pathSlug('songs')){kind='song';key=pathSlug('songs');}
+  else if(pathSlug('artists')){kind='artist';key=pathSlug('artists');}
+  else if(path==='/'||path==='/index.html'){kind='page';key='home';}
+  else if(path==='/artists.html'){kind='page';key='artists';}
+  if(!kind)return;
+  send('view',kind,key);
+
+  // first play of any audio/video on the page
+  var played={};
+  document.addEventListener('play',function(e){
+    var t=e.target;if(!t||!t.tagName)return;
+    var id=(t.currentSrc||t.src||t.tagName);
+    if(played[id])return;played[id]=1;
+    send('play',kind,key);
+  },true);
+
+  if(kind==='post'){
+    wrap('trackDownload',function(){send('download','post',key);});
+    wrap('sharePost',function(){send('share','post',key);});
+  }
+  if(kind==='song'){
+    wrap('downloadMp3',function(){send('download','song',key);});
+    // a tap inside the YouTube player moves focus into the iframe
+    window.addEventListener('blur',function(){
+      setTimeout(function(){
+        var a=document.activeElement;
+        if(a&&a.tagName==='IFRAME'&&!a._wz){a._wz=1;send('yt','song',key);}
+      },50);
+    });
+  }
+  // clicks on outbound links (YouTube, streaming, social)
+  document.addEventListener('click',function(e){
+    var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+    if(!a)return;
+    var h=a.getAttribute('href')||'';
+    if(!/^https?:\/\//i.test(h)||h.indexOf(host)>-1)return;
+    send(/youtube\.com|youtu\.be/i.test(h)?'yt':'click',kind,key);
+  },true);
+  if(kind==='artist'){
+    document.addEventListener('click',function(e){
+      var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+      if(a&&/\/songs\//.test(a.getAttribute('href')||''))send('click','artist',key);
+    },true);
+  }
+})();
 </script>
 </body>
 </html>

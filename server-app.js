@@ -95,6 +95,14 @@ app.use('/images', express.static(path.join(__dirname, 'images'), { maxAge: '7d'
 app.get('/sitemap.xml', (req, res) => res.sendFile(path.join(__dirname, 'sitemap.xml')));
 app.use('/data', require('express').static(path.join(__dirname, 'data'), { maxAge: '60s' }));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+// FILE-ROUTES: root files that were returning 404
+['ads.txt', 'robots.txt', 'wavzo2026indexnow.txt'].forEach((f) => {
+  app.get('/' + f, (req, res) => {
+    const fp = path.join(__dirname, f);
+    if (!require('fs').existsSync(fp)) return res.status(404).send('Not found');
+    res.type('text/plain').sendFile(fp);
+  });
+});
 app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'favicon.ico')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

@@ -119,7 +119,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
-const PREPOST={"post": {"title": "Bella Shmurda Remembers Late Friend Mohbad Three Years After Death", "slug": "bella-shmurda-remembers-late-friend-mohbad-three-years-260913-jftj", "category": "MUSIC", "excerpt": "Bella Shmurda pays tribute to Mohbad three years after his passing, sharing heartfelt sentiments on social media.The post Bella Shmurda Remembers Late Friend Mohbad Three Years After Death appeared", "content": "Bella Shmurda pays tribute to Mohbad three years after his passing, sharing heartfelt sentiments on social media.\nThe post Bella Shmurda Remembers Late Friend Mohbad Three Years After Death appeared \n\nSource: https://tooxclusive.com/entertainment/bella-shmurda-remembers-late-friend-mohbad-three-years-after-death/", "coverImage": "https://hub.tooxclusive.com/wp-content/uploads/2024/07/Bella-Shmurda.jpg", "musicFile": null, "videoFile": null, "date": "Sep 13, 2026", "createdAt": 1789314166058}, "related": [{"slug": "davido-mayorkun-amp-fola-s-b4-b4-returns-260914-ynf0", "title": "Davido, Mayorkun &amp; FOLA’s B4 B4 Returns to No. 1 on Apple Music Nigeria", "category": "MUSIC", "coverImage": "https://hub.tooxclusive.com/wp-content/uploads/2026/07/Davido-Mayorkun-FOLA.jpg", "date": "Sep 14, 2026"}, {"slug": "testimony-song-bro-george-mp3-download-260914-pld3", "title": "Testimony Song | Bro George - Mp3 Download", "category": "MUSIC", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789374072/m3zxmwaldom3x8a8qsxb.jpg", "date": "Sep 14, 2026"}, {"slug": "zan-yabe-ka-t-b-thankgod-mp3-download-260920-n9mh", "title": "Zan Yabe Ka | T.B ThankGod - Mp3 Download", "category": "MUSIC", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789889182/qizqspebjvaflknymutz.jpg", "date": "Sep 20, 2026"}]};
+const PREPOST={"post": {"title": "Bella Shmurda Remembers Late Friend Mohbad Three Years After Death", "slug": "bella-shmurda-remembers-late-friend-mohbad-three-years-260913-jftj", "category": "MUSIC", "excerpt": "Bella Shmurda pays tribute to Mohbad three years after his passing, sharing heartfelt sentiments on social media.The post Bella Shmurda Remembers Late Friend Mohbad Three Years After Death appeared", "content": "Bella Shmurda pays tribute to Mohbad three years after his passing, sharing heartfelt sentiments on social media.\nThe post Bella Shmurda Remembers Late Friend Mohbad Three Years After Death appeared \n\nSource: https://tooxclusive.com/entertainment/bella-shmurda-remembers-late-friend-mohbad-three-years-after-death/", "coverImage": "https://hub.tooxclusive.com/wp-content/uploads/2024/07/Bella-Shmurda.jpg", "musicFile": null, "videoFile": null, "date": "Sep 13, 2026", "createdAt": 1789314166058, "views": 1}, "related": [{"slug": "davido-mayorkun-amp-fola-s-b4-b4-returns-260914-ynf0", "title": "Davido, Mayorkun &amp; FOLA’s B4 B4 Returns to No. 1 on Apple Music Nigeria", "category": "MUSIC", "coverImage": "https://hub.tooxclusive.com/wp-content/uploads/2026/07/Davido-Mayorkun-FOLA.jpg", "date": "Sep 14, 2026"}, {"slug": "testimony-song-bro-george-mp3-download-260914-pld3", "title": "Testimony Song | Bro George - Mp3 Download", "category": "MUSIC", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789374072/m3zxmwaldom3x8a8qsxb.jpg", "date": "Sep 14, 2026"}, {"slug": "zan-yabe-ka-t-b-thankgod-mp3-download-260920-n9mh", "title": "Zan Yabe Ka | T.B ThankGod - Mp3 Download", "category": "MUSIC", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789889182/qizqspebjvaflknymutz.jpg", "date": "Sep 20, 2026"}]};
 
 function getCache(){
   try{
@@ -473,6 +473,80 @@ window.addEventListener('scroll',()=>{
 });
 document.getElementById('backToTop').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
 document.getElementById('subForm').addEventListener('submit',e=>{e.preventDefault();alert('Thanks!');});
+</script>
+<script>
+/* WZ-TRACK */
+(function(){
+  var API='https://wavzo-db.dakudinamoses.workers.dev/track';
+  var host=location.hostname;
+  var live=(host==='wavzo.com.ng'||host==='www.wavzo.com.ng');
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  function send(ev,kind,key){
+    try{
+      if(!live||owner||!key||!/^[\w.\-:~%]{1,120}$/.test(key))return;
+      var body=JSON.stringify({ev:ev,kind:kind,key:key,ref:document.referrer||''});
+      if(navigator.sendBeacon){navigator.sendBeacon(API,new Blob([body],{type:'text/plain'}));return;}
+      fetch(API,{method:'POST',body:body,keepalive:true,headers:{'Content-Type':'text/plain'}});
+    }catch(e){}
+  }
+  window.WZ={track:send};
+  function pathSlug(dir){
+    var m=location.pathname.match(new RegExp('^/'+dir+'/([^/]+?)(?:\\.html)?$'));
+    if(!m)return '';
+    try{return decodeURIComponent(m[1]);}catch(e){return m[1];}
+  }
+  function wrap(name,fn){
+    var old=window[name];
+    if(typeof old!=='function')return;
+    window[name]=function(){try{fn.apply(null,arguments);}catch(e){} return old.apply(this,arguments);};
+  }
+  var path=location.pathname,kind='',key='';
+  if(pathSlug('posts')){kind='post';key=pathSlug('posts');}
+  else if(pathSlug('songs')){kind='song';key=pathSlug('songs');}
+  else if(pathSlug('artists')){kind='artist';key=pathSlug('artists');}
+  else if(path==='/'||path==='/index.html'){kind='page';key='home';}
+  else if(path==='/artists.html'){kind='page';key='artists';}
+  if(!kind)return;
+  send('view',kind,key);
+
+  // first play of any audio/video on the page
+  var played={};
+  document.addEventListener('play',function(e){
+    var t=e.target;if(!t||!t.tagName)return;
+    var id=(t.currentSrc||t.src||t.tagName);
+    if(played[id])return;played[id]=1;
+    send('play',kind,key);
+  },true);
+
+  if(kind==='post'){
+    wrap('trackDownload',function(){send('download','post',key);});
+    wrap('sharePost',function(){send('share','post',key);});
+  }
+  if(kind==='song'){
+    wrap('downloadMp3',function(){send('download','song',key);});
+    // a tap inside the YouTube player moves focus into the iframe
+    window.addEventListener('blur',function(){
+      setTimeout(function(){
+        var a=document.activeElement;
+        if(a&&a.tagName==='IFRAME'&&!a._wz){a._wz=1;send('yt','song',key);}
+      },50);
+    });
+  }
+  // clicks on outbound links (YouTube, streaming, social)
+  document.addEventListener('click',function(e){
+    var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+    if(!a)return;
+    var h=a.getAttribute('href')||'';
+    if(!/^https?:\/\//i.test(h)||h.indexOf(host)>-1)return;
+    send(/youtube\.com|youtu\.be/i.test(h)?'yt':'click',kind,key);
+  },true);
+  if(kind==='artist'){
+    document.addEventListener('click',function(e){
+      var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+      if(a&&/\/songs\//.test(a.getAttribute('href')||''))send('click','artist',key);
+    },true);
+  }
+})();
 </script>
 </body>
 </html>

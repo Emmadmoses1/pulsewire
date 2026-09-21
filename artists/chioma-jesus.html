@@ -121,5 +121,79 @@ async function init(){
 init();
 window.addEventListener('scroll',()=>{document.getElementById('siteNav').classList.toggle('scrolled',window.scrollY>10);});
 </script>
+<script>
+/* WZ-TRACK */
+(function(){
+  var API='https://wavzo-db.dakudinamoses.workers.dev/track';
+  var host=location.hostname;
+  var live=(host==='wavzo.com.ng'||host==='www.wavzo.com.ng');
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  function send(ev,kind,key){
+    try{
+      if(!live||owner||!key||!/^[\w.\-:~%]{1,120}$/.test(key))return;
+      var body=JSON.stringify({ev:ev,kind:kind,key:key,ref:document.referrer||''});
+      if(navigator.sendBeacon){navigator.sendBeacon(API,new Blob([body],{type:'text/plain'}));return;}
+      fetch(API,{method:'POST',body:body,keepalive:true,headers:{'Content-Type':'text/plain'}});
+    }catch(e){}
+  }
+  window.WZ={track:send};
+  function pathSlug(dir){
+    var m=location.pathname.match(new RegExp('^/'+dir+'/([^/]+?)(?:\\.html)?$'));
+    if(!m)return '';
+    try{return decodeURIComponent(m[1]);}catch(e){return m[1];}
+  }
+  function wrap(name,fn){
+    var old=window[name];
+    if(typeof old!=='function')return;
+    window[name]=function(){try{fn.apply(null,arguments);}catch(e){} return old.apply(this,arguments);};
+  }
+  var path=location.pathname,kind='',key='';
+  if(pathSlug('posts')){kind='post';key=pathSlug('posts');}
+  else if(pathSlug('songs')){kind='song';key=pathSlug('songs');}
+  else if(pathSlug('artists')){kind='artist';key=pathSlug('artists');}
+  else if(path==='/'||path==='/index.html'){kind='page';key='home';}
+  else if(path==='/artists.html'){kind='page';key='artists';}
+  if(!kind)return;
+  send('view',kind,key);
+
+  // first play of any audio/video on the page
+  var played={};
+  document.addEventListener('play',function(e){
+    var t=e.target;if(!t||!t.tagName)return;
+    var id=(t.currentSrc||t.src||t.tagName);
+    if(played[id])return;played[id]=1;
+    send('play',kind,key);
+  },true);
+
+  if(kind==='post'){
+    wrap('trackDownload',function(){send('download','post',key);});
+    wrap('sharePost',function(){send('share','post',key);});
+  }
+  if(kind==='song'){
+    wrap('downloadMp3',function(){send('download','song',key);});
+    // a tap inside the YouTube player moves focus into the iframe
+    window.addEventListener('blur',function(){
+      setTimeout(function(){
+        var a=document.activeElement;
+        if(a&&a.tagName==='IFRAME'&&!a._wz){a._wz=1;send('yt','song',key);}
+      },50);
+    });
+  }
+  // clicks on outbound links (YouTube, streaming, social)
+  document.addEventListener('click',function(e){
+    var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+    if(!a)return;
+    var h=a.getAttribute('href')||'';
+    if(!/^https?:\/\//i.test(h)||h.indexOf(host)>-1)return;
+    send(/youtube\.com|youtu\.be/i.test(h)?'yt':'click',kind,key);
+  },true);
+  if(kind==='artist'){
+    document.addEventListener('click',function(e){
+      var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+      if(a&&/\/songs\//.test(a.getAttribute('href')||''))send('click','artist',key);
+    },true);
+  }
+})();
+</script>
 </body>
 </html>
