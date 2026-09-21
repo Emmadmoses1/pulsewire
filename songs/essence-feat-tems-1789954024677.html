@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Essence (feat. Tems) — Wizkid | WAVZO</title>
+  <meta name="description" content="From the release 'Made In Lagos' by Wizkid (2020).">
+  <link rel="canonical" href="https://wavzo.com.ng/songs/essence-feat-tems-1789954024677.html">
+  <meta property="og:type" content="music.song">
+  <meta property="og:title" content="Essence (feat. Tems) — Wizkid">
+  <meta property="og:description" content="From the release 'Made In Lagos' by Wizkid (2020).">
+  <meta property="og:image" content="https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/b0/09/8e/b0098ed0-ef53-f2b5-386a-c8e6181f3c8a/886448775256.jpg/1000x1000bb.jpg">
+  <meta property="og:url" content="https://wavzo.com.ng/songs/essence-feat-tems-1789954024677.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Essence (feat. Tems) — Wizkid">
+  <meta name="twitter:description" content="From the release 'Made In Lagos' by Wizkid (2020).">
+  <meta name="twitter:image" content="https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/b0/09/8e/b0098ed0-ef53-f2b5-386a-c8e6181f3c8a/886448775256.jpg/1000x1000bb.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/wavzo-icon-192.png">
+  <link rel="apple-touch-icon" href="/images/wavzo-icon-192.png">
+  
+<link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://wsrv.nl">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap"></noscript>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<div class="ticker-bar">
+  <span class="ticker-live">LIVE</span>
+  <div class="ticker-viewport"><div class="ticker-track" id="tickerTrack"></div></div>
+</div>
+<header class="navbar" id="siteNav">
+  <div class="logo"><a href="/">WAV<span>ZO</span></a></div>
+  <nav><a href="/">HOME</a><a href="/artists.html">ARTISTS</a></nav>
+</header>
+
+<div class="article-wrap">
+  <div class="article-inner">
+    <div class="article-breadcrumb"><a href="/">Home</a> / <a href="/artists.html">Artists</a> / <span id="crumbArtist"></span></div>
+    <span class="article-cat-tag" id="songType"></span>
+    <h1 class="article-title" id="songTitle"></h1>
+    <p style="margin-top:-10px;margin-bottom:20px"><a id="artistLink" style="font-weight:700;color:#e11"></a></p>
+    <img id="songCover" class="article-cover" src="" alt="">
+    <p class="article-body" id="songExcerpt"></p>
+
+    <div class="media-block" id="downloadBlock" style="display:none">
+      <div class="media-label">Download</div>
+      <button class="download-btn" id="downloadMp3Btn" onclick="downloadMp3()" style="border:none;cursor:pointer">⬇ Download MP3</button>
+      <p id="downloadStatus" style="font-size:12px;color:#777;margin-top:8px"></p>
+    </div>
+
+    <div class="media-block" id="videoBlock" style="display:none">
+      <div class="media-label">Music Video</div>
+      <div id="videoEmbed"></div>
+    </div>
+
+    <div class="article-back"><a id="backToArtist" class="back-link">&larr; Back to artist</a></div>
+  </div>
+</div>
+
+<footer>&copy; WAVZO</footer>
+
+<script>
+/* FAST-IMG */
+function IMG(u,w){
+  try{
+    if(!u||!/^https?:\/\//i.test(u)||u.indexOf('wsrv.nl')>-1)return u;
+    var m=u.match(/^(https?:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/)(v\d+\/.*)$/);
+    if(m)return m[1]+'f_auto,q_auto,w_'+w+'/'+m[2];
+    return 'https://wsrv.nl/?url='+encodeURIComponent(u)+'&w='+w+'&output=webp&q=75&we';
+  }catch(e){return u;}
+}
+function IMGFB(el){el.onerror=null;if(el.dataset&&el.dataset.o)el.src=el.dataset.o;}
+const BIN_ID='6aa50e3aac6210605ac3c542';
+const BIN_KEY='public';
+const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
+const songId='song-1789954024678';
+const PRE={"song": {"id": "song-1789954024678", "title": "Essence (feat. Tems)", "artistId": "art-1789367524925", "type": "Single", "excerpt": "From the release \"Made In Lagos\" by Wizkid (2020).", "downloadUrl": "https://res.cloudinary.com/smg1blzu/video/upload/v1789954019/cuvwh5dufz8qwkuy9y5i.mp3", "youtubeUrl": "https://www.youtube.com/watch?v=jipQpjUA_o8", "cover": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/b0/09/8e/b0098ed0-ef53-f2b5-386a-c8e6181f3c8a/886448775256.jpg/1000x1000bb.jpg", "slug": "essence-feat-tems-1789954024677", "createdAt": 1789954024678}, "artist": {"id": "art-1789367524925", "name": "Wizkid", "genre": "Afrobeats", "bio": "Ayodeji Ibrahim Balogun, known professionally as Wizkid, is a Nigerian singer and songwriter. Born in the Ojuelegba suburb of Surulere, Lagos, Wizkid is a voice in the emerging Afrobeats movement. His music is a blend of Afrobeats, afropop, R&B, afrobeat, reggae, dancehall, and pop. He began recording music at the age of 11 and released a collaborative album with the Glorious Five, a group he and a few of his church friends formed. In 2009, Wizkid signed a record deal with Banky W's Empire Mates Entertainment (E.M.E). He gained recognition after releasing \"Holla at Your Boy\", the lead single from his debut studio album, Superstar (2011), which also spawned the singles \"Tease Me/Bad Guys\" and \"Don't Dull\".", "slug": "wizkid", "photo": "https://upload.wikimedia.org/wikipedia/commons/b/b6/Artworks-UWHjOik17qMFy0Sb-64tibA-t500x500.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"}, "titles": ["Holy Ghost | Emma D Moses", "Reform receives record £36m donation from crypto billionaire", "Burnham and Badenoch revive red versus blue politics as Reform land 'gobsmacking' donation", "Lightning Houthi advance in Yemen may bring dangerous new dimension to Iran war", "Masked men, lorries and road blocks: How anti-migrant activists are changing tactics", "Trump says united Ireland would be 'fantastic' during visit to Dublin"]};
+
+function youtubeId(url){
+  const m=url.match(/(?:youtu\.be\/|v=)([a-zA-Z0-9_-]{11})/);
+  return m?m[1]:null;
+}
+
+async function init(){
+  /* FAST-SONG */
+  let db;
+  if(typeof PRE!=='undefined'&&PRE&&PRE.song){
+    db={songs:[PRE.song],artists:PRE.artist?[PRE.artist]:[],posts:(PRE.titles||[]).map(t=>({title:t}))};
+  }else{
+    const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+    const data=await res.json();
+    db=data.record||{};
+  }
+  const song=(db.songs||[]).find(s=>s.id===songId);
+  if(!song)return;
+  const artist=(db.artists||[]).find(a=>a.id===song.artistId);
+
+  document.getElementById('songType').textContent=song.type;
+  document.getElementById('songTitle').textContent=song.title;
+  document.getElementById('songExcerpt').textContent=song.excerpt||'';
+  if(song.cover){const el=document.getElementById('songCover');el.dataset.o=song.cover;el.onerror=function(){IMGFB(el)};el.src=IMG(song.cover,900);}
+
+  if(artist){
+    document.getElementById('crumbArtist').textContent=artist.name;
+    const link=document.getElementById('artistLink');
+    link.textContent='by '+artist.name;
+    link.href='/artists/'+artist.slug+'.html';
+    document.getElementById('backToArtist').href='/artists/'+artist.slug+'.html';
+    document.getElementById('backToArtist').innerHTML='&larr; Back to '+artist.name;
+  }
+
+  if(song.downloadUrl){
+    document.getElementById('downloadBlock').style.display='block';
+    window._songData = { audioUrl: song.downloadUrl, artist: artist?artist.name:'Unknown Artist', title: song.title, year: song.year||'', genre: song.genre||artist?.genre||'', coverUrl: song.cover||'' };
+  }
+  if(song.youtubeUrl){
+    const vid=youtubeId(song.youtubeUrl);
+    if(vid){
+      document.getElementById('videoBlock').style.display='block';
+      document.getElementById('videoEmbed').innerHTML=`<iframe width="100%" height="380" style="border-radius:6px;border:none" src="https://www.youtube.com/embed/${vid}" allowfullscreen></iframe>`;
+    }
+  }
+
+  const track=document.getElementById('tickerTrack');
+  [...(db.posts||[]).slice(0,6),...(db.posts||[]).slice(0,6)].forEach(p=>{const s=document.createElement('span');s.textContent=p.title;track.appendChild(s);});
+}
+async function downloadMp3(){
+  const btn=document.getElementById('downloadMp3Btn');
+  const status=document.getElementById('downloadStatus');
+  if(!window._songData){status.textContent='Nothing to download.';return;}
+  btn.disabled=true;btn.textContent='Converting...';status.textContent='Processing audio — this may take a moment for longer tracks.';
+  try{
+    const res=await fetch('/api/download-mp3',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(window._songData)
+    });
+    if(!res.ok){
+      const err=await res.json().catch(()=>({error:'Download failed'}));
+      throw new Error(err.error||'Download failed');
+    }
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=`${window._songData.artist} - ${window._songData.title}.mp3`.replace(/[\/\\:*?"<>|]/g,'');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    status.textContent='✓ Download started';
+  }catch(e){
+    status.textContent='Error: '+e.message;
+  }
+  btn.disabled=false;btn.textContent='⬇ Download MP3';
+}
+
+init();
+window.addEventListener('scroll',()=>{document.getElementById('siteNav').classList.toggle('scrolled',window.scrollY>10);});
+</script>
+<script>
+/* WZ-TRACK */
+(function(){
+  var API='https://wavzo-db.dakudinamoses.workers.dev/track';
+  var host=location.hostname;
+  var live=(host==='wavzo.com.ng'||host==='www.wavzo.com.ng');
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  function send(ev,kind,key){
+    try{
+      if(!live||owner||!key||!/^[\w.\-:~%]{1,120}$/.test(key))return;
+      var body=JSON.stringify({ev:ev,kind:kind,key:key,ref:document.referrer||''});
+      if(navigator.sendBeacon){navigator.sendBeacon(API,new Blob([body],{type:'text/plain'}));return;}
+      fetch(API,{method:'POST',body:body,keepalive:true,headers:{'Content-Type':'text/plain'}});
+    }catch(e){}
+  }
+  window.WZ={track:send};
+  function pathSlug(dir){
+    var m=location.pathname.match(new RegExp('^/'+dir+'/([^/]+?)(?:\\.html)?$'));
+    if(!m)return '';
+    try{return decodeURIComponent(m[1]);}catch(e){return m[1];}
+  }
+  function wrap(name,fn){
+    var old=window[name];
+    if(typeof old!=='function')return;
+    window[name]=function(){try{fn.apply(null,arguments);}catch(e){} return old.apply(this,arguments);};
+  }
+  var path=location.pathname,kind='',key='';
+  if(pathSlug('posts')){kind='post';key=pathSlug('posts');}
+  else if(pathSlug('songs')){kind='song';key=pathSlug('songs');}
+  else if(pathSlug('artists')){kind='artist';key=pathSlug('artists');}
+  else if(path==='/'||path==='/index.html'){kind='page';key='home';}
+  else if(path==='/artists.html'){kind='page';key='artists';}
+  if(!kind)return;
+  send('view',kind,key);
+
+  // first play of any audio/video on the page
+  var played={};
+  document.addEventListener('play',function(e){
+    var t=e.target;if(!t||!t.tagName)return;
+    var id=(t.currentSrc||t.src||t.tagName);
+    if(played[id])return;played[id]=1;
+    send('play',kind,key);
+  },true);
+
+  if(kind==='post'){
+    wrap('trackDownload',function(){send('download','post',key);});
+    wrap('sharePost',function(){send('share','post',key);});
+  }
+  if(kind==='song'){
+    wrap('downloadMp3',function(){send('download','song',key);});
+    // a tap inside the YouTube player moves focus into the iframe
+    window.addEventListener('blur',function(){
+      setTimeout(function(){
+        var a=document.activeElement;
+        if(a&&a.tagName==='IFRAME'&&!a._wz){a._wz=1;send('yt','song',key);}
+      },50);
+    });
+  }
+  // clicks on outbound links (YouTube, streaming, social)
+  document.addEventListener('click',function(e){
+    var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+    if(!a)return;
+    var h=a.getAttribute('href')||'';
+    if(!/^https?:\/\//i.test(h)||h.indexOf(host)>-1)return;
+    send(/youtube\.com|youtu\.be/i.test(h)?'yt':'click',kind,key);
+  },true);
+  if(kind==='artist'){
+    document.addEventListener('click',function(e){
+      var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+      if(a&&/\/songs\//.test(a.getAttribute('href')||''))send('click','artist',key);
+    },true);
+  }
+})();
+</script>
+</body>
+</html>
