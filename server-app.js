@@ -105,6 +105,7 @@ app.get('/posts/:slug', instant.handler('post'));
 app.get('/songs/:slug', instant.handler('song'));
 app.get('/artists/:slug', instant.handler('artist'));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/livescores.html', (req, res) => res.sendFile(path.join(__dirname, 'livescores.html')));
 // FILE-ROUTES: root files that were returning 404
 ['ads.txt', 'robots.txt', 'wavzo2026indexnow.txt'].forEach((f) => {
   app.get('/' + f, (req, res) => {
