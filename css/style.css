@@ -785,6 +785,13 @@ footer a:hover { color: #e11; }
   .article-title { font-size: 22px; }
   .related-grid { grid-template-columns: 1fr; }
 }
+@media (min-width: 1000px) {
+  .article-inner { max-width: 860px; padding: 48px 24px 70px; }
+  .article-title { font-size: 42px; }
+  .article-body { font-size: 18px; }
+  .article-cover { max-height: 520px; }
+  .related-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+}
 
 /* ========================================
    ADMIN — media upload + live site button
