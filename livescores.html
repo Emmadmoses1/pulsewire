@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Football Scores — WAVZO</title>
+<meta name="description" content="Live football scores, today's fixtures and results, updated automatically.">
+<link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/images/wavzo-icon-192.png">
+<link rel="apple-touch-icon" href="/images/wavzo-icon-192.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#111}
+a{text-decoration:none;color:inherit}
+
+.ticker-bar{background:#0a0a0a;color:#fff;display:flex;align-items:center;overflow:hidden;white-space:nowrap;padding:8px 0;font-size:12px;border-bottom:3px solid #e11}
+.ticker-live{background:#e11;padding:4px 12px;border-radius:2px;font-weight:800;margin:0 16px;flex-shrink:0;font-size:10px;letter-spacing:2px;text-transform:uppercase}
+.ticker-viewport{flex:1;overflow:hidden;min-width:0}
+.ticker-track{display:inline-block;animation:tickscroll 35s linear infinite}
+.ticker-track span{margin-right:80px;font-weight:500;opacity:.9}
+.ticker-track span::before{content:'•';margin-right:80px;color:#e11;opacity:.6}
+@keyframes tickscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+.site-nav{background:#fff;border-bottom:1px solid #e8e8e8;position:sticky;top:0;z-index:300;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:62px;box-shadow:0 1px 0 #e8e8e8}
+.nav-logo{font-weight:900;font-size:26px;letter-spacing:-2px;color:#0a0a0a;display:flex;align-items:center;gap:2px}
+.nav-logo span{color:#e11}
+.nav-links{display:flex;align-items:center;gap:2px}
+.nav-links a{font-size:12px;font-weight:700;letter-spacing:.3px;color:#444;padding:8px 14px;border-radius:6px;transition:.15s;text-transform:uppercase}
+.nav-links a:hover{color:#e11;background:#fff5f5}
+.nav-links a.active{color:#e11}
+@media(max-width:768px){.site-nav{padding:0 16px}.nav-logo{font-size:22px}.nav-links a{padding:8px 9px;font-size:11px}}
+
+.page-title{max-width:900px;margin:32px auto 4px;padding:0 20px;font-size:26px;font-weight:900}
+.page-sub{max-width:900px;margin:0 auto 20px;padding:0 20px;font-size:13px;color:#888}
+
+.ls-tabs{max-width:900px;margin:0 auto 6px;padding:0 20px;display:flex;gap:8px}
+.ls-tab{padding:9px 18px;border-radius:20px;border:1px solid #ddd;background:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:#444}
+.ls-tab.active{background:#111;border-color:#111;color:#fff}
+
+.ls-datebar{max-width:900px;margin:14px auto 0;padding:0 20px;display:none;align-items:center;gap:10px}
+.ls-datebar.show{display:flex}
+.ls-datebar button{width:34px;height:34px;border-radius:8px;border:1px solid #ddd;background:#fff;font-size:16px;cursor:pointer}
+.ls-datebar input{border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13px;flex:1}
+.ls-datebar span{font-size:13px;color:#666;font-weight:700}
+
+.ls-wrap{max-width:900px;margin:18px auto 60px;padding:0 20px}
+.ls-note{font-size:12px;color:#999;margin:14px 0;text-align:center}
+.ls-group{margin-bottom:22px}
+.ls-group-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#666;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e8e8e8}
+.ls-match{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #eee;border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.ls-status{width:56px;flex-shrink:0;text-align:center;font-size:11px;font-weight:800}
+.ls-status.live{color:#e11}
+.ls-status.live .dot{display:inline-block;width:6px;height:6px;background:#e11;border-radius:50%;margin-right:4px;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ls-status.ft{color:#888}
+.ls-status.upcoming{color:#111}
+.ls-teams{flex:1;min-width:0;font-size:14px;font-weight:600}
+.ls-teams div{display:flex;justify-content:space-between;gap:8px}
+.ls-teams span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ls-score{font-weight:900;flex-shrink:0}
+.ls-hl{font-size:11px;font-weight:700;color:#e11;flex-shrink:0;white-space:nowrap}
+.empty-msg{max-width:900px;margin:60px auto;padding:0 20px;text-align:center;color:#888}
+footer{text-align:center;padding:30px;color:#999;font-size:12px}
+</style>
+</head>
+<body>
+<div class="ticker-bar">
+  <span class="ticker-live">LIVE</span>
+  <div class="ticker-viewport"><div class="ticker-track" id="tickerTrack"></div></div>
+</div>
+<nav class="site-nav">
+  <a href="/" class="nav-logo">WAV<span>ZO</span></a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/artists.html">Artists</a>
+    <a href="/livescores.html" class="active">Live Scores</a>
+  </div>
+</nav>
+
+<h1 class="page-title">Live Football Scores</h1>
+<p class="page-sub">Scores update automatically. This page does not stream video — tap Highlights on a finished match to watch the recap on YouTube.</p>
+
+<div class="ls-tabs">
+  <button class="ls-tab active" id="tabLive" data-t="live">🔴 Live now</button>
+  <button class="ls-tab" id="tabFix" data-t="date">📅 Fixtures</button>
+</div>
+<div class="ls-datebar" id="dateBar">
+  <button id="dPrev">←</button>
+  <input type="date" id="dPick">
+  <button id="dNext">→</button>
+  <span id="dLabel"></span>
+</div>
+
+<div class="ls-wrap" id="lsWrap"><p class="ls-note">Loading...</p></div>
+<p class="empty-msg" id="emptyMsg" style="display:none"></p>
+
+<footer>&copy; WAVZO</footer>
+
+<script>
+const FB='https://wavzo-db.dakudinamoses.workers.dev/football';
+let mode='live', selDate=new Date().toISOString().slice(0,10), timer=null;
+
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtTime(ms){if(!ms)return '';return new Date(ms).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+function statusBits(e){
+  if(e.status==='inprogress')return {cls:'live',label:'<span class="dot"></span>'+esc(e.statusText||'LIVE')};
+  if(e.status==='finished')return {cls:'ft',label:'FT'};
+  if(e.status==='notstarted')return {cls:'upcoming',label:fmtTime(e.start)};
+  return {cls:'upcoming',label:esc(e.statusText||e.status||'')};
+}
+function ytSearch(e){return 'https://www.youtube.com/results?search_query='+encodeURIComponent(e.home+' vs '+e.away+' highlights');}
+
+function render(events, emptyText){
+  const wrap=document.getElementById('lsWrap'), empty=document.getElementById('emptyMsg');
+  if(!events.length){wrap.innerHTML='';empty.style.display='block';empty.textContent=emptyText;return;}
+  empty.style.display='none';
+  const groups={};
+  events.forEach(e=>{const k=(e.country?e.country+' - ':'')+e.tournament;(groups[k]=groups[k]||[]).push(e);});
+  const keys=Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
+  wrap.innerHTML=keys.map(k=>{
+    const rows=groups[k].map(e=>{
+      const st=statusBits(e);
+      const score=(e.homeScore!=null&&e.awayScore!=null)?(esc(e.homeScore)+' - '+esc(e.awayScore)):'vs';
+      const hl=e.status==='finished'?'<a class="ls-hl" href="'+ytSearch(e)+'" target="_blank" rel="noopener">Highlights ▶</a>':'';
+      return '<div class="ls-match"><div class="ls-status '+st.cls+'">'+st.label+'</div>'+
+        '<div class="ls-teams"><div><span>'+esc(e.home)+'</span></div><div><span>'+esc(e.away)+'</span></div></div>'+
+        '<div class="ls-score">'+score+'</div>'+hl+'</div>';
+    }).join('');
+    return '<div class="ls-group"><div class="ls-group-title">'+esc(k)+'</div>'+rows+'</div>';
+  }).join('');
+}
+
+async function loadLive(){
+  const wrap=document.getElementById('lsWrap');
+  try{
+    const r=await fetch(FB+'?type=live');
+    const d=await r.json();
+    if(!r.ok||!d.ok)throw new Error(d.message||('HTTP '+r.status));
+    render(d.events||[], 'No matches are being played right now. Check back soon, or look at Fixtures.');
+  }catch(e){
+    wrap.innerHTML='<p class="ls-note">Could not load live scores: '+esc(e.message)+'. This refreshes automatically, so it may just be a moment.</p>';
+  }
+}
+async function loadDate(){
+  const wrap=document.getElementById('lsWrap');
+  document.getElementById('dPick').value=selDate;
+  const d=new Date(selDate+'T00:00:00');
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('dLabel').textContent=selDate===today?'Today':d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+  wrap.innerHTML='<p class="ls-note">Loading...</p>';
+  try{
+    const r=await fetch(FB+'?type=date&date='+selDate);
+    const j=await r.json();
+    if(!r.ok||!j.ok)throw new Error(j.message||('HTTP '+r.status));
+    render(j.events||[], 'No fixtures found for this date.');
+  }catch(e){
+    wrap.innerHTML='<p class="ls-note">Could not load fixtures: '+esc(e.message)+'</p>';
+  }
+}
+function startTimer(){
+  if(timer)clearInterval(timer);
+  if(mode==='live')timer=setInterval(loadLive,30000);
+}
+function switchTab(t){
+  mode=t;
+  document.getElementById('tabLive').classList.toggle('active',t==='live');
+  document.getElementById('tabFix').classList.toggle('active',t==='date');
+  document.getElementById('dateBar').classList.toggle('show',t==='date');
+  if(t==='live')loadLive();else loadDate();
+  startTimer();
+}
+document.getElementById('tabLive').addEventListener('click',()=>switchTab('live'));
+document.getElementById('tabFix').addEventListener('click',()=>switchTab('date'));
+document.getElementById('dPick').addEventListener('change',function(){selDate=this.value;loadDate();});
+document.getElementById('dPrev').addEventListener('click',()=>{const d=new Date(selDate+'T00:00:00');d.setDate(d.getDate()-1);selDate=d.toISOString().slice(0,10);loadDate();});
+document.getElementById('dNext').addEventListener('click',()=>{const d=new Date(selDate+'T00:00:00');d.setDate(d.getDate()+1);selDate=d.toISOString().slice(0,10);loadDate();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(timer)clearInterval(timer);}else{startTimer();if(mode==='live')loadLive();}});
+
+fetch('/data/db.json').then(r=>r.json()).then(db=>{
+  const track=document.getElementById('tickerTrack');
+  [...(db.posts||[]).slice(0,6),...(db.posts||[]).slice(0,6)].forEach(p=>{const t=document.createElement('span');t.textContent=p.title;track.appendChild(t);});
+}).catch(()=>{});
+
+loadLive();startTimer();
+</script>
+<script>
+/* WZ-TRACK */
+(function(){
+  var API='https://wavzo-db.dakudinamoses.workers.dev/track';
+  var host=location.hostname;
+  var live=(host==='wavzo.com.ng'||host==='www.wavzo.com.ng');
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  function send(ev,kind,key){
+    try{
+      if(!live||owner)return;
+      var body=JSON.stringify({ev:ev,kind:kind,key:key,ref:document.referrer||''});
+      if(navigator.sendBeacon){navigator.sendBeacon(API,new Blob([body],{type:'text/plain'}));return;}
+      fetch(API,{method:'POST',body:body,keepalive:true,headers:{'Content-Type':'text/plain'}});
+    }catch(e){}
+  }
+  send('view','page','livescores');
+  document.addEventListener('click',function(e){
+    var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+    if(!a)return;
+    var h=a.getAttribute('href')||'';
+    if(/youtube\.com/i.test(h))send('yt','page','livescores');
+  },true);
+})();
+</script>
+</body>
+</html>
