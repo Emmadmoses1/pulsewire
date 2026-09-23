@@ -3593,5 +3593,155 @@ async function uploadOwnMp3(){
 })();
 
 </script>
+<script>
+
+/* ADMIN-4 */
+(function(){
+  function el(id){return document.getElementById(id);}
+  var WORKER=BIN_URL.replace(/\/v3\/b\/.*$/,'');
+  function key(){return BIN_KEY;}
+  function toast(m,ms){if(typeof showToast==='function')showToast(m,ms||4000);}
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function norm(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'');}
+  function cleanTitle(t){
+    return String(t||'')
+      .replace(/\s*[\(\[]\s*(official|lyric|lyrics|audio|video|music video|visuali[sz]er|hd|4k|explicit|prod\.?)[^\)\]]*[\)\]]/gi,'')
+      .replace(/\s{2,}/g,' ').trim();
+  }
+  function splitArtistTitle(raw){
+    var t=cleanTitle(raw),m=t.match(/^(.+?)\s+[-–—]\s+(.+)$/);
+    return m?{artist:m[1].trim(),title:cleanTitle(m[2])}:{artist:'',title:t};
+  }
+  function pickArtistOption(name){
+    var sel=el('songArtist');if(!sel||!name)return null;
+    var want=norm(name);
+    for(var i=0;i<sel.options.length;i++)if(norm(sel.options[i].text)===want)return sel.options[i];
+    for(var j=0;j<sel.options.length;j++)if(norm(sel.options[j].text).indexOf(want)>-1||want.indexOf(norm(sel.options[j].text))>-1)return sel.options[j];
+    return null;
+  }
+  function slugify(t){return (String(t||'song').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')||'song');}
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+
+  var TRACKS=[];
+
+  function buildBox(){
+    var anchor=el('songLinkBox');if(!anchor||el('albumBox'))return;
+    var box=document.createElement('div');box.className='field';box.id='albumBox';
+    box.style.cssText='border:1px dashed var(--border);border-radius:10px;padding:12px;margin-top:14px';
+    box.innerHTML=
+      '<label>💿 Add an album from a YouTube playlist</label>'+
+      '<div style="display:flex;gap:8px"><input type="text" id="albLink" placeholder="Paste a YouTube playlist link" style="flex:1"><button type="button" class="btn btn-sm btn-dark" id="albFetchBtn" style="width:auto">Fetch Tracklist</button></div>'+
+      '<p id="albStatus" style="font-size:12px;color:#888;margin-top:6px;line-height:1.5"></p>'+
+      '<div id="albForm" style="display:none;margin-top:12px">'+
+        '<div class="field"><label>Artist</label><select id="albArtist"></select></div>'+
+        '<div class="field"><label>Album name</label><input type="text" id="albName"></div>'+
+        '<div class="field"><label>Year</label><input type="text" id="albYear" inputmode="numeric" maxlength="4" placeholder="'+new Date().getFullYear()+'"></div>'+
+        '<div class="field"><label>Genre</label><input type="text" id="albGenre" placeholder="Afrobeats"></div>'+
+        '<div class="field"><label>Cover art</label><div style="display:flex;gap:10px;align-items:center"><img id="albCoverPrev" style="width:56px;height:56px;object-fit:cover;border-radius:8px;background:#222"><input type="file" id="albCoverIn" accept="image/*"></div></div>'+
+        '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;text-transform:none;letter-spacing:0"><input type="checkbox" id="albVoice" checked style="width:auto;margin-top:2px"><span>Add the WAVZO voice tag to every track</span></label>'+
+        '<div id="albTracks" style="margin-top:10px"></div>'+
+        '<button type="button" class="btn" id="albSaveBtn" style="margin-top:10px">🎵 Convert &amp; Save All</button>'+
+        '<div id="albProgWrap" class="prog-wrap" style="display:none;margin-top:8px"><div class="prog-fill" id="albProgBar" style="width:0%"></div></div>'+
+        '<p id="albResult" style="font-size:12px;margin-top:8px;line-height:1.6"></p>'+
+      '</div>';
+    anchor.parentNode.insertBefore(box,anchor.nextSibling);
+    el('albFetchBtn').addEventListener('click',fetchPlaylist);
+    el('albCoverIn').addEventListener('change',function(){var f=this.files[0];if(f)el('albCoverPrev').src=URL.createObjectURL(f);});
+    el('albSaveBtn').addEventListener('click',saveAll);
+  }
+
+  function renderTracks(){
+    el('albTracks').innerHTML=TRACKS.map(function(t,i){
+      return '<label style="display:flex;gap:10px;align-items:center;padding:6px 0;font-size:12px;text-transform:none;letter-spacing:0">'+
+        '<input type="checkbox" class="albChk" data-i="'+i+'" '+(t.on?'checked':'')+' style="width:auto">'+
+        '<img src="'+esc(t.thumbnail)+'" style="width:44px;height:33px;object-fit:cover;border-radius:4px;flex-shrink:0">'+
+        '<input type="text" class="albTitleIn" data-i="'+i+'" value="'+esc(t.title)+'" style="flex:1;padding:6px 8px;font-size:12px">'+
+        '</label>';
+    }).join('');
+    [].forEach.call(el('albTracks').querySelectorAll('.albChk'),function(c){c.addEventListener('change',function(){TRACKS[+this.dataset.i].on=this.checked;});});
+    [].forEach.call(el('albTracks').querySelectorAll('.albTitleIn'),function(inp){inp.addEventListener('input',function(){TRACKS[+this.dataset.i].title=this.value;});});
+  }
+
+  async function fetchPlaylist(){
+    var st=el('albStatus'),btn=el('albFetchBtn'),link=(el('albLink').value||'').trim();
+    if(!link){alert('Paste a playlist link first.');return;}
+    btn.disabled=true;btn.textContent='Reading...';st.style.color='#888';st.textContent='Reading the playlist...';
+    try{
+      var r=await fetch(WORKER+'/playlist?url='+encodeURIComponent(link),{headers:{'X-Master-Key':key()}});
+      var d=await r.json();
+      if(!r.ok||!d.ok)throw new Error(d.message||('HTTP '+r.status));
+      TRACKS=d.tracks.map(function(t){
+        var sp=splitArtistTitle(t.title);
+        return {videoId:t.videoId,thumbnail:t.thumbnail,raw:t.title,title:sp.title||cleanTitle(t.title),artist:sp.artist,on:true};
+      });
+      var artists={};TRACKS.forEach(function(t){if(t.artist)artists[norm(t.artist)]=(artists[norm(t.artist)]||0)+1;});
+      var common=Object.keys(artists).sort(function(a,b){return artists[b]-artists[a];})[0];
+      var commonName=common?TRACKS.filter(function(t){return norm(t.artist)===common;})[0].artist:'';
+      var sel=el('albArtist');
+      sel.innerHTML=(el('songArtist')?el('songArtist').innerHTML:'');
+      var opt=commonName?pickArtistOption(commonName):null;
+      if(opt)sel.value=opt.value;
+      el('albName').value=cleanTitle(link.match(/list=/)?TRACKS.length+'-track playlist':'');
+      if(commonName)el('albName').value=commonName+' Album';
+      renderTracks();
+      el('albForm').style.display='block';
+      if(TRACKS[0])el('albCoverPrev').src=TRACKS[0].thumbnail;
+      st.style.color=d.truncated?'#f59e0b':'#22c55e';
+      st.textContent='✓ Found '+d.count+' track'+(d.count===1?'':'s')+(d.truncated?'. YouTube only gives the most recent 15 videos from a playlist through this method - if the album has more, add the rest by pasting each song\'s own link in Add Song.':'')+
+        (commonName?' Artist guessed as "'+esc(commonName)+'" - check it\'s right.':' Could not guess the artist from the titles - please pick one.');
+    }catch(e){
+      st.style.color='#ef4444';st.textContent='Could not read that playlist: '+esc(e.message);
+    }
+    btn.disabled=false;btn.textContent='Fetch Tracklist';
+  }
+
+  async function saveAll(){
+    var chosen=TRACKS.filter(function(t){return t.on;});
+    if(!chosen.length){alert('Tick at least one track.');return;}
+    var artistOpt=el('albArtist').options[el('albArtist').selectedIndex];
+    if(!artistOpt){alert('Pick an artist first.');return;}
+    var meta={artist:artistOpt.text,album:'wavzo.com.ng',year:(el('albYear').value||'').trim(),genre:(el('albGenre').value||'').trim(),comment:'Downloaded from wavzo.com.ng'};
+    var albumName=(el('albName').value||'').trim()||meta.artist+' Album';
+    var voice=el('albVoice').checked;
+    var btn=el('albSaveBtn'),res=el('albResult'),prog=el('albProgWrap'),bar=el('albProgBar');
+    btn.disabled=true;res.textContent='';prog.style.display='block';
+    var coverFile=(el('albCoverIn').files[0])||null;
+    var ok=0,fail=[];
+    for(var i=0;i<chosen.length;i++){
+      var t=chosen[i];
+      bar.style.width=Math.round(100*i/chosen.length)+'%';
+      res.style.color='#888';res.textContent='Track '+(i+1)+' of '+chosen.length+': converting "'+esc(t.title)+'"...';
+      try{
+        var W2='https://pulsewire-ai.dakudinamoses.workers.dev';
+        var init=await fetch(W2+'/mp3-convert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:t.videoId})}).then(function(r){return r.json();});
+        var dl=init.downloadUrl||'';
+        if(!dl&&init.progressId){
+          for(var w=0;w<30&&!dl;w++){
+            await new Promise(function(r){setTimeout(r,3000);});
+            var pd=await fetch(W2+'/mp3-progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:init.progressId})}).then(function(r){return r.json();});
+            if(pd.finished&&pd.downloadUrl)dl=pd.downloadUrl;
+          }
+        }
+        if(!dl)throw new Error('conversion timed out');
+        var built=await window._wzBuild({url:dl,meta:Object.assign({title:t.title},meta),coverFile:coverFile,voice:voice,prog:'albProgWrap',bar:'albProgBar',say:function(msg){res.textContent='Track '+(i+1)+' of '+chosen.length+': '+msg;}});
+        var song={id:uid(),title:t.title,artistId:artistOpt.value,slug:slugify(t.title)+'-'+Date.now()+i,type:'Album',cover:built.cover?coverFile?URL.createObjectURL(coverFile):TRACKS[0].thumbnail:TRACKS[0].thumbnail,downloadUrl:built.url,youtubeUrl:'https://www.youtube.com/watch?v='+t.videoId,album:albumName,trackNumber:i+1,createdAt:Date.now(),downloads:0};
+        var db=await loadDB();db.songs=db.songs||[];db.songs.push(song);await saveDB(db);
+        fetch(WORKER+'/indexnow',{method:'POST',headers:{'X-Master-Key':key()},body:JSON.stringify({urls:['https://wavzo.com.ng/songs/'+song.slug+'.html']})}).catch(function(){});
+        ok++;
+      }catch(e){fail.push(t.title+' ('+e.message+')');}
+    }
+    bar.style.width='100%';
+    res.style.color=fail.length?'#f59e0b':'#22c55e';
+    res.textContent='Saved '+ok+' of '+chosen.length+' tracks.'+(fail.length?' Failed: '+fail.join(', '):'');
+    toast('Album save finished: '+ok+' of '+chosen.length+' tracks saved.',6000);
+    if(typeof loadDash==='function')loadDash();
+    if(typeof triggerPreviewGeneration==='function')triggerPreviewGeneration();
+    btn.disabled=false;
+  }
+
+  buildBox();
+})();
+
+</script>
 </body>
 </html>
