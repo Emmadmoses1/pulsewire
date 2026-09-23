@@ -110,8 +110,10 @@ function statusBits(e){
 }
 function ytSearch(e){return 'https://www.youtube.com/results?search_query='+encodeURIComponent(e.home+' vs '+e.away+' highlights');}
 
+let currentEvents={};
 function render(events, emptyText){
   const wrap=document.getElementById('lsWrap'), empty=document.getElementById('emptyMsg');
+  currentEvents={};events.forEach(e=>{currentEvents[e.id]=e;});
   if(!events.length){wrap.innerHTML='';empty.style.display='block';empty.textContent=emptyText;return;}
   empty.style.display='none';
   const groups={};
@@ -122,7 +124,9 @@ function render(events, emptyText){
       const st=statusBits(e);
       const score=(e.homeScore!=null&&e.awayScore!=null)?(esc(e.homeScore)+' - '+esc(e.awayScore)):'vs';
       const hl=e.status==='finished'?'<a class="ls-hl" href="'+ytSearch(e)+'" target="_blank" rel="noopener">Highlights ▶</a>':'';
-      return '<div class="ls-match"><div class="ls-status '+st.cls+'">'+st.label+'</div>'+
+      var canDetail=(e.status==='inprogress'||e.status==='finished');
+      var open=canDetail?"onclick=\'openMatchDetails(currentEvents[\""+e.id+"\"])\' style=\"cursor:pointer\"":'';
+      return '<div class="ls-match" '+open+'><div class="ls-status '+st.cls+'">'+st.label+'</div>'+
         '<div class="ls-teams"><div><span>'+esc(e.home)+'</span></div><div><span>'+esc(e.away)+'</span></div></div>'+
         '<div class="ls-score">'+score+'</div>'+hl+'</div>';
     }).join('');
@@ -206,6 +210,91 @@ loadLive();startTimer();
     if(/youtube\.com/i.test(h))send('yt','page','livescores');
   },true);
 })();
+</script>
+<script>
+
+/* MATCH-DETAILS */
+(function(){
+  var modal=document.createElement('div');
+  modal.id='mdModal';
+  modal.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:flex-end;justify-content:center';
+  modal.innerHTML='<div id="mdSheet" style="background:#fff;width:100%;max-width:520px;max-height:82vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:20px"></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click',function(e){if(e.target===modal)closeModal();});
+
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function closeModal(){modal.style.display='none';}
+  function playerName(inc){
+    if(inc.playerName)return inc.playerName;
+    if(inc.player&&inc.player.name)return inc.player.name;
+    if(inc.assist1&&inc.assist1.name)return inc.assist1.name;
+    return '';
+  }
+  function minuteLabel(inc){
+    if(inc.time==null||inc.time<0)return '';
+    var m=''+inc.time;
+    if(inc.addedTime&&inc.addedTime>0&&inc.addedTime<900)m+='+'+inc.addedTime;
+    return m+"'";
+  }
+  function timelineHtml(list){
+    var rows=(list||[]).filter(function(i){return i.incidentType==='goal'||i.incidentType==='card';})
+      .sort(function(a,b){return (b.time||0)-(a.time||0);});
+    if(!rows.length)return '<p style="font-size:13px;color:#888;margin-top:6px">No goals or cards recorded for this match yet.</p>';
+    return '<div style="margin-top:6px">'+rows.map(function(inc){
+      var side=inc.isHome?'left':'right';
+      var icon=inc.incidentType==='goal'?(inc.incidentClass==='penalty'?'⚽ (pen)':'⚽'):(inc.incidentClass==='red'?'🟥':'🟨');
+      var name=esc(playerName(inc))||(inc.incidentType==='goal'?'Goal':'Card');
+      var score=(inc.homeScore!=null&&inc.awayScore!=null)?(' <span style="color:#999">'+inc.homeScore+'-'+inc.awayScore+'</span>'):'';
+      return '<div style="display:flex;justify-content:'+(side==='left'?'flex-start':'flex-end')+';margin-bottom:8px">'+
+        '<div style="text-align:'+(side==='left'?'left':'right')+';font-size:13px"><b>'+minuteLabel(inc)+' '+icon+'</b> '+name+score+'</div></div>';
+    }).join('')+'</div>';
+  }
+  function lineupCol(team,label){
+    if(!team)return '';
+    var list=team.players||team.lineup||[];
+    if(!list.length)return '';
+    var items=list.map(function(p){
+      var pl=p.player||p;
+      var nm=pl.shortName||pl.name||'';
+      if(!nm)return '';
+      var sub=p.substitute?' <span style="color:#bbb">(sub)</span>':'';
+      var num=(p.shirtNumber||pl.jerseyNumber)?(p.shirtNumber||pl.jerseyNumber)+'. ':'';
+      return '<div style="font-size:12px;padding:3px 0">'+esc(num)+esc(nm)+sub+'</div>';
+    }).filter(Boolean).join('');
+    if(!items)return '';
+    return '<div style="flex:1"><div style="font-size:11px;font-weight:800;color:#888;text-transform:uppercase;margin-bottom:6px">'+esc(label)+(team.formation?' - '+esc(team.formation):'')+'</div>'+items+'</div>';
+  }
+
+  window.openMatchDetails=async function(ev){
+    var sheet=document.getElementById('mdSheet');
+    modal.style.display='flex';
+    sheet.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start"><h3 style="font-size:16px;margin:0">'+esc(ev.home)+' vs '+esc(ev.away)+'</h3>'+
+      '<button onclick="document.getElementById(\'mdModal\').style.display=\'none\'" style="border:none;background:none;font-size:20px;line-height:1;cursor:pointer">×</button></div>'+
+      '<p style="font-size:12px;color:#888;margin-top:4px">'+esc(ev.tournament||'')+'</p><p style="font-size:13px;color:#aaa;margin-top:14px">Loading match details...</p>';
+    try{
+      var r=await fetch(FB+'?type=details&id='+encodeURIComponent(ev.id));
+      var d=await r.json();
+      if(!r.ok||!d.ok)throw new Error(d.message||('HTTP '+r.status));
+      var incHtml=(d.incidents&&d.incidents.ok)?timelineHtml(d.incidents.data&&d.incidents.data.incidents):'<p style="font-size:13px;color:#888;margin-top:6px">Match timeline is not available for this match.</p>';
+      var lu=d.lineups&&d.lineups.ok?d.lineups.data:null;
+      var luHtml='';
+      if(lu){
+        var cols=[lineupCol(lu.home,'Home'),lineupCol(lu.away,'Away')].filter(Boolean);
+        if(cols.length)luHtml='<div style="margin-top:18px;border-top:1px solid #eee;padding-top:14px"><div style="font-size:11px;font-weight:800;color:#666;text-transform:uppercase;margin-bottom:8px">Lineups</div><div style="display:flex;gap:16px">'+cols.join('')+'</div></div>';
+      }
+      var scoreLine=(ev.homeScore!=null&&ev.awayScore!=null)?('<div style="font-size:22px;font-weight:900;margin-top:10px">'+ev.homeScore+' - '+ev.awayScore+'</div>'):'';
+      var body=document.createElement('div');
+      body.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start"><h3 style="font-size:16px;margin:0">'+esc(ev.home)+' vs '+esc(ev.away)+'</h3>'+
+        '<button onclick="document.getElementById(\'mdModal\').style.display=\'none\'" style="border:none;background:none;font-size:20px;line-height:1;cursor:pointer">×</button></div>'+
+        '<p style="font-size:12px;color:#888;margin-top:4px">'+esc(ev.tournament||'')+'</p>'+scoreLine+
+        '<div style="margin-top:16px"><div style="font-size:11px;font-weight:800;color:#666;text-transform:uppercase;margin-bottom:8px">Timeline</div>'+incHtml+'</div>'+luHtml;
+      sheet.innerHTML='';sheet.appendChild(body);
+    }catch(e){
+      sheet.innerHTML+='<p style="font-size:13px;color:#c00;margin-top:14px">Could not load match details: '+esc(e.message)+'</p>';
+    }
+  };
+})();
+
 </script>
 </body>
 </html>
