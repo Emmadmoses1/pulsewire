@@ -89,18 +89,41 @@ async function init(){
     img.style.display='block';
   }
 
+  /* ALBUM-GROUP */
   const songs=(db.songs||[]).filter(s=>s.artistId===artistId);
   if(songs.length){
     const list=document.getElementById('artistSongsList');
     document.getElementById('songsBlock').style.display='block';
-    songs.forEach(s=>{
+    const singles=songs.filter(s=>!s.albumId);
+    const albums={};
+    songs.filter(s=>s.albumId).forEach(s=>{(albums[s.albumId]=albums[s.albumId]||[]).push(s);});
+    function coverImg(url,size){return url?`<img src="${IMG(url,size)}" data-o="${url}" onerror="IMGFB(this)" style="width:48px;height:48px;object-fit:cover;border-radius:4px">`:'';}
+    function songRow(s,indent){
       const a=document.createElement('a');
       a.href='/songs/'+s.slug+'.html';
-      a.style.cssText='display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;padding:8px;border:1px solid #eee;border-radius:6px';
-      a.innerHTML=(s.cover?`<img src="${IMG(s.cover,160)}" data-o="${s.cover}" onerror="IMGFB(this)" style="width:48px;height:48px;object-fit:cover;border-radius:4px">`:'')+
-        `<span style="font-weight:600">${s.title}</span>`;
-      list.appendChild(a);
+      a.style.cssText='display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;padding:8px;border:1px solid #eee;border-radius:6px'+(indent?';margin-left:20px':'');
+      a.innerHTML=coverImg(s.cover,160)+`<span style="font-weight:600">${s.title}</span>`;
+      return a;
+    }
+    Object.keys(albums).forEach(albumId=>{
+      const tracks=albums[albumId].slice().sort((a,b)=>(a.trackNumber||0)-(b.trackNumber||0));
+      const first=tracks[0];
+      const header=document.createElement('div');
+      header.style.cssText='display:flex;align-items:center;gap:12px;padding:8px;border:1px solid #eee;border-radius:6px;cursor:pointer';
+      header.innerHTML=coverImg(first.albumCover||first.cover,160)+
+        `<span style="font-weight:600;flex:1">💿 ${first.album||'Album'}</span><span style="font-size:12px;color:#888">${tracks.length} track${tracks.length===1?'':'s'} ▾</span>`;
+      const tray=document.createElement('div');
+      tray.style.cssText='display:none;flex-direction:column;gap:8px;margin-top:8px';
+      tracks.forEach(s=>tray.appendChild(songRow(s,true)));
+      header.addEventListener('click',()=>{
+        const open=tray.style.display==='flex';
+        tray.style.display=open?'none':'flex';
+        header.querySelector('span:last-child').textContent=tracks.length+' track'+(tracks.length===1?'':'s')+(open?' ▾':' ▴');
+      });
+      list.appendChild(header);
+      list.appendChild(tray);
     });
+    singles.forEach(s=>list.appendChild(songRow(s,false)));
   }
 
   const track=document.getElementById('tickerTrack');

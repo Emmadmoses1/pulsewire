@@ -3706,6 +3706,13 @@ async function uploadOwnMp3(){
     var btn=el('albSaveBtn'),res=el('albResult'),prog=el('albProgWrap'),bar=el('albProgBar');
     btn.disabled=true;res.textContent='';prog.style.display='block';
     var coverFile=(el('albCoverIn').files[0])||null;
+    var albumId=uid();
+    res.textContent='Preparing album cover...';
+    var albumCoverUrl=TRACKS[0]?TRACKS[0].thumbnail:'';
+    if(coverFile){
+      try{albumCoverUrl=await uploadCloud(coverFile,'albProgWrap','albProgBar');}
+      catch(e){res.style.color='#f59e0b';res.textContent='Could not upload your cover, using the playlist thumbnail instead.';}
+    }
     var ok=0,fail=[];
     for(var i=0;i<chosen.length;i++){
       var t=chosen[i];
@@ -3724,7 +3731,7 @@ async function uploadOwnMp3(){
         }
         if(!dl)throw new Error('conversion timed out');
         var built=await window._wzBuild({url:dl,meta:Object.assign({title:t.title},meta),coverFile:coverFile,voice:voice,prog:'albProgWrap',bar:'albProgBar',say:function(msg){res.textContent='Track '+(i+1)+' of '+chosen.length+': '+msg;}});
-        var song={id:uid(),title:t.title,artistId:artistOpt.value,slug:slugify(t.title)+'-'+Date.now()+i,type:'Album',cover:built.cover?coverFile?URL.createObjectURL(coverFile):TRACKS[0].thumbnail:TRACKS[0].thumbnail,downloadUrl:built.url,youtubeUrl:'https://www.youtube.com/watch?v='+t.videoId,album:albumName,trackNumber:i+1,createdAt:Date.now(),downloads:0};
+        var song={id:uid(),title:t.title,artistId:artistOpt.value,slug:slugify(t.title)+'-'+Date.now()+i,type:'Album',cover:albumCoverUrl,downloadUrl:built.url,youtubeUrl:'https://www.youtube.com/watch?v='+t.videoId,album:albumName,albumId:albumId,albumCover:albumCoverUrl,trackNumber:i+1,createdAt:Date.now(),downloads:0};
         var db=await loadDB();db.songs=db.songs||[];db.songs.push(song);await saveDB(db);
         fetch(WORKER+'/indexnow',{method:'POST',headers:{'X-Master-Key':key()},body:JSON.stringify({urls:['https://wavzo.com.ng/songs/'+song.slug+'.html']})}).catch(function(){});
         ok++;
