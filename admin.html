@@ -3786,24 +3786,6 @@ async function uploadOwnMp3(){
     if(e.target&&e.target.classList&&e.target.classList.contains('rssBulkChk'))updateCount();
   });
 
-  async function resolveImage(item){
-    var hosted=null,candidate=null;
-    if(item.image){
-      candidate=toHttps(item.image);
-      try{hosted=await rehostImage([upscaleImage(item.image),candidate]);}catch(e){}
-    }
-    if(!hosted){
-      try{
-        var og=await findOgImage(item.link);
-        if(og){
-          if(!candidate)candidate=og;
-          try{hosted=await rehostImage([og]);}catch(e){}
-        }
-      }catch(e){}
-    }
-    return hosted||candidate||null;
-  }
-
   async function publishSelected(){
     var boxes=[].slice.call(document.querySelectorAll('.rssBulkChk:checked'));
     var indices=boxes.map(function(c){return +c.dataset.i;});
@@ -3819,10 +3801,7 @@ async function uploadOwnMp3(){
       status.style.color='#888';
       status.textContent='Publishing '+(n+1)+' of '+indices.length+': "'+esc(item.title)+'"...';
       try{
-        window._rssImageUrl=await resolveImage(item);
-        el('pTitle').value=item.title;
-        el('pExcerpt').value=item.excerpt;
-        el('pContent').value=(typeof shortenNews==='function'?shortenNews(item.fullContent||item.excerpt):(item.fullContent||item.excerpt))+'\n\nSource: '+item.link;
+        await useNews(indices[n]);
         var pubErr=el('pubErr');
         pubErr.classList.remove('show');
         await publishPost();
