@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Use — WAVZO</title>
+<meta name="description" content="The terms that apply to using the WAVZO website.">
+<link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/images/wavzo-icon-192.png">
+<style>
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#111;margin:0;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:40px 20px 80px}
+h1{font-size:26px;margin-bottom:6px}
+h2{font-size:18px;margin-top:32px}
+p,li{font-size:14px;color:#333}
+a{color:#e11}
+.updated{font-size:12px;color:#888;margin-bottom:24px}
+.back{display:inline-block;margin-bottom:20px;font-size:13px;font-weight:700;color:#e11;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<a class="back" href="/">← Back to WAVZO</a>
+<h1>Terms of Use</h1>
+<p class="updated">Last updated: September 2026</p>
+
+<p>By using wavzo.com.ng ("WAVZO", "the site"), you agree to these terms.</p>
+
+<h2>Use of the site</h2>
+<p>WAVZO provides music news, artist profiles, downloadable audio, and related content for personal, non-commercial use. You may not use automated tools to scrape or republish our content without permission.</p>
+
+<h2>Downloads</h2>
+<p>Audio made available for download on WAVZO is provided for personal listening. Rights to the underlying music remain with the original artists and rights holders.</p>
+
+<h2>Comments and submissions</h2>
+<p>If you leave a comment, you're responsible for what you post. We may remove content that is abusive, spam, or unlawful, without notice.</p>
+
+<h2>Accuracy of content</h2>
+<p>We make a reasonable effort to keep news and information accurate, but WAVZO makes no guarantee that all content is complete or error-free, and content may change without notice.</p>
+
+<h2>Third-party links and services</h2>
+<p>Our site links to third-party sites (such as YouTube, streaming services, and social media) and uses third-party services (such as advertising and analytics providers). We are not responsible for the content or practices of those third parties.</p>
+
+<h2>Advertising</h2>
+<p>WAVZO may display advertising, including through Google AdSense. Advertisers and ad networks are responsible for the content of their own ads.</p>
+
+<h2>Limitation of liability</h2>
+<p>WAVZO is provided "as is" without warranties of any kind. We are not liable for any damages arising from your use of the site, to the fullest extent permitted by law.</p>
+
+<h2>Changes to these terms</h2>
+<p>We may update these terms from time to time. Continued use of the site after a change means you accept the updated terms.</p>
+
+<h2>Contact us</h2>
+<p>Questions about these terms can be sent to <a href="mailto:hello@wavzo.com.ng">hello@wavzo.com.ng</a>.</p>
+</div>
+<script>
+/* PROMO-BANNER */
+(function(){
+  var WA_NUMBER='2348124992371';
+  if(!WA_NUMBER||WA_NUMBER.indexOf('REPLACE')===0)return;
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  if(owner)return;
+  var HIDE_KEY='wz_promo_hidden_until';
+  try{
+    var until=+(localStorage.getItem(HIDE_KEY)||0);
+    if(until&&Date.now()<until)return;
+  }catch(e){}
+
+  var css=document.createElement('style');
+  css.textContent=
+    '#wzPromo{position:fixed;left:50%;bottom:-100px;transform:translateX(-50%);z-index:400;'+
+    'background:#0a0a0a;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);'+
+    'display:flex;align-items:center;gap:10px;max-width:92vw;transition:bottom .5s ease;font-family:inherit}'+
+    '#wzPromo.show{bottom:16px}'+
+    '#wzPromo a{color:#fff;text-decoration:none;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}'+
+    '#wzPromo .x{cursor:pointer;color:#888;font-size:16px;line-height:1;padding:2px 4px;flex-shrink:0}'+
+    '@media(max-width:420px){#wzPromo a{font-size:12px}}';
+  document.head.appendChild(css);
+
+  var el=document.createElement('div');
+  el.id='wzPromo';
+  var text=encodeURIComponent("Hi WAVZO, I'd like to upload my song.");
+  el.innerHTML='<a href="https://wa.me/'+WA_NUMBER+'?text='+text+'" target="_blank" rel="noopener">🎵 Upload your song on WAVZO — chat us on WhatsApp</a>'+
+    '<span class="x" id="wzPromoClose">×</span>';
+  document.body.appendChild(el);
+
+  setTimeout(function(){el.classList.add('show');},2500);
+  document.getElementById('wzPromoClose').addEventListener('click',function(e){
+    e.preventDefault();e.stopPropagation();
+    el.classList.remove('show');
+    try{localStorage.setItem(HIDE_KEY,String(Date.now()+24*3600000));}catch(err){}
+    setTimeout(function(){el.remove();},600);
+  });
+})();
+</script>
+</body>
+</html>

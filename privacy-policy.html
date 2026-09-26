@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — WAVZO</title>
+<meta name="description" content="How WAVZO collects and uses information from visitors.">
+<link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/images/wavzo-icon-192.png">
+<style>
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#111;margin:0;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:40px 20px 80px}
+h1{font-size:26px;margin-bottom:6px}
+h2{font-size:18px;margin-top:32px}
+p,li{font-size:14px;color:#333}
+a{color:#e11}
+.updated{font-size:12px;color:#888;margin-bottom:24px}
+.back{display:inline-block;margin-bottom:20px;font-size:13px;font-weight:700;color:#e11;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<a class="back" href="/">← Back to WAVZO</a>
+<h1>Privacy Policy</h1>
+<p class="updated">Last updated: September 2026</p>
+
+<p>WAVZO ("we", "us") operates wavzo.com.ng, a music news and entertainment website. This page explains what information we collect from visitors and how it is used.</p>
+
+<h2>Information we collect</h2>
+<ul>
+<li><strong>Email address</strong>, only if you subscribe to our newsletter. We use it solely to send you updates about new posts and songs, and you can unsubscribe at any time using the link in every email.</li>
+<li><strong>Usage data</strong> such as page views, downloads, and general location (country level), collected automatically to understand which content is popular. This does not identify you personally.</li>
+<li><strong>Comments</strong> you choose to leave on posts, including the name you provide.</li>
+</ul>
+
+<h2>Cookies and similar technology</h2>
+<p>Our site, and third-party services we use, may place cookies or similar technology on your device to remember preferences, measure traffic, and serve relevant advertising. You can control or disable cookies in your browser settings.</p>
+
+<h2>Advertising</h2>
+<p>We may display advertising through Google AdSense and similar networks. Google and its partners may use cookies to serve ads based on your visits to this and other websites. You can learn more about how Google uses data at <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">policies.google.com/technologies/partner-sites</a>, and manage your ad preferences at <a href="https://adssettings.google.com" target="_blank" rel="noopener">adssettings.google.com</a>.</p>
+
+<h2>Third-party services</h2>
+<p>We use third-party services to operate the site, including hosting, a content delivery network, an email delivery service for subscribers, and services that provide sports scores and video hosting. These providers process limited data (such as your IP address) only as needed to deliver their service, under their own privacy policies.</p>
+
+<h2>Data retention</h2>
+<p>Subscriber emails are kept until you unsubscribe or ask us to delete them. Usage data is kept in aggregate form and is not linked back to an individual visitor.</p>
+
+<h2>Your choices</h2>
+<p>You can unsubscribe from our newsletter at any time. To ask about or delete any personal data we hold about you, contact us using the details below.</p>
+
+<h2>Children's privacy</h2>
+<p>WAVZO is not directed at children under 13, and we do not knowingly collect personal information from children.</p>
+
+<h2>Changes to this policy</h2>
+<p>We may update this page from time to time. Continued use of the site after a change means you accept the updated policy.</p>
+
+<h2>Contact us</h2>
+<p>Questions about this policy can be sent to <a href="mailto:hello@wavzo.com.ng">hello@wavzo.com.ng</a>.</p>
+</div>
+<script>
+/* PROMO-BANNER */
+(function(){
+  var WA_NUMBER='2348124992371';
+  if(!WA_NUMBER||WA_NUMBER.indexOf('REPLACE')===0)return;
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  if(owner)return;
+  var HIDE_KEY='wz_promo_hidden_until';
+  try{
+    var until=+(localStorage.getItem(HIDE_KEY)||0);
+    if(until&&Date.now()<until)return;
+  }catch(e){}
+
+  var css=document.createElement('style');
+  css.textContent=
+    '#wzPromo{position:fixed;left:50%;bottom:-100px;transform:translateX(-50%);z-index:400;'+
+    'background:#0a0a0a;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);'+
+    'display:flex;align-items:center;gap:10px;max-width:92vw;transition:bottom .5s ease;font-family:inherit}'+
+    '#wzPromo.show{bottom:16px}'+
+    '#wzPromo a{color:#fff;text-decoration:none;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}'+
+    '#wzPromo .x{cursor:pointer;color:#888;font-size:16px;line-height:1;padding:2px 4px;flex-shrink:0}'+
+    '@media(max-width:420px){#wzPromo a{font-size:12px}}';
+  document.head.appendChild(css);
+
+  var el=document.createElement('div');
+  el.id='wzPromo';
+  var text=encodeURIComponent("Hi WAVZO, I'd like to upload my song.");
+  el.innerHTML='<a href="https://wa.me/'+WA_NUMBER+'?text='+text+'" target="_blank" rel="noopener">🎵 Upload your song on WAVZO — chat us on WhatsApp</a>'+
+    '<span class="x" id="wzPromoClose">×</span>';
+  document.body.appendChild(el);
+
+  setTimeout(function(){el.classList.add('show');},2500);
+  document.getElementById('wzPromoClose').addEventListener('click',function(e){
+    e.preventDefault();e.stopPropagation();
+    el.classList.remove('show');
+    try{localStorage.setItem(HIDE_KEY,String(Date.now()+24*3600000));}catch(err){}
+    setTimeout(function(){el.remove();},600);
+  });
+})();
+</script>
+</body>
+</html>

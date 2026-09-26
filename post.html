@@ -536,5 +536,45 @@ document.getElementById('subForm').addEventListener('submit',e=>{e.preventDefaul
   }
 })();
 </script>
+<script>
+/* PROMO-BANNER */
+(function(){
+  var WA_NUMBER='2348124992371';
+  if(!WA_NUMBER||WA_NUMBER.indexOf('REPLACE')===0)return;
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  if(owner)return;
+  var HIDE_KEY='wz_promo_hidden_until';
+  try{
+    var until=+(localStorage.getItem(HIDE_KEY)||0);
+    if(until&&Date.now()<until)return;
+  }catch(e){}
+
+  var css=document.createElement('style');
+  css.textContent=
+    '#wzPromo{position:fixed;left:50%;bottom:-100px;transform:translateX(-50%);z-index:400;'+
+    'background:#0a0a0a;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);'+
+    'display:flex;align-items:center;gap:10px;max-width:92vw;transition:bottom .5s ease;font-family:inherit}'+
+    '#wzPromo.show{bottom:16px}'+
+    '#wzPromo a{color:#fff;text-decoration:none;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}'+
+    '#wzPromo .x{cursor:pointer;color:#888;font-size:16px;line-height:1;padding:2px 4px;flex-shrink:0}'+
+    '@media(max-width:420px){#wzPromo a{font-size:12px}}';
+  document.head.appendChild(css);
+
+  var el=document.createElement('div');
+  el.id='wzPromo';
+  var text=encodeURIComponent("Hi WAVZO, I'd like to upload my song.");
+  el.innerHTML='<a href="https://wa.me/'+WA_NUMBER+'?text='+text+'" target="_blank" rel="noopener">🎵 Upload your song on WAVZO — chat us on WhatsApp</a>'+
+    '<span class="x" id="wzPromoClose">×</span>';
+  document.body.appendChild(el);
+
+  setTimeout(function(){el.classList.add('show');},2500);
+  document.getElementById('wzPromoClose').addEventListener('click',function(e){
+    e.preventDefault();e.stopPropagation();
+    el.classList.remove('show');
+    try{localStorage.setItem(HIDE_KEY,String(Date.now()+24*3600000));}catch(err){}
+    setTimeout(function(){el.remove();},600);
+  });
+})();
+</script>
 </body>
 </html>
