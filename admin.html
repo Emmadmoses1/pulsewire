@@ -857,6 +857,15 @@ async function loadNews(){
   }));
   items = _buckets.flat();
 
+  try {
+    const _db = await loadDB();
+    const _posted = new Set((_db.posts || []).map(p => {
+      const m = (p.content || '').match(/Source:\s*(\S+)\s*$/);
+      return m ? m[1] : null;
+    }).filter(Boolean));
+    items = items.filter(it => !_posted.has(it.link));
+  } catch (e) { console.log('Could not check for already-posted stories:', e.message); }
+
   btn.disabled = false; btn.textContent = '📰 Suggest from Trusted Sources';
 
   if (!items.length) {
