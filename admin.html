@@ -3733,7 +3733,7 @@ async function uploadOwnMp3(){
         }
         if(!dl)throw new Error('conversion timed out');
         var built=await window._wzBuild({url:dl,meta:Object.assign({title:t.title},meta),coverFile:coverFile,voice:voice,prog:'albProgWrap',bar:'albProgBar',say:function(msg){res.textContent='Track '+(i+1)+' of '+chosen.length+': '+msg;}});
-        var song={id:uid(),title:t.title,artistId:artistOpt.value,slug:slugify(t.title)+'-'+Date.now()+i,type:'Album',cover:albumCoverUrl,downloadUrl:built.url,youtubeUrl:'https://www.youtube.com/watch?v='+t.videoId,album:albumName,albumId:albumId,albumCover:albumCoverUrl,trackNumber:i+1,createdAt:Date.now(),downloads:0};
+        var song={id:uid(),title:t.title,artistId:artistOpt.value,slug:slugify(t.title)+'-'+Date.now()+i,type:'Album',cover:albumCoverUrl,downloadUrl:built.url,youtubeUrl:'https://www.youtube.com/watch?v='+t.videoId,album:albumName,albumId:albumId,albumCover:albumCoverUrl,year:meta.year,genre:meta.genre,trackNumber:i+1,createdAt:Date.now(),downloads:0};
         var db=await loadDB();db.songs=db.songs||[];db.songs.push(song);await saveDB(db);
         fetch(WORKER+'/indexnow',{method:'POST',headers:{'X-Master-Key':key()},body:JSON.stringify({urls:['https://wavzo.com.ng/songs/'+song.slug+'.html']})}).catch(function(){});
         ok++;
