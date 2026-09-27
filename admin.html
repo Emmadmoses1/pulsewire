@@ -197,6 +197,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <option value="TRENDING">TRENDING</option>
           <option value="MUSIC">MUSIC</option>
           <option value="GOSPEL">GOSPEL</option>
+          <option value="SPORTS">SPORTS</option>
         </select>
       </div>
       <div class="field"><label>Excerpt <button type="button" class="btn btn-sm" style="background:#333;width:auto;padding:4px 10px;font-size:11px;margin-left:6px" onclick="aiGenExcerpt()">✨ AI Generate</button></label><input type="text" id="pExcerpt" placeholder="Short description..."></div>
@@ -797,6 +798,13 @@ async function loadNews(){
       { name: 'Tooxclusive Gospel', url: 'https://tooxclusive.com/category/gospel/feed/' },
       { name: 'NaijaGospel', url: 'https://naijagospel.com.ng/feed/' },
       { name: 'GospelHotspot', url: 'https://www.gospelhotspot.net/feed/' }
+    ];
+  } else if (cat === 'SPORTS') {
+    FEEDS = [
+      { name: 'BBC Sport', url: 'http://feeds.bbci.co.uk/sport/football/rss.xml' },
+      { name: 'Sky Sports', url: 'https://www.skysports.com/rss/12040' },
+      { name: 'Goal.com', url: 'https://www.goal.com/feeds/en/news' },
+      { name: 'CompleteSports', url: 'https://www.completesports.com/feed/' }
     ];
   } else {
     FEEDS = [
