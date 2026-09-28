@@ -82,7 +82,7 @@
 
 <header class="navbar" id="siteNav">
   <div class="logo"><a href="/">WAV<span>ZO</span></a></div>
-  <nav><a href="/">HOME</a></nav>
+  <nav><a href="/">HOME</a><a href="/livescores.html">LIVE SCORES</a></nav>
 </header>
 
 <main class="article-wrap">
@@ -119,7 +119,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
-const PREPOST={"post": {"title": "Unanimous vote sees Nashville Airport move to rename itself after Dolly Parton", "slug": "unanimous-vote-sees-nashville-airport-move-to-rename-260913-ex56", "category": "TRENDING", "excerpt": "“At a place where Tennessee welcomes the world, it is fitting that Nashville International Airport would bear the name of our state’s favourite daughter\"The post Unanimous vote sees Nashville Airpo", "content": "Nashville International Airport is set to be renamed in honour of Dolly Parton following a unanimous vote by the governing board.\n\nREAD MORE: Dolly Parton, 1946-2026: the Queen of Country was a unifying force in a divided world\n\nOn Friday (September 11), the Metropolitan Nashville Airport Authority board of commissioners voted 6-0 to start the process of changing the airport’s name in memory of the late country icon.\nNews of Dolly’s death emerged last month, with her cause of death revealed as a “brief battle with cancer” a few days later.\n\nSource: https://www.nme.com/news/music/unanimous-vote-sees-nashville-airport-move-to-rename-itself-after-dolly-parton-3968563?utm_source=rss&utm_medium=rss&utm_campaign=unanimous-vote-sees-nashville-airport-move-to-rename-itself-after-dolly-parton", "coverImage": "https://www.nme.com/wp-content/uploads/2026/09/live-dolly-parton.jpg", "musicFile": null, "videoFile": null, "date": "Sep 13, 2026", "createdAt": 1789315807571, "views": 3, "reactions": {"love": 1}}, "related": [{"slug": "jhen-aiko-achieves-first-no-1-album-on-260921-ay8d", "title": "Jhené Aiko Achieves First No. 1 Album on Billboard 200 With ‘Westside Whimsy’", "category": "TRENDING", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789953514/eselnzplmaph4vbcivor.png", "date": "Sep 21, 2026"}, {"slug": "afrobeats-update-september-2026-mix-260921-h463", "title": "Afrobeats Update September 2026 Mix", "category": "TRENDING", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789953547/df2sufd8bih88yx7bi6f.jpg", "date": "Sep 21, 2026"}, {"slug": "sunday-night-football-how-to-watch-the-indianapolis-260921-7dhc", "title": "‘Sunday Night Football’: How to Watch the Indianapolis Colts vs. Kansas City Chiefs Game Live Online Free", "category": "TRENDING", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789953583/uvupet3qcglgowbdudfp.png", "date": "Sep 21, 2026"}]};
+const PREPOST={"post": {"title": "Unanimous vote sees Nashville Airport move to rename itself after Dolly Parton", "slug": "unanimous-vote-sees-nashville-airport-move-to-rename-260913-ex56", "category": "TRENDING", "excerpt": "“At a place where Tennessee welcomes the world, it is fitting that Nashville International Airport would bear the name of our state’s favourite daughter\"The post Unanimous vote sees Nashville Airpo", "content": "Nashville International Airport is set to be renamed in honour of Dolly Parton following a unanimous vote by the governing board.\n\nREAD MORE: Dolly Parton, 1946-2026: the Queen of Country was a unifying force in a divided world\n\nOn Friday (September 11), the Metropolitan Nashville Airport Authority board of commissioners voted 6-0 to start the process of changing the airport’s name in memory of the late country icon.\nNews of Dolly’s death emerged last month, with her cause of death revealed as a “brief battle with cancer” a few days later.\n\nSource: https://www.nme.com/news/music/unanimous-vote-sees-nashville-airport-move-to-rename-itself-after-dolly-parton-3968563?utm_source=rss&utm_medium=rss&utm_campaign=unanimous-vote-sees-nashville-airport-move-to-rename-itself-after-dolly-parton", "coverImage": "https://www.nme.com/wp-content/uploads/2026/09/live-dolly-parton.jpg", "musicFile": null, "videoFile": null, "date": "Sep 13, 2026", "createdAt": 1789315807571, "views": 3, "reactions": {"love": 1}}, "related": [{"slug": "jalen-brunson-amp-katseye-on-snl-here-s-260927-e6lq", "title": "Jalen Brunson &amp; KATSEYE on ‘SNL’: Here’s Where to Watch the Season 52 Premiere Live Online for Free", "category": "TRENDING", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1790498902/ebtz83lpky4ypb2mpers.png", "date": "Sep 27, 2026"}, {"slug": "framed-answer-today-here-s-the-solution-for-260927-y50n", "title": "Framed answer today – here’s the solution for September 27", "category": "TRENDING", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1790498906/u2f9rltgqagftesunbhp.jpg", "date": "Sep 27, 2026"}, {"slug": "what-songs-are-on-the-new-sense-amp-260927-zdhg", "title": "What songs are on the new ‘Sense &amp; Sensibility’ soundtrack?", "category": "TRENDING", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1790498910/gp0ap8gmuevr0q5ewgoy.jpg", "date": "Sep 27, 2026"}]};
 
 function getCache(){
   try{
@@ -546,6 +546,46 @@ document.getElementById('subForm').addEventListener('submit',e=>{e.preventDefaul
       if(a&&/\/songs\//.test(a.getAttribute('href')||''))send('click','artist',key);
     },true);
   }
+})();
+</script>
+<script>
+/* PROMO-BANNER */
+(function(){
+  var WA_NUMBER='2348124992371';
+  if(!WA_NUMBER||WA_NUMBER.indexOf('REPLACE')===0)return;
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  if(owner)return;
+  var HIDE_KEY='wz_promo_hidden_until';
+  try{
+    var until=+(localStorage.getItem(HIDE_KEY)||0);
+    if(until&&Date.now()<until)return;
+  }catch(e){}
+
+  var css=document.createElement('style');
+  css.textContent=
+    '#wzPromo{position:fixed;left:50%;bottom:-100px;transform:translateX(-50%);z-index:400;'+
+    'background:#0a0a0a;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);'+
+    'display:flex;align-items:center;gap:10px;max-width:92vw;transition:bottom .5s ease;font-family:inherit}'+
+    '#wzPromo.show{bottom:16px}'+
+    '#wzPromo a{color:#fff;text-decoration:none;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}'+
+    '#wzPromo .x{cursor:pointer;color:#888;font-size:16px;line-height:1;padding:2px 4px;flex-shrink:0}'+
+    '@media(max-width:420px){#wzPromo a{font-size:12px}}';
+  document.head.appendChild(css);
+
+  var el=document.createElement('div');
+  el.id='wzPromo';
+  var text=encodeURIComponent("Hi WAVZO, I'd like to upload my song.");
+  el.innerHTML='<a href="https://wa.me/'+WA_NUMBER+'?text='+text+'" target="_blank" rel="noopener">🎵 Upload your song on WAVZO — chat us on WhatsApp</a>'+
+    '<span class="x" id="wzPromoClose">×</span>';
+  document.body.appendChild(el);
+
+  setTimeout(function(){el.classList.add('show');},2500);
+  document.getElementById('wzPromoClose').addEventListener('click',function(e){
+    e.preventDefault();e.stopPropagation();
+    el.classList.remove('show');
+    try{localStorage.setItem(HIDE_KEY,String(Date.now()+24*3600000));}catch(err){}
+    setTimeout(function(){el.remove();},600);
+  });
 })();
 </script>
 </body>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intro — Asake | WAVZO</title>
+  <meta name="description" content="Intro by Asake">
+  <link rel="canonical" href="https://wavzo.com.ng/songs/intro-17902054790480.html">
+  <meta property="og:type" content="music.song">
+  <meta property="og:title" content="Intro — Asake">
+  <meta property="og:description" content="Intro by Asake">
+  <meta property="og:image" content="https://i.ytimg.com/vi/twre24OEr-o/hqdefault.jpg">
+  <meta property="og:url" content="https://wavzo.com.ng/songs/intro-17902054790480.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Intro — Asake">
+  <meta name="twitter:description" content="Intro by Asake">
+  <meta name="twitter:image" content="https://i.ytimg.com/vi/twre24OEr-o/hqdefault.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/wavzo-icon-192.png">
+  <link rel="apple-touch-icon" href="/images/wavzo-icon-192.png">
+  
+<link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://wsrv.nl">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap"></noscript>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<div class="ticker-bar">
+  <span class="ticker-live">LIVE</span>
+  <div class="ticker-viewport"><div class="ticker-track" id="tickerTrack"></div></div>
+</div>
+<header class="navbar" id="siteNav">
+  <div class="logo"><a href="/">WAV<span>ZO</span></a></div>
+  <nav><a href="/">HOME</a><a href="/artists.html">ARTISTS</a><a href="/livescores.html">LIVE SCORES</a></nav>
+</header>
+
+<div class="article-wrap">
+  <div class="article-inner">
+    <div class="article-breadcrumb"><a href="/">Home</a> / <a href="/artists.html">Artists</a> / <span id="crumbArtist"></span></div>
+    <span class="article-cat-tag" id="songType"></span>
+    <h1 class="article-title" id="songTitle"></h1>
+    <p style="margin-top:-10px;margin-bottom:20px"><a id="artistLink" style="font-weight:700;color:#e11"></a></p>
+    <img id="songCover" class="article-cover" src="" alt="">
+    <p class="article-body" id="songExcerpt"></p>
+
+    <div class="media-block" id="downloadBlock" style="display:none">
+      <div class="media-label">Download</div>
+      <button class="download-btn" id="downloadMp3Btn" onclick="downloadMp3()" style="border:none;cursor:pointer">⬇ Download MP3</button>
+      <p id="downloadStatus" style="font-size:12px;color:#777;margin-top:8px"></p>
+    </div>
+
+    <div class="media-block" id="videoBlock" style="display:none">
+      <div class="media-label">Music Video</div>
+      <div id="videoEmbed"></div>
+    </div>
+
+    <div class="article-back"><a id="backToArtist" class="back-link">&larr; Back to artist</a></div>
+  </div>
+</div>
+
+<footer>&copy; WAVZO</footer>
+
+<script>
+/* FAST-IMG */
+function IMG(u,w){
+  try{
+    if(!u||!/^https?:\/\//i.test(u)||u.indexOf('wsrv.nl')>-1)return u;
+    var m=u.match(/^(https?:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/)(v\d+\/.*)$/);
+    if(m)return m[1]+'f_auto,q_auto,w_'+w+'/'+m[2];
+    return 'https://wsrv.nl/?url='+encodeURIComponent(u)+'&w='+w+'&output=webp&q=75&we';
+  }catch(e){return u;}
+}
+function IMGFB(el){el.onerror=null;if(el.dataset&&el.dataset.o)el.src=el.dataset.o;}
+const BIN_ID='6aa50e3aac6210605ac3c542';
+const BIN_KEY='public';
+const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
+const songId='mueq4c5ka6e3hj';
+const PRE={"song": {"id": "mueq4c5ka6e3hj", "title": "Intro", "artistId": "art-1789725228554", "slug": "intro-17902054790480", "type": "Album", "cover": "https://i.ytimg.com/vi/twre24OEr-o/hqdefault.jpg", "downloadUrl": "https://res.cloudinary.com/smg1blzu/video/upload/v1790205480/eo5qlap4q9dvumz16ljc.mp3", "youtubeUrl": "https://www.youtube.com/watch?v=twre24OEr-o", "album": "MONEY", "trackNumber": 1, "createdAt": 1790205479048, "downloads": 0, "albumId": "alb-1790229105572-13", "albumCover": "https://i.ytimg.com/vi/twre24OEr-o/hqdefault.jpg"}, "artist": {"id": "art-1789725228554", "name": "Asake", "genre": "Afrobeats", "bio": "Ahmed Ololade, known professionally as Asake, is a Nigerian singer, rapper, and songwriter. His debut album, Mr. Money with the Vibe (2022) broke the record for the biggest opening day for an African album on Apple Music at the time and debuted at number 66 on the Billboard 200 chart. His second album Work of Art (2023), matched the chart position of its predecessor. Asake's third album Lungu Boy (2024) became his third consecutive number one album in Nigeria and the longest-running number one in Nigeria chart history.", "slug": "asake", "photo": "https://upload.wikimedia.org/wikipedia/commons/7/75/ASAKE.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"}, "titles": ["Holy Ghost | Emma D Moses", "Reform receives record £36m donation from crypto billionaire", "Burnham and Badenoch revive red versus blue politics as Reform land 'gobsmacking' donation", "Lightning Houthi advance in Yemen may bring dangerous new dimension to Iran war", "Masked men, lorries and road blocks: How anti-migrant activists are changing tactics", "Trump says united Ireland would be 'fantastic' during visit to Dublin"]};
+
+function youtubeId(url){
+  const m=url.match(/(?:youtu\.be\/|v=)([a-zA-Z0-9_-]{11})/);
+  return m?m[1]:null;
+}
+
+async function init(){
+  /* FAST-SONG */
+  let db;
+  if(typeof PRE!=='undefined'&&PRE&&PRE.song){
+    db={songs:[PRE.song],artists:PRE.artist?[PRE.artist]:[],posts:(PRE.titles||[]).map(t=>({title:t}))};
+  }else{
+    const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+    const data=await res.json();
+    db=data.record||{};
+  }
+  const song=(db.songs||[]).find(s=>s.id===songId);
+  if(!song)return;
+  const artist=(db.artists||[]).find(a=>a.id===song.artistId);
+
+  document.getElementById('songType').textContent=song.type;
+  document.getElementById('songTitle').textContent=song.title;
+  document.getElementById('songExcerpt').textContent=song.excerpt||'';
+  if(song.cover){const el=document.getElementById('songCover');el.dataset.o=song.cover;el.onerror=function(){IMGFB(el)};el.src=IMG(song.cover,900);}
+
+  if(artist){
+    document.getElementById('crumbArtist').textContent=artist.name;
+    const link=document.getElementById('artistLink');
+    link.textContent='by '+artist.name;
+    link.href='/artists/'+artist.slug+'.html';
+    document.getElementById('backToArtist').href='/artists/'+artist.slug+'.html';
+    document.getElementById('backToArtist').innerHTML='&larr; Back to '+artist.name;
+  }
+
+  if(song.downloadUrl){
+    document.getElementById('downloadBlock').style.display='block';
+    window._songData = { audioUrl: song.downloadUrl, artist: artist?artist.name:'Unknown Artist', title: song.title, year: song.year||'', genre: song.genre||artist?.genre||'', coverUrl: song.cover||'' };
+  }
+  if(song.youtubeUrl){
+    const vid=youtubeId(song.youtubeUrl);
+    if(vid){
+      document.getElementById('videoBlock').style.display='block';
+      document.getElementById('videoEmbed').innerHTML=`<iframe width="100%" height="380" style="border-radius:6px;border:none" src="https://www.youtube.com/embed/${vid}" allowfullscreen></iframe>`;
+    }
+  }
+
+  const track=document.getElementById('tickerTrack');
+  [...(db.posts||[]).slice(0,6),...(db.posts||[]).slice(0,6)].forEach(p=>{const s=document.createElement('span');s.textContent=p.title;track.appendChild(s);});
+}
+async function downloadMp3(){
+  const btn=document.getElementById('downloadMp3Btn');
+  const status=document.getElementById('downloadStatus');
+  if(!window._songData){status.textContent='Nothing to download.';return;}
+  btn.disabled=true;btn.textContent='Converting...';status.textContent='Processing audio — this may take a moment for longer tracks.';
+  try{
+    const res=await fetch('/api/download-mp3',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(window._songData)
+    });
+    if(!res.ok){
+      const err=await res.json().catch(()=>({error:'Download failed'}));
+      throw new Error(err.error||'Download failed');
+    }
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=`${window._songData.artist} - ${window._songData.title}.mp3`.replace(/[\/\\:*?"<>|]/g,'');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    status.textContent='✓ Download started';
+  }catch(e){
+    status.textContent='Error: '+e.message;
+  }
+  btn.disabled=false;btn.textContent='⬇ Download MP3';
+}
+
+init();
+window.addEventListener('scroll',()=>{document.getElementById('siteNav').classList.toggle('scrolled',window.scrollY>10);});
+</script>
+<script>
+/* WZ-TRACK */
+(function(){
+  var API='https://wavzo-db.dakudinamoses.workers.dev/track';
+  var host=location.hostname;
+  var live=(host==='wavzo.com.ng'||host==='www.wavzo.com.ng');
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  function send(ev,kind,key){
+    try{
+      if(!live||owner||!key||!/^[\w.\-:~%]{1,120}$/.test(key))return;
+      var body=JSON.stringify({ev:ev,kind:kind,key:key,ref:document.referrer||''});
+      if(navigator.sendBeacon){navigator.sendBeacon(API,new Blob([body],{type:'text/plain'}));return;}
+      fetch(API,{method:'POST',body:body,keepalive:true,headers:{'Content-Type':'text/plain'}});
+    }catch(e){}
+  }
+  window.WZ={track:send};
+  function pathSlug(dir){
+    var m=location.pathname.match(new RegExp('^/'+dir+'/([^/]+?)(?:\\.html)?$'));
+    if(!m)return '';
+    try{return decodeURIComponent(m[1]);}catch(e){return m[1];}
+  }
+  function wrap(name,fn){
+    var old=window[name];
+    if(typeof old!=='function')return;
+    window[name]=function(){try{fn.apply(null,arguments);}catch(e){} return old.apply(this,arguments);};
+  }
+  var path=location.pathname,kind='',key='';
+  if(pathSlug('posts')){kind='post';key=pathSlug('posts');}
+  else if(pathSlug('songs')){kind='song';key=pathSlug('songs');}
+  else if(pathSlug('artists')){kind='artist';key=pathSlug('artists');}
+  else if(path==='/'||path==='/index.html'){kind='page';key='home';}
+  else if(path==='/artists.html'){kind='page';key='artists';}
+  if(!kind)return;
+  send('view',kind,key);
+
+  // first play of any audio/video on the page
+  var played={};
+  document.addEventListener('play',function(e){
+    var t=e.target;if(!t||!t.tagName)return;
+    var id=(t.currentSrc||t.src||t.tagName);
+    if(played[id])return;played[id]=1;
+    send('play',kind,key);
+  },true);
+
+  if(kind==='post'){
+    wrap('trackDownload',function(){send('download','post',key);});
+    wrap('sharePost',function(){send('share','post',key);});
+  }
+  if(kind==='song'){
+    wrap('downloadMp3',function(){send('download','song',key);});
+    // a tap inside the YouTube player moves focus into the iframe
+    window.addEventListener('blur',function(){
+      setTimeout(function(){
+        var a=document.activeElement;
+        if(a&&a.tagName==='IFRAME'&&!a._wz){a._wz=1;send('yt','song',key);}
+      },50);
+    });
+  }
+  // clicks on outbound links (YouTube, streaming, social)
+  document.addEventListener('click',function(e){
+    var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+    if(!a)return;
+    var h=a.getAttribute('href')||'';
+    if(!/^https?:\/\//i.test(h)||h.indexOf(host)>-1)return;
+    send(/youtube\.com|youtu\.be/i.test(h)?'yt':'click',kind,key);
+  },true);
+  if(kind==='artist'){
+    document.addEventListener('click',function(e){
+      var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+      if(a&&/\/songs\//.test(a.getAttribute('href')||''))send('click','artist',key);
+    },true);
+  }
+})();
+</script>
+<script>
+/* PROMO-BANNER */
+(function(){
+  var WA_NUMBER='2348124992371';
+  if(!WA_NUMBER||WA_NUMBER.indexOf('REPLACE')===0)return;
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  if(owner)return;
+  var HIDE_KEY='wz_promo_hidden_until';
+  try{
+    var until=+(localStorage.getItem(HIDE_KEY)||0);
+    if(until&&Date.now()<until)return;
+  }catch(e){}
+
+  var css=document.createElement('style');
+  css.textContent=
+    '#wzPromo{position:fixed;left:50%;bottom:-100px;transform:translateX(-50%);z-index:400;'+
+    'background:#0a0a0a;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);'+
+    'display:flex;align-items:center;gap:10px;max-width:92vw;transition:bottom .5s ease;font-family:inherit}'+
+    '#wzPromo.show{bottom:16px}'+
+    '#wzPromo a{color:#fff;text-decoration:none;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}'+
+    '#wzPromo .x{cursor:pointer;color:#888;font-size:16px;line-height:1;padding:2px 4px;flex-shrink:0}'+
+    '@media(max-width:420px){#wzPromo a{font-size:12px}}';
+  document.head.appendChild(css);
+
+  var el=document.createElement('div');
+  el.id='wzPromo';
+  var text=encodeURIComponent("Hi WAVZO, I'd like to upload my song.");
+  el.innerHTML='<a href="https://wa.me/'+WA_NUMBER+'?text='+text+'" target="_blank" rel="noopener">🎵 Upload your song on WAVZO — chat us on WhatsApp</a>'+
+    '<span class="x" id="wzPromoClose">×</span>';
+  document.body.appendChild(el);
+
+  setTimeout(function(){el.classList.add('show');},2500);
+  document.getElementById('wzPromoClose').addEventListener('click',function(e){
+    e.preventDefault();e.stopPropagation();
+    el.classList.remove('show');
+    try{localStorage.setItem(HIDE_KEY,String(Date.now()+24*3600000));}catch(err){}
+    setTimeout(function(){el.remove();},600);
+  });
+})();
+</script>
+</body>
+</html>

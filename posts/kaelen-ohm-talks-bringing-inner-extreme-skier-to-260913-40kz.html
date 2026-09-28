@@ -82,7 +82,7 @@
 
 <header class="navbar" id="siteNav">
   <div class="logo"><a href="/">WAV<span>ZO</span></a></div>
-  <nav><a href="/">HOME</a></nav>
+  <nav><a href="/">HOME</a><a href="/livescores.html">LIVE SCORES</a></nav>
 </header>
 
 <main class="article-wrap">
@@ -119,7 +119,7 @@ const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
 const CACHE_KEY='pw_posts';
-const PREPOST={"post": {"title": "Kaelen Ohm Talks Bringing Inner Extreme Skier to Film Roles: “I Want to Find the Steeper Hill to Go Down”", "slug": "kaelen-ohm-talks-bringing-inner-extreme-skier-to-260913-40kz", "category": "ENTERTAINMENT", "excerpt": "Star turns in 'Hit &amp; Run,' 'From' and 'The Betrayers' thriller this year at the Toronto Film Festival have got Ohm onto everyone's call sheets in Canada.", "content": "Star turns in 'Hit &amp; Run,' 'From' and 'The Betrayers' thriller this year at the Toronto Film Festival have got Ohm onto everyone's call sheets in Canada.\n\nSource: https://www.hollywoodreporter.com/movies/movie-news/kaelen-ohm-talks-bringing-inner-extreme-skier-to-film-roles-1236689571/", "coverImage": null, "musicFile": null, "videoFile": null, "date": "Sep 13, 2026", "createdAt": 1789314213836, "views": 1}, "related": [{"slug": "ben-affleck-almost-cast-ex-wife-jennifer-garner-260921-1ebh", "title": "Ben Affleck Almost Cast Ex-Wife Jennifer Garner in ‘Animals’ Before Deciding ‘We Don’t Wanna Do That’: ‘You Just Get Baggage’", "category": "ENTERTAINMENT", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789953465/iolpjsbfbkva8kjzniw7.jpg", "date": "Sep 21, 2026"}, {"slug": "the-assassin-s-review-a-riveting-south-korean-260921-uq3u", "title": "‘The Assassin(s)’ Review: A Riveting South Korean Popcorn Thriller About a Real Assassination", "category": "ENTERTAINMENT", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789953477/dj4xmdptxmikruocygat.jpg", "date": "Sep 21, 2026"}, {"slug": "tom-cruise-s-biggest-movie-new-wonka-show-260921-3z9x", "title": "Tom Cruise’s Biggest Movie, New Wonka Show &amp; More Netflix Releases This Week", "category": "ENTERTAINMENT", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1789953489/s7sbrr2lmrelieeluakc.jpg", "date": "Sep 21, 2026"}]};
+const PREPOST={"post": {"title": "Kaelen Ohm Talks Bringing Inner Extreme Skier to Film Roles: “I Want to Find the Steeper Hill to Go Down”", "slug": "kaelen-ohm-talks-bringing-inner-extreme-skier-to-260913-40kz", "category": "ENTERTAINMENT", "excerpt": "Star turns in 'Hit &amp; Run,' 'From' and 'The Betrayers' thriller this year at the Toronto Film Festival have got Ohm onto everyone's call sheets in Canada.", "content": "Star turns in 'Hit &amp; Run,' 'From' and 'The Betrayers' thriller this year at the Toronto Film Festival have got Ohm onto everyone's call sheets in Canada.\n\nSource: https://www.hollywoodreporter.com/movies/movie-news/kaelen-ohm-talks-bringing-inner-extreme-skier-to-film-roles-1236689571/", "coverImage": null, "musicFile": null, "videoFile": null, "date": "Sep 13, 2026", "createdAt": 1789314213836, "views": 1}, "related": [{"slug": "watch-cillian-murphy-amp-john-krasinski-s-blockbuster-260927-zgth", "title": "Watch Cillian Murphy &amp; John Krasinski’s Blockbuster Sci-Fi Movie Before It Leaves Netflix", "category": "ENTERTAINMENT", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1790498860/esxok2dpxc4rqceicla8.webp", "date": "Sep 27, 2026"}, {"slug": "shameless-william-h-macy-on-why-he-doesn-260927-ao0h", "title": "Shameless’ William H. Macy on Why He Doesn’t Want to Direct Anymore Despite Critical Hits", "category": "ENTERTAINMENT", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1790498864/nq39rr8qdcvaaadjykoy.jpg", "date": "Sep 27, 2026"}, {"slug": "watch-hilarious-278m-ice-cube-amp-kevin-hart-260927-8xpf", "title": "Watch Hilarious $278M Ice Cube &amp; Kevin Hart Comedies Before They Leave Streaming", "category": "ENTERTAINMENT", "coverImage": "https://res.cloudinary.com/smg1blzu/image/upload/v1790498867/yl7tehn9g3wfxldsmhhn.webp", "date": "Sep 27, 2026"}]};
 
 function getCache(){
   try{
@@ -546,6 +546,46 @@ document.getElementById('subForm').addEventListener('submit',e=>{e.preventDefaul
       if(a&&/\/songs\//.test(a.getAttribute('href')||''))send('click','artist',key);
     },true);
   }
+})();
+</script>
+<script>
+/* PROMO-BANNER */
+(function(){
+  var WA_NUMBER='2348124992371';
+  if(!WA_NUMBER||WA_NUMBER.indexOf('REPLACE')===0)return;
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  if(owner)return;
+  var HIDE_KEY='wz_promo_hidden_until';
+  try{
+    var until=+(localStorage.getItem(HIDE_KEY)||0);
+    if(until&&Date.now()<until)return;
+  }catch(e){}
+
+  var css=document.createElement('style');
+  css.textContent=
+    '#wzPromo{position:fixed;left:50%;bottom:-100px;transform:translateX(-50%);z-index:400;'+
+    'background:#0a0a0a;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);'+
+    'display:flex;align-items:center;gap:10px;max-width:92vw;transition:bottom .5s ease;font-family:inherit}'+
+    '#wzPromo.show{bottom:16px}'+
+    '#wzPromo a{color:#fff;text-decoration:none;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}'+
+    '#wzPromo .x{cursor:pointer;color:#888;font-size:16px;line-height:1;padding:2px 4px;flex-shrink:0}'+
+    '@media(max-width:420px){#wzPromo a{font-size:12px}}';
+  document.head.appendChild(css);
+
+  var el=document.createElement('div');
+  el.id='wzPromo';
+  var text=encodeURIComponent("Hi WAVZO, I'd like to upload my song.");
+  el.innerHTML='<a href="https://wa.me/'+WA_NUMBER+'?text='+text+'" target="_blank" rel="noopener">🎵 Upload your song on WAVZO — chat us on WhatsApp</a>'+
+    '<span class="x" id="wzPromoClose">×</span>';
+  document.body.appendChild(el);
+
+  setTimeout(function(){el.classList.add('show');},2500);
+  document.getElementById('wzPromoClose').addEventListener('click',function(e){
+    e.preventDefault();e.stopPropagation();
+    el.classList.remove('show');
+    try{localStorage.setItem(HIDE_KEY,String(Date.now()+24*3600000));}catch(err){}
+    setTimeout(function(){el.remove();},600);
+  });
 })();
 </script>
 </body>
