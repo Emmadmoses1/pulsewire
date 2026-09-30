@@ -259,6 +259,7 @@
     <a href="javascript:void(0)" onclick="selectCategory('MUSIC')">Music</a>
     <a href="javascript:void(0)" onclick="selectCategory('ENTERTAINMENT')">Entertainment</a>
     <a href="javascript:void(0)" onclick="selectCategory('TRENDING')">Trending</a>
+    <a href="javascript:void(0)" onclick="selectCategory('SPORTS')">Sports</a>
   </div>
   <div class="nav-right">
     <button class="nav-search-btn" onclick="toggleSearch()">
@@ -281,6 +282,7 @@
   <a href="javascript:void(0)" onclick="selectCategory('ENTERTAINMENT');toggleMobileNav()">Entertainment</a>
   <a href="javascript:void(0)" onclick="selectCategory('TRENDING');toggleMobileNav()">Trending</a>
   <a href="javascript:void(0)" onclick="selectCategory('CULTURE');toggleMobileNav()">Culture</a>
+  <a href="javascript:void(0)" onclick="selectCategory('SPORTS');toggleMobileNav()">Sports</a>
 </div>
 
 <!-- SEARCH -->
@@ -298,6 +300,7 @@
   <a data-cat="MUSIC" onclick="selectCategory('MUSIC')">Music</a>
   <a data-cat="ENTERTAINMENT" onclick="selectCategory('ENTERTAINMENT')">Entertainment</a>
   <a data-cat="TRENDING" onclick="selectCategory('TRENDING')">Trending</a>
+  <a data-cat="SPORTS" onclick="selectCategory('SPORTS')">Sports</a>
   <a data-cat="CULTURE" onclick="selectCategory('CULTURE')">Culture</a>
 </div>
 
@@ -356,6 +359,7 @@
       <button class="post-filter-btn" data-filter="CULTURE" onclick="selectCategory('CULTURE')">Culture</button>
       <button class="post-filter-btn" data-filter="TRENDING" onclick="selectCategory('TRENDING')">Trending</button>
       <button class="post-filter-btn" data-filter="MUSIC" onclick="selectCategory('MUSIC')">Music</button>
+      <button class="post-filter-btn" data-filter="SPORTS" onclick="selectCategory('SPORTS')">Sports</button>
     </div>
     <div class="posts-grid" id="postGrid"></div>
     <p id="emptyState" style="display:none">No stories found.</p>
