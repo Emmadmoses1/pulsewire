@@ -2091,7 +2091,7 @@ async function findOgImage(link){
 }
 /* FIXES-5 */
 function shortenNews(t,limit){
-  limit=limit||700;t=String(t||'').trim();
+  limit=limit||20000;t=String(t||'').trim();
   if(t.length<=limit+80)return t;
   let cut=t.slice(0,limit);
   const m=Math.max(cut.lastIndexOf('. '),cut.lastIndexOf('.\n'),cut.lastIndexOf('\n\n'));
