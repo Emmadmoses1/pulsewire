@@ -1014,10 +1014,42 @@ function cancelEdit(){
   document.getElementById('cancelEditBtn').style.display='none';
 }
 
+
+function formatArticleContent(raw){
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function linkify(s){
+    return s.replace(/(https?:\/\/[^\s<]+)/g,function(u){
+      var clean=u.replace(/[),.!?]+$/,'');
+      var trail=u.slice(clean.length);
+      return '<a href="'+clean+'" target="_blank" rel="noopener nofollow">'+clean+'</a>'+trail;
+    });
+  }
+  var text=String(raw||'').trim();
+  if(!text)return '';
+  var paras=text.split(/\n{2,}/).map(function(p){return p.trim();}).filter(Boolean);
+  return paras.map(function(p,i){
+    var m=p.match(/^(Source:)\s*(\S+)/i);
+    if(m){
+      return '<p class="article-source"><em>'+esc(m[1])+' <a href="'+esc(m[2])+'" target="_blank" rel="noopener nofollow">'+esc(m[2])+'</a></em></p>';
+    }
+    var safe=linkify(esc(p));
+    if(i===0){
+      var cut=p.search(/[.!?]\s/);
+      if(cut>10&&cut<220){
+        var lead=linkify(esc(p.slice(0,cut+1)));
+        var rest=linkify(esc(p.slice(cut+1)));
+        return '<p><strong>'+lead+'</strong>'+rest+'</p>';
+      }
+      return '<p><strong>'+safe+'</strong></p>';
+    }
+    return '<p>'+safe+'</p>';
+  }).join('\n');
+}
+
 async function publishPost(){
   const title=document.getElementById('pTitle').value.trim();
   const excerpt=document.getElementById('pExcerpt').value.trim();
-  const content=document.getElementById('pContent').value.trim();
+  const content=formatArticleContent(document.getElementById('pContent').value.trim());
   const category=document.getElementById('pCat').value;
   const pubErr=document.getElementById('pubErr');
   const pubSuc=document.getElementById('pubSuc');
