@@ -1028,9 +1028,9 @@ function formatArticleContent(raw){
   if(!text)return '';
   var paras=text.split(/\n{2,}/).map(function(p){return p.trim();}).filter(Boolean);
   return paras.map(function(p,i){
-    var m=p.match(/^(Source:)\s*(\S+)/i);
+    var m=p.match(/^Source:\s*(.+?)\s*\|\s*(\S+)$/i);
     if(m){
-      return '<p class="article-source"><em>'+esc(m[1])+' <a href="'+esc(m[2])+'" target="_blank" rel="noopener nofollow">'+esc(m[2])+'</a></em></p>';
+      return '<p class="article-source"><a class="read-more-btn" href="'+esc(m[2])+'" target="_blank" rel="noopener nofollow">Read the full story at '+esc(m[1])+' &rarr;</a></p>';
     }
     var safe=linkify(esc(p));
     if(i===0){
@@ -2126,7 +2126,7 @@ async function findOgImage(link){
 }
 /* FIXES-5 */
 function shortenNews(t,limit){
-  limit=limit||20000;t=String(t||'').trim();
+  limit=limit||420;t=String(t||'').trim();
   if(t.length<=limit+80)return t;
   let cut=t.slice(0,limit);
   const m=Math.max(cut.lastIndexOf('. '),cut.lastIndexOf('.\n'),cut.lastIndexOf('\n\n'));
@@ -2140,7 +2140,7 @@ async function useNews(i){
   const token=++_useNewsToken;
   document.getElementById('pTitle').value=item.title;
   document.getElementById('pExcerpt').value=item.excerpt;
-  document.getElementById('pContent').value=shortenNews(item.fullContent||item.excerpt)+'\n\nSource: '+item.link;
+  document.getElementById('pContent').value=shortenNews(item.fullContent||item.excerpt)+'\n\nSource: '+item.source+'|'+item.link;
   const ci=document.getElementById('coverIn');if(ci)ci.value='';
   const prev=document.getElementById('coverPrev');
   const fname=document.getElementById('coverFname');
