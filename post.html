@@ -59,6 +59,7 @@
     .reaction-btn.active{background:#e63946;border-color:#e63946;color:#fff}
   </style>
   <meta name="google-site-verification" content="N_Ld3rdWv_kQf6zgorjRoJk663yRqeXNBFN9JysrIPk" />
+<script src="/monetize.js?v=1" defer></script>
 </head>
 <body>
 
@@ -172,6 +173,7 @@ function startDownload(url,type,slug){
     const a=document.createElement('a');
     a.href=dlUrl(url,document.title);a.download='';a.style.display='none';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
+    try{if(window.wzMonetize)window.wzMonetize('audio');}catch(e){}
     return;
   }
   const gate=document.getElementById('dlGate');
@@ -188,7 +190,7 @@ function startDownload(url,type,slug){
       clearInterval(timer);
       countdown.textContent='✅ Ready!';
       btn.disabled=false;btn.textContent='⬇ DOWNLOAD NOW';
-      btn.onclick=()=>{trackDownload(slug,type);const a=document.createElement('a');a.href=dlUrl(url,document.title);a.download='';a.click();};
+      btn.onclick=()=>{trackDownload(slug,type);const a=document.createElement('a');a.href=dlUrl(url,document.title);a.download='';a.click();try{if(window.wzMonetize)window.wzMonetize('video');}catch(e){}};
     } else {
       countdown.textContent='Download starts in '+sec+'s';
     }
