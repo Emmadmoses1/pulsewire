@@ -173,7 +173,25 @@ async function trackDownload(slug,type){
   }catch(e){}
 }
 
+// Forces the browser to SAVE the file instead of opening/playing it
+function dlUrl(url,name){
+  try{
+    const u=String(url||'');
+    const safe=String(name||'wavzo').replace(/\s*[—-]\s*WAVZO\s*$/i,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,80)||'wavzo';
+    if(/^https?:\/\/res\.cloudinary\.com\//i.test(u)&&u.indexOf('/upload/')>-1&&u.indexOf('fl_attachment')<0){
+      return u.replace('/upload/','/upload/fl_attachment:'+safe+'/');
+    }
+  }catch(e){}
+  return url;
+}
 function startDownload(url,type,slug){
+  if(type==='audio'){
+    trackDownload(slug,type);
+    const a=document.createElement('a');
+    a.href=dlUrl(url,document.title);a.download='';a.style.display='none';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    return;
+  }
   const gate=document.getElementById('dlGate');
   const btn=document.getElementById('dlFinalBtn');
   const countdown=document.getElementById('dlCountdown');
@@ -188,7 +206,7 @@ function startDownload(url,type,slug){
       clearInterval(timer);
       countdown.textContent='✅ Ready!';
       btn.disabled=false;btn.textContent='⬇ DOWNLOAD NOW';
-      btn.onclick=()=>{trackDownload(slug,type);const a=document.createElement('a');a.href=url;a.download='';a.click();};
+      btn.onclick=()=>{trackDownload(slug,type);const a=document.createElement('a');a.href=dlUrl(url,document.title);a.download='';a.click();};
     } else {
       countdown.textContent='Download starts in '+sec+'s';
     }
