@@ -26,6 +26,7 @@ function head(o) {
     '  <meta property="og:image" content="' + o.image + '">\n  <meta property="og:image:secure_url" content="' + o.image + '">\n  <meta property="og:image:width" content="1200">\n  <meta property="og:image:height" content="630">\n  <meta property="og:image:alt" content="' + o.ogTitle + '">\n' +
     '  <meta property="og:url" content="' + o.url + '">\n  <meta name="twitter:card" content="summary_large_image">\n' +
     '  <meta name="twitter:title" content="' + o.ogTitle + '">\n  <meta name="twitter:description" content="' + o.desc + '">\n  <meta name="twitter:image" content="' + o.image + '">\n  <meta name="twitter:image:alt" content="' + o.ogTitle + '">' +
+    (o.robots ? '\n  <meta name="robots" content="' + o.robots + '">' : '') +
     (o.ld ? '\n  <script type="application/ld+json">' + js(o.ld) + '</script>' : '');
 }
 const DEFAULT_IMG = SITE + '/images/wavzo-og-image.png';
@@ -59,6 +60,33 @@ function postLd(post, url) {
     publisher: { '@type': 'Organization', name: 'WAVZO', logo: { '@type': 'ImageObject', url: SITE + '/images/wavzo-icon-512.png' } }
   };
 }
+// ---- Search quality rules: only strong, unique posts are offered to Google ----
+const SEO_MIN_TEXT = 300; // posts with less text (and no audio/video) are kept for readers but hidden from Google
+const normTitle = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const hasMedia = (p) => [p.musicFile, p.videoFile].some((v) => v && v !== 'None');
+const textLen = (p) => plain(p.content).length;
+let seoDoc = null, seoBest = null;
+function seoBestMap(doc) {
+  if (seoDoc === doc && seoBest) return seoBest;
+  const best = new Map();
+  for (const p of doc.posts || []) {
+    if (!p || !p.slug) continue;
+    const k = normTitle(p.title);
+    if (!k) continue;
+    const cur = best.get(k);
+    const better = !cur || textLen(p) > textLen(cur) ||
+      (textLen(p) === textLen(cur) && (Number(p.createdAt) || 0) < (Number(cur.createdAt) || 0));
+    if (better) best.set(k, p);
+  }
+  seoDoc = doc; seoBest = best;
+  return best;
+}
+function seoState(doc, post) {
+  const main = seoBestMap(doc).get(normTitle(post.title));
+  const dupOf = main && main.slug !== post.slug ? main.slug : null;
+  const thin = !hasMedia(post) && textLen(post) < SEO_MIN_TEXT;
+  return { dupOf, thin, index: !dupOf && !thin };
+}
 function ssrArticle(post, doc) {
   const cat = esc(post.category || ''), title = esc(post.title || '');
   const rel = (doc.posts || []).filter((p) => p.slug !== post.slug && p.category === post.category).slice(-3).reverse();
@@ -72,10 +100,11 @@ function ssrArticle(post, doc) {
 }
 function renderPost(doc, post) {
   const slug = safeId(post.slug);
-  const url = SITE + '/posts/' + slug + '.html';
+  const st = seoState(doc, post);
+  const url = SITE + '/posts/' + (st.dupOf ? safeId(st.dupOf) : slug) + '.html';
   let page = put(read('post.html'), '<title>WAVZO</title>', head({
     title: esc(post.title || 'WAVZO') + ' — WAVZO', desc: attr(post.excerpt || plain(post.content), 200), url, type: 'article',
-    ogTitle: esc(post.title || 'WAVZO'), image: esc(ogImage(post.coverImage)), ld: postLd(post, url)
+    ogTitle: esc(post.title || 'WAVZO'), image: esc(ogImage(post.coverImage)), ld: postLd(post, url), robots: st.thin && !st.dupOf ? 'noindex,follow' : ''
   }));
   page = put(page, "let slug=new URLSearchParams(window.location.search).get('slug');", "const slug='" + slug + "';");
   page = put(page, '<div class="article-inner" id="articleInner"></div>', '<div class="article-inner" id="articleInner">' + ssrArticle(post, doc) + '</div>');
@@ -123,7 +152,7 @@ const day = (ms) => { const n = Number(ms); const d = new Date(isNaN(n) ? ms : n
 async function sitemap() {
   const doc = await getDoc(60000);
   const rows = [[SITE + '/', ''], [SITE + '/artists.html', '']];
-  for (const p of doc.posts || []) if (p.slug) rows.push([SITE + '/posts/' + p.slug + '.html', day(p.createdAt)]);
+  for (const p of doc.posts || []) if (p.slug && seoState(doc, p).index) rows.push([SITE + '/posts/' + p.slug + '.html', day(p.createdAt)]);
   for (const s of doc.songs || []) if (s.slug) rows.push([SITE + '/songs/' + s.slug + '.html', day(s.createdAt)]);
   for (const a of doc.artists || []) if (a.slug) rows.push([SITE + '/artists/' + a.slug + '.html', day(a.createdAt)]);
   return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
@@ -161,7 +190,7 @@ async function checkNew() {
   try {
     const doc = await getDoc(0);
     const rows = [];
-    for (const k of ['posts', 'songs', 'artists']) for (const x of doc[k] || []) if (x && x.slug) rows.push({ url: SITE + '/' + k + '/' + x.slug + '.html', t: Number(x.createdAt) || 0 });
+    for (const k of ['posts', 'songs', 'artists']) for (const x of doc[k] || []) if (x && x.slug && (k !== 'posts' || seoState(doc, x).index)) rows.push({ url: SITE + '/' + k + '/' + x.slug + '.html', t: Number(x.createdAt) || 0 });
     if (known === null) {
       known = new Set(rows.map((r) => r.url));
       await submitIndexNow(rows.filter((r) => r.t > Date.now() - 6 * 3600 * 1000).map((r) => r.url)); // published while the server slept
