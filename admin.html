@@ -565,6 +565,7 @@ window.addEventListener('unhandledrejection',ev=>{
   showToast('⚠ '+String(m).slice(0,160),6000);
 });
 async function loadDB(){
+  if(window.__dbSnap&&Date.now()-window.__dbSnap.t<8000){try{return JSON.parse(window.__dbSnap.body);}catch(e){}}
   let r;
   try{r=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});}
   catch(e){throw new Error('Cannot reach Database - check your internet.');}
@@ -582,6 +583,7 @@ async function saveDB(data){
   catch(e){throw new Error('Cannot reach Database - check your internet.');}
   let d=null;try{d=await r.json();}catch(e){}
   if(!r.ok)throw new Error('Database save failed ('+r.status+')'+((d&&d.message)?': '+d.message:'')+' (database is '+Math.round(body.length/1024)+' KB)');
+  window.__dbSnap={t:Date.now(),body:body};
   return d;
 }
 async function compressImage(file,maxDim,quality){
@@ -763,6 +765,21 @@ async function uploadFromUrl(remoteUrl,filename){
 let _rssImageUrl = null, _rssMusicUrl = null, _rssVideoUrl = null;
 
 
+function __normLink(u){return String(u||'').replace(/&amp;/g,'&').replace(/[).,;]+$/,'').replace(/#.*$/,'').replace(/\/+$/,'').toLowerCase();}
+function __postedLinks(){try{return new Set(JSON.parse(localStorage.getItem('wz_posted_links')||'[]').map(__normLink));}catch(e){return new Set();}}
+function __rememberPosted(u){if(!u)return;try{const a=JSON.parse(localStorage.getItem('wz_posted_links')||'[]');a.push(u);localStorage.setItem('wz_posted_links',JSON.stringify(a.slice(-600)));}catch(e){}}
+// takes a posted story out of the headlines list straight away
+function __dropNewsItem(link){
+  try{
+    const n=__normLink(link),items=window._newsItems||[];
+    const idx=items.findIndex(it=>it&&__normLink(it.link)===n);
+    if(idx<0)return;
+    items[idx]=null;
+    const chk=document.querySelector('.rssBulkChk[data-i="'+idx+'"]');
+    if(chk&&chk.parentElement)chk.parentElement.remove();
+    if(!document.querySelector('.rssBulkChk')){const b=document.getElementById('newsResults');if(b)b.innerHTML='<p style="padding:10px;color:#888;font-size:13px">All suggested stories are posted. Click Suggest again for more.</p>';}
+  }catch(e){}
+}
 async function loadNews(){
   const box = document.getElementById('newsResults');
   const btn = document.getElementById('rssBtn');
@@ -831,6 +848,12 @@ async function loadNews(){
   }
 
   let items = [];
+  let _serverOk = false;
+  try {
+    const _rr = await fetch('/admin/rss-items?cat=' + encodeURIComponent(cat));
+    if (_rr.ok) { const _j = await _rr.json(); if (_j && Array.isArray(_j.items)) { items = _j.items; _serverOk = true; } }
+  } catch (e) { console.log('Server feed reader failed, using backup:', e.message); }
+  if (_serverOk) FEEDS = [];
   const _buckets = FEEDS.map(() => []);
   await Promise.all(FEEDS.map(async (feed, _fi) => {
     try {
@@ -871,15 +894,20 @@ async function loadNews(){
       }
     } catch (e) { console.log('Feed failed:', feed.name); }
   }));
-  items = _buckets.flat();
+  if (!_serverOk) items = _buckets.flat();
 
   try {
-    const _db = await loadDB();
-    const _posted = new Set((_db.posts || []).map(p => {
-      const m = (p.content || '').match(/Source:\s*(\S+)\s*$/);
-      return m ? m[1] : null;
-    }).filter(Boolean));
-    items = items.filter(it => !_posted.has(it.link));
+    const _mine = __postedLinks();
+    items = items.filter(it => !_mine.has(__normLink(it.link)));
+    if (!_serverOk) {
+      const _db = await loadDB();
+      const _posted = new Set();
+      (_db.posts || []).forEach(p => {
+        if (p.sourceUrl) _posted.add(__normLink(p.sourceUrl));
+        (String(p.content || '').slice(-900).match(/https?:\/\/[^\s"'<>)]+/g) || []).forEach(u => _posted.add(__normLink(u)));
+      });
+      items = items.filter(it => !_posted.has(__normLink(it.link)));
+    }
   } catch (e) { console.log('Could not check for already-posted stories:', e.message); }
 
   btn.disabled = false; btn.textContent = '📰 Suggest from Trusted Sources';
@@ -917,6 +945,8 @@ function upscaleImage(url){
 
 async function useNews(i){
   const item = window._newsItems[i];
+  if(!item)return;
+  window._rssSourceLink = item.link;
   if(item.image)item.image=upscaleImage(item.image);
   document.getElementById('pTitle').value = item.title;
   document.getElementById('pExcerpt').value = item.excerpt;
@@ -935,8 +965,9 @@ async function useNews(i){
     document.getElementById('coverFname').textContent = 'Fetching image...';
     (async()=>{
       try{
-        const r = await fetch('https://corsproxy.io/?'+encodeURIComponent(item.link));
-        const html = await r.text();
+        let html = '';
+        try { const sr = await fetch('/admin/og-image?url=' + encodeURIComponent(item.link)); const sj = await sr.json(); if (sj && sj.image) html = 'property="og:image" content="' + sj.image + '"'; } catch (_e) {}
+        if (!html) { const r = await fetch('https://corsproxy.io/?'+encodeURIComponent(item.link)); html = await r.text(); }
         const m = html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/) ||
                   html.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/);
         if(m && m[1] && !m[1].includes('logo')){
@@ -1084,9 +1115,12 @@ async function publishPost(){
       const idx=db.posts.findIndex(p=>p.slug===editingSlug);
       if(idx>-1)db.posts[idx]={...db.posts[idx],title,category,excerpt,content,coverImage,musicFile,videoFile};
     } else {
-      db.posts.push({title,slug,category,excerpt,content,coverImage,musicFile,videoFile,date,createdAt:Date.now()});
+      const _np={title,slug,category,excerpt,content,coverImage,musicFile,videoFile,date,createdAt:Date.now()};
+      if(window._rssSourceLink)_np.sourceUrl=window._rssSourceLink;
+      db.posts.push(_np);
     }
     await saveDB(db);
+    if(!editingSlug)window._lastPublished={slug,title,excerpt,coverImage};
     pubSuc.textContent=editingSlug?'✅ Post updated!':'✅ Post published!';pubSuc.classList.add('show');
     triggerPreviewGeneration();
     btn.textContent='PUBLISH POST';btn.disabled=false;
@@ -1095,7 +1129,7 @@ async function publishPost(){
     _rssImageUrl=null;_rssMusicUrl=null;_rssVideoUrl=null;
     editingSlug=null;window._editingPost=null;
     document.getElementById('cancelEditBtn').style.display='none';
-    document.getElementById('newsResults').innerHTML='';
+    if(window._rssSourceLink){__rememberPosted(window._rssSourceLink);__dropNewsItem(window._rssSourceLink);window._rssSourceLink=null;}else{document.getElementById('newsResults').innerHTML='';}
     document.getElementById('coverPrev').style.display='none';
     ['coverFname','audioFname','videoFname'].forEach(id=>document.getElementById(id).textContent='');
     loadPosts();loadDash();
@@ -2742,20 +2776,21 @@ async function uploadOwnMp3(){
     var t0=Date.now();
     var out=await rawPublish.apply(this,arguments);
     if(editing)return out;
-    try{
-      var suc=el('pubSuc');
-      if(!suc||!/published/i.test(suc.textContent||''))return out;
-      var db=await loadDB();
-      var post=(db.posts||[]).slice().reverse().find(function(p){return p.title===title&&(p.createdAt||0)>=t0-5000;});
-      if(!post)return out;
-      var path='/posts/'+post.slug+'.html';
-      rawFetch(WORKER+'/indexnow',{method:'POST',headers:{'X-Master-Key':key()},body:JSON.stringify({urls:['https://wavzo.com.ng'+path,'https://wavzo.com.ng/']})}).catch(function(){});
-      if(email){
-        var r=await rawFetch(WORKER+'/notify',{method:'POST',headers:{'X-Master-Key':key()},body:JSON.stringify({id:post.slug,title:post.title,excerpt:post.excerpt||'',image:post.coverImage||'',path:path})});
-        var d=await r.json().catch(function(){return {};});
-        toast(d.message||(r.ok?'Subscribers emailed.':'Email failed (HTTP '+r.status+')'),6000);
-      }
-    }catch(e){console.log('after-publish steps failed',e);}
+    var suc=el('pubSuc');
+    var post=window._lastPublished;
+    if(!suc||!/published/i.test(suc.textContent||'')||!post||post.title!==title)return out;
+    window._lastPublished=null;
+    (async function(){
+      try{
+        var path='/posts/'+post.slug+'.html';
+        rawFetch(WORKER+'/indexnow',{method:'POST',headers:{'X-Master-Key':key()},body:JSON.stringify({urls:['https://wavzo.com.ng'+path,'https://wavzo.com.ng/']})}).catch(function(){});
+        if(email){
+          var r=await rawFetch(WORKER+'/notify',{method:'POST',headers:{'X-Master-Key':key()},body:JSON.stringify({id:post.slug,title:post.title,excerpt:post.excerpt||'',image:post.coverImage||'',path:path})});
+          var d=await r.json().catch(function(){return {};});
+          toast(d.message||(r.ok?'Subscribers emailed.':'Email failed (HTTP '+r.status+')'),6000);
+        }
+      }catch(e){console.log('after-publish steps failed',e);}
+    })();
     return out;
   };
   var rawSaveSong=window.saveSong;
@@ -3848,26 +3883,71 @@ async function uploadOwnMp3(){
     var indices=boxes.map(function(c){return +c.dataset.i;});
     if(!indices.length){alert('Tick at least one story first.');return;}
     var items=window._newsItems||[];
-    var btn=el('bulkPubBtn'),status=el('bulkPubStatus');
-    var selectAll=el('bulkSelectAll');
+    var btn=el('bulkPubBtn'),status=el('bulkPubStatus'),selectAll=el('bulkSelectAll');
     btn.disabled=true;if(selectAll)selectAll.disabled=true;
-    var ok=0,fail=[];
-    for(var n=0;n<indices.length;n++){
-      var item=items[indices[n]];
-      if(!item){fail.push('(missing story)');continue;}
-      status.style.color='#888';
-      status.textContent='Publishing '+(n+1)+' of '+indices.length+': "'+esc(item.title)+'"...';
-      try{
-        await useNews(indices[n]);
-        var pubErr=el('pubErr');
-        pubErr.classList.remove('show');
-        await publishPost();
-        if(pubErr.classList.contains('show'))fail.push(item.title+' ('+pubErr.textContent+')');
-        else ok++;
-      }catch(e){fail.push(item.title+' ('+(e&&e.message)+')');}
-    }
+    var t0=Date.now(),WORKER=BIN_URL.replace(/\/v3\/b\/.*$/,'');
+    var cat=(el('pCat')&&el('pCat').value)||'NEWS';
+    var picked=indices.map(function(i){return {i:i,item:items[i]};}).filter(function(x){return x.item;});
+    var fail=[],ok=0,skipped=0;
+    try{
+      status.style.color='#888';status.textContent='Preparing '+picked.length+' stories...';
+      await Promise.all(picked.map(async function(x){
+        var it=x.item;
+        if(it.image){it.image=upscaleImage(it.image);return;}
+        try{var r=await fetch('/admin/og-image?url='+encodeURIComponent(it.link));var j=await r.json();if(j&&j.image)it.image=upscaleImage(j.image);}catch(e){}
+      }));
+      status.textContent='Publishing '+picked.length+' stories...';
+      var db=await loadDB();
+      var pl=new Set(),pt=new Set();
+      var tk=function(t){return String(t||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();};
+      (db.posts||[]).forEach(function(p){
+        if(p.sourceUrl)pl.add(__normLink(p.sourceUrl));
+        ((String(p.content||'').slice(-900)).match(/https?:\/\/[^\s"'<>)]+/g)||[]).forEach(function(u){pl.add(__normLink(u));});
+        pt.add(tk(p.title));
+      });
+      var d=new Date();
+      var dateTag=d.getFullYear().toString().slice(2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+      var date=d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+      var added=[];
+      picked.forEach(function(x,k){
+        var it=x.item;
+        var excerpt=(it.excerpt||(it.fullContent||'').slice(0,200)).trim();
+        if(!it.title||!excerpt){fail.push((it.title||'(no title)')+' (no text)');return;}
+        if(pl.has(__normLink(it.link))||pt.has(tk(it.title))){skipped++;__dropNewsItem(it.link);return;}
+        pl.add(__normLink(it.link));pt.add(tk(it.title));
+        var base=it.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').split('-').slice(0,8).join('-');
+        var post={title:it.title,slug:base+'-'+dateTag+'-'+Math.random().toString(36).slice(2,6),category:cat,excerpt:excerpt,
+          content:formatArticleContent((it.fullContent||excerpt)+'\n\nSource: '+it.link),coverImage:it.image||null,musicFile:null,videoFile:null,
+          date:date,createdAt:Date.now()+k,sourceUrl:it.link};
+        db.posts.push(post);added.push(post);
+      });
+      if(added.length){
+        status.textContent='Saving '+added.length+' stories...';
+        await saveDB(db);
+        ok=added.length;
+        added.forEach(function(p){__rememberPosted(p.sourceUrl);__dropNewsItem(p.sourceUrl);});
+        // background: search engines + subscribers, the list is free for the next batch straight away
+        (function(){
+          try{
+            var urls=added.map(function(p){return 'https://wavzo.com.ng/posts/'+p.slug+'.html';}).concat(['https://wavzo.com.ng/']);
+            fetch(WORKER+'/indexnow',{method:'POST',headers:{'X-Master-Key':BIN_KEY},body:JSON.stringify({urls:urls})}).catch(function(){});
+            var wantEmail=!el('pubEmail')||el('pubEmail').checked;
+            if(wantEmail)(async function(){
+              for(var n=0;n<added.length;n++){
+                var p=added[n];
+                try{await fetch(WORKER+'/notify',{method:'POST',headers:{'X-Master-Key':BIN_KEY},body:JSON.stringify({id:p.slug,title:p.title,excerpt:p.excerpt||'',image:p.coverImage||'',path:'/posts/'+p.slug+'.html'})});}catch(e){}
+              }
+            })();
+          }catch(e){}
+        })();
+        if(typeof triggerPreviewGeneration==='function')triggerPreviewGeneration();
+        if(typeof loadPosts==='function')loadPosts();
+        if(typeof loadDash==='function')loadDash();
+      }
+    }catch(e){fail.push('save error: '+(e&&e.message));}
+    var secs=Math.round((Date.now()-t0)/100)/10;
     status.style.color=fail.length?'#f59e0b':'#22c55e';
-    status.textContent='Published '+ok+' of '+indices.length+' stories.'+(fail.length?' Failed: '+fail.join(', '):'');
+    status.textContent='Published '+ok+' of '+indices.length+' stories in '+secs+'s.'+(skipped?' Skipped '+skipped+' already posted.':'')+(fail.length?' Problems: '+fail.join(', '):'');
     if(typeof showToast==='function')showToast('Bulk publish finished: '+ok+' of '+indices.length+' published.',6000);
     btn.disabled=false;if(selectAll)selectAll.disabled=false;
     updateCount();
