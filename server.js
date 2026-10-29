@@ -18,5 +18,9 @@ function isYouTubeUrl(value) {
 }
 
 const app = require('./server-app');
+const instant = require('./instant-pages');
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => console.log(`WAVZO running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`WAVZO running on port ${PORT}`);
+  instant.startIndexNowWatcher();
+});

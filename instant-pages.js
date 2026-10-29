@@ -25,7 +25,8 @@ function head(o) {
     '  <meta property="og:site_name" content="WAVZO">\n  <meta property="og:type" content="' + o.type + '">\n  <meta property="og:title" content="' + o.ogTitle + '">\n  <meta property="og:description" content="' + o.desc + '">\n' +
     '  <meta property="og:image" content="' + o.image + '">\n  <meta property="og:image:secure_url" content="' + o.image + '">\n  <meta property="og:image:width" content="1200">\n  <meta property="og:image:height" content="630">\n  <meta property="og:image:alt" content="' + o.ogTitle + '">\n' +
     '  <meta property="og:url" content="' + o.url + '">\n  <meta name="twitter:card" content="summary_large_image">\n' +
-    '  <meta name="twitter:title" content="' + o.ogTitle + '">\n  <meta name="twitter:description" content="' + o.desc + '">\n  <meta name="twitter:image" content="' + o.image + '">\n  <meta name="twitter:image:alt" content="' + o.ogTitle + '">';
+    '  <meta name="twitter:title" content="' + o.ogTitle + '">\n  <meta name="twitter:description" content="' + o.desc + '">\n  <meta name="twitter:image" content="' + o.image + '">\n  <meta name="twitter:image:alt" content="' + o.ogTitle + '">' +
+    (o.ld ? '\n  <script type="application/ld+json">' + js(o.ld) + '</script>' : '');
 }
 const DEFAULT_IMG = SITE + '/images/wavzo-og-image.png';
 // Share-ready image: always https, 1200x630, small enough for WhatsApp (< 300 KB)
@@ -45,12 +46,25 @@ const plain = (h) => String(h == null ? '' : h).replace(/<[^>]*>/g, ' ').replace
 
 const safeId = (v) => String(v == null ? '' : v).replace(/[^\w.-]/g, '');
 
+function postLd(post, url) {
+  const n = Number(post.createdAt);
+  let d = new Date(isNaN(n) ? post.createdAt : n);
+  if (isNaN(d)) d = new Date(post.date);
+  const iso = isNaN(d) ? undefined : d.toISOString();
+  return {
+    '@context': 'https://schema.org', '@type': 'NewsArticle', mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    headline: String(post.title || 'WAVZO').slice(0, 110), description: String(post.excerpt || plain(post.content)).slice(0, 200),
+    image: [ogImage(post.coverImage)], datePublished: iso, dateModified: iso,
+    author: { '@type': 'Organization', name: 'WAVZO', url: SITE },
+    publisher: { '@type': 'Organization', name: 'WAVZO', logo: { '@type': 'ImageObject', url: SITE + '/images/wavzo-icon-512.png' } }
+  };
+}
 function renderPost(doc, post) {
   const slug = safeId(post.slug);
   const url = SITE + '/posts/' + slug + '.html';
   let page = put(read('post.html'), '<title>WAVZO</title>', head({
     title: esc(post.title || 'WAVZO') + ' — WAVZO', desc: attr(post.excerpt || plain(post.content), 200), url, type: 'article',
-    ogTitle: esc(post.title || 'WAVZO'), image: esc(ogImage(post.coverImage))
+    ogTitle: esc(post.title || 'WAVZO'), image: esc(ogImage(post.coverImage)), ld: postLd(post, url)
   }));
   page = put(page, "let slug=new URLSearchParams(window.location.search).get('slug');", "const slug='" + slug + "';");
   const same = (doc.posts || []).filter((p) => p.slug !== post.slug && p.category === post.category).slice(-3)
@@ -93,7 +107,7 @@ async function page(kind, slug) {
   }
   return item ? RENDER[kind](doc, item) : null;
 }
-const day = (ms) => { const d = new Date(ms); return isNaN(d) ? '' : d.toISOString().slice(0, 10); };
+const day = (ms) => { const n = Number(ms); const d = new Date(isNaN(n) ? ms : n); return isNaN(d) ? '' : d.toISOString().slice(0, 10); };
 async function sitemap() {
   const doc = await getDoc(60000);
   const rows = [[SITE + '/', ''], [SITE + '/artists.html', '']];
@@ -118,4 +132,34 @@ function handler(kind) {
     } catch (e) { next(); }
   };
 }
-module.exports = { page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
+// Notifies search engines (IndexNow) about new posts/songs/artists, no admin action needed
+const INDEXNOW_KEY = process.env.INDEXNOW_KEY || 'wavzo2026indexnow';
+let known = null;
+async function submitIndexNow(urls) {
+  if (!urls.length) return;
+  try {
+    const r = await fetch('https://api.indexnow.org/indexnow', {
+      method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ host: 'wavzo.com.ng', key: INDEXNOW_KEY, keyLocation: SITE + '/' + INDEXNOW_KEY + '.txt', urlList: urls.slice(0, 100) })
+    });
+    console.log('IndexNow: sent ' + Math.min(urls.length, 100) + ' url(s), status ' + r.status);
+  } catch (e) { console.log('IndexNow failed: ' + e.message); }
+}
+async function checkNew() {
+  try {
+    const doc = await getDoc(0);
+    const rows = [];
+    for (const k of ['posts', 'songs', 'artists']) for (const x of doc[k] || []) if (x && x.slug) rows.push({ url: SITE + '/' + k + '/' + x.slug + '.html', t: Number(x.createdAt) || 0 });
+    if (known === null) {
+      known = new Set(rows.map((r) => r.url));
+      await submitIndexNow(rows.filter((r) => r.t > Date.now() - 6 * 3600 * 1000).map((r) => r.url)); // published while the server slept
+      return;
+    }
+    const fresh = rows.filter((r) => !known.has(r.url));
+    fresh.forEach((r) => known.add(r.url));
+    if (fresh.length) await submitIndexNow(fresh.map((r) => r.url).concat(SITE + '/'));
+  } catch (e) { console.log('IndexNow check failed: ' + e.message); }
+}
+function startIndexNowWatcher() { setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
+
+module.exports = { startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
