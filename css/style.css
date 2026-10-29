@@ -825,3 +825,8 @@ footer a:hover { color: #e11; }
 .media-img { background: rgba(59,130,246,0.15); color: #3b82f6; }
 .media-vid { background: rgba(139,92,246,0.15); color: #8b5cf6; }
 .media-aud { background: rgba(16,185,129,0.15); color: #10b981; }
+
+/* read-more button for imported stories */
+.article-source{margin:22px 0 8px}
+.read-more-btn{display:inline-block;background:#e11;color:#fff!important;font-weight:700;font-size:14px;padding:12px 22px;border-radius:8px;text-decoration:none}
+.read-more-btn:hover{opacity:.9}
