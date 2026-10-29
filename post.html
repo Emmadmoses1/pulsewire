@@ -415,7 +415,7 @@ function renderPost(post,posts){
         <h3 class="related-title">More from ${post.category}</h3>
         <div class="related-grid">
           ${related.map(r=>`
-            <a href="/post.html?slug=${r.slug}" class="related-card">
+            <a href="/posts/${r.slug}.html" class="related-card">
               ${r.coverImage?`<img src="${IMG(r.coverImage,400)}" data-o="${r.coverImage}" onerror="IMGFB(this)" class="related-thumb" loading="lazy">`:'<div class="related-thumb-placeholder"></div>'}
               <div class="related-card-body">
                 <span class="related-cat">${r.category}</span>

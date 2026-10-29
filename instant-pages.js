@@ -59,6 +59,17 @@ function postLd(post, url) {
     publisher: { '@type': 'Organization', name: 'WAVZO', logo: { '@type': 'ImageObject', url: SITE + '/images/wavzo-icon-512.png' } }
   };
 }
+function ssrArticle(post, doc) {
+  const cat = esc(post.category || ''), title = esc(post.title || '');
+  const rel = (doc.posts || []).filter((p) => p.slug !== post.slug && p.category === post.category).slice(-3).reverse();
+  return '<div class="article-breadcrumb"><a href="/">Home</a> <span>/</span> ' + cat + '</div>' +
+    '<div class="article-cat-tag">' + cat + '</div><h1 class="article-title">' + title + '</h1>' +
+    '<div class="views-bar"><span>📅 ' + esc(post.date || '') + '</span></div>' +
+    (/^https?:\/\//i.test(post.coverImage || '') ? '<img src="' + esc(ogImage(post.coverImage)) + '" class="article-cover" alt="' + title + '">' : '') +
+    '<div class="article-body">' + (post.content || '') + '</div>' +
+    (rel.length ? '<div class="related-section"><h3 class="related-title">More from ' + cat + '</h3>' +
+      rel.map((r) => '<p><a href="/posts/' + safeId(r.slug) + '.html">' + esc(r.title || '') + '</a></p>').join('') + '</div>' : '');
+}
 function renderPost(doc, post) {
   const slug = safeId(post.slug);
   const url = SITE + '/posts/' + slug + '.html';
@@ -67,6 +78,7 @@ function renderPost(doc, post) {
     ogTitle: esc(post.title || 'WAVZO'), image: esc(ogImage(post.coverImage)), ld: postLd(post, url)
   }));
   page = put(page, "let slug=new URLSearchParams(window.location.search).get('slug');", "const slug='" + slug + "';");
+  page = put(page, '<div class="article-inner" id="articleInner"></div>', '<div class="article-inner" id="articleInner">' + ssrArticle(post, doc) + '</div>');
   const same = (doc.posts || []).filter((p) => p.slug !== post.slug && p.category === post.category).slice(-3)
     .map((p) => ({ slug: p.slug, title: p.title, category: p.category, coverImage: p.coverImage, date: p.date }));
   return put(page, "const CACHE_KEY='pw_posts';", "const CACHE_KEY='pw_posts';\nconst PREPOST=" + js({ post, related: same }) + ';');
