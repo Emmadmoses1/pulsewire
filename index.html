@@ -33,6 +33,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://wsrv.nl">
   <link rel="preconnect" href="https://wavzo-db.dakudinamoses.workers.dev">
+  <link rel="preload" href="/data/home.json" as="fetch" crossorigin="anonymous">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap"></noscript>
   <link rel="stylesheet" href="/css/style.css">
@@ -428,7 +429,7 @@ function IMGFB(el){el.onerror=null;if(el.dataset&&el.dataset.o)el.src=el.dataset
 const BIN_ID='6aa50e3aac6210605ac3c542';
 const BIN_KEY='public';
 const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
-const CACHE_KEY='wz_v3';
+const CACHE_KEY='wz_v4';try{localStorage.removeItem('wz_v3');}catch(e){}
 const CACHE_TTL=5*60*1000;
 const SITE='https://wavzo.com.ng';
 const DEFAULT_OG=SITE+'/images/wavzo-og-image.png';
@@ -438,16 +439,11 @@ function setCache(d){try{localStorage.setItem(CACHE_KEY,JSON.stringify({...d,ts:
 
 async function fetchAll(){
   try{
-    const r=await fetch('/data/db.json');
+    const r=await fetch('/data/home.json');
+    if(!r.ok)throw new Error('home '+r.status);
     const rec=await r.json();
     const data={posts:[...(rec.posts||[])].reverse(),songs:rec.songs||[],artists:rec.artists||[]};
     setCache(data);
-    // refresh from JSONBin in background
-    fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}}).then(r=>r.json()).then(d=>{
-      const rec2=d.record||{};
-      const fresh={posts:[...(rec2.posts||[])].reverse(),songs:rec2.songs||[],artists:rec2.artists||[]};
-      setCache(fresh);
-    }).catch(()=>{});
     return data;
   }catch(e){
     const r=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
@@ -634,6 +630,8 @@ async function init(){
   }
 }
 
+function pf(e){const a=e.target.closest&&e.target.closest('a[href^="/posts/"],a[href^="/songs/"]');if(!a||a.dataset.pf)return;a.dataset.pf='1';const l=document.createElement('link');l.rel='prefetch';l.href=a.href;document.head.appendChild(l);}
+document.addEventListener('touchstart',pf,{passive:true});document.addEventListener('mouseover',pf);
 init();
 window.addEventListener('scroll',()=>{
   document.getElementById('siteNav').classList.toggle('scrolled',window.scrollY>10);

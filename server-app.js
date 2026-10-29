@@ -85,6 +85,7 @@ initDB();
 
 const instant = require('./instant-pages'); // INSTANT-PAGES
 const app = express();
+try { app.use(require('compression')({ threshold: 1024 })); } catch (e) { console.log('compression not installed (run: npm install compression)'); }
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public'), { index: false, maxAge: '1d' })); // FAST-SERVER
@@ -104,6 +105,15 @@ app.use('/images', express.static(path.join(__dirname, 'images'), { maxAge: '7d'
 app.get('/sitemap.xml', async (req, res) => {
   try { res.set('Cache-Control', 'public, max-age=300').type('application/xml').send(await instant.sitemap()); }
   catch (e) { res.sendFile(path.join(__dirname, 'sitemap.xml')); }
+});
+app.get('/data/home.json', async (req, res, next) => {
+  try {
+    const out = instant.homePayload(await instant.dbDoc());
+    res.set({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=30, stale-while-revalidate=300', 'ETag': out.etag, 'Vary': 'Accept-Encoding' });
+    if (req.headers['if-none-match'] === out.etag) return res.status(304).end();
+    if (/\bgzip\b/.test(req.headers['accept-encoding'] || '')) { res.set('Content-Encoding', 'gzip'); return res.end(out.gz); }
+    res.end(out.body);
+  } catch (e) { next(); }
 });
 app.get('/data/db.json', async (req, res, next) => {
   try { res.set('Cache-Control', 'public, max-age=20').json(await instant.dbJson()); } catch (e) { next(); }

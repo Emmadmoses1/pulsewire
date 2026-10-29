@@ -6,13 +6,23 @@ const DB_URL = 'https://wavzo-db.dakudinamoses.workers.dev/v3/b/main/latest';
 const SITE = 'https://wavzo.com.ng';
 let cache = { t: 0, doc: null };
 
+let inflight = null;
+function refreshDoc() {
+  if (inflight) return inflight;
+  inflight = (async () => {
+    const r = await fetch(DB_URL, { headers: { 'X-Master-Key': 'public' } });
+    if (!r.ok) throw new Error('database returned ' + r.status);
+    const j = await r.json();
+    cache = { t: Date.now(), doc: j.record || {} };
+    return cache.doc;
+  })().finally(() => { inflight = null; });
+  return inflight;
+}
+// Old data is served instantly while fresh data loads in the background
 async function getDoc(maxAgeMs) {
   if (cache.doc && Date.now() - cache.t < maxAgeMs) return cache.doc;
-  const r = await fetch(DB_URL, { headers: { 'X-Master-Key': 'public' } });
-  if (!r.ok) throw new Error('database returned ' + r.status);
-  const j = await r.json();
-  cache = { t: Date.now(), doc: j.record || {} };
-  return cache.doc;
+  if (cache.doc && maxAgeMs > 0) { refreshDoc().catch(() => {}); return cache.doc; }
+  return refreshDoc();
 }
 const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const js = (o) => JSON.stringify(o).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
@@ -162,6 +172,23 @@ async function dbJson() {
   const doc = await getDoc(20000);
   return { posts: doc.posts || [], songs: doc.songs || [], artists: doc.artists || [] };
 }
+// Small, compressed list for the home page (no article bodies): ~2 MB becomes ~100 KB
+const crypto = require('crypto');
+const zlib = require('zlib');
+let homeFor = null, homeOut = null;
+function homePayload(doc) {
+  if (homeFor === doc && homeOut) return homeOut;
+  const posts = (doc.posts || []).map((p) => {
+    const rest = Object.assign({}, p);
+    delete rest.content;
+    rest.excerpt = String(p.excerpt || plain(p.content)).slice(0, 220);
+    return rest;
+  });
+  const body = Buffer.from(JSON.stringify({ posts, songs: doc.songs || [], artists: doc.artists || [] }));
+  homeOut = { body, gz: zlib.gzipSync(body, { level: 9 }), etag: '"' + crypto.createHash('md5').update(body).digest('hex').slice(0, 16) + '"' };
+  homeFor = doc;
+  return homeOut;
+}
 function handler(kind) {
   return async (req, res, next) => {
     try {
@@ -201,6 +228,6 @@ async function checkNew() {
     if (fresh.length) await submitIndexNow(fresh.map((r) => r.url).concat(SITE + '/'));
   } catch (e) { console.log('IndexNow check failed: ' + e.message); }
 }
-function startIndexNowWatcher() { setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
+function startIndexNowWatcher() { refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
 
-module.exports = { startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
+module.exports = { homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
