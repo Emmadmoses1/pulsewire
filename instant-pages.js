@@ -22,18 +22,35 @@ const put = (tpl, from, to) => tpl.split(from).join(to); // no special replaceme
 
 function head(o) {
   return '<title>' + o.title + '</title>\n  <meta name="description" content="' + o.desc + '">\n  <link rel="canonical" href="' + o.url + '">\n' +
-    '  <meta property="og:type" content="' + o.type + '">\n  <meta property="og:title" content="' + o.ogTitle + '">\n  <meta property="og:description" content="' + o.desc + '">\n' +
-    '  <meta property="og:image" content="' + o.image + '">\n  <meta property="og:url" content="' + o.url + '">\n  <meta name="twitter:card" content="summary_large_image">\n' +
-    '  <meta name="twitter:title" content="' + o.ogTitle + '">\n  <meta name="twitter:description" content="' + o.desc + '">\n  <meta name="twitter:image" content="' + o.image + '">';
+    '  <meta property="og:site_name" content="WAVZO">\n  <meta property="og:type" content="' + o.type + '">\n  <meta property="og:title" content="' + o.ogTitle + '">\n  <meta property="og:description" content="' + o.desc + '">\n' +
+    '  <meta property="og:image" content="' + o.image + '">\n  <meta property="og:image:secure_url" content="' + o.image + '">\n  <meta property="og:image:width" content="1200">\n  <meta property="og:image:height" content="630">\n  <meta property="og:image:alt" content="' + o.ogTitle + '">\n' +
+    '  <meta property="og:url" content="' + o.url + '">\n  <meta name="twitter:card" content="summary_large_image">\n' +
+    '  <meta name="twitter:title" content="' + o.ogTitle + '">\n  <meta name="twitter:description" content="' + o.desc + '">\n  <meta name="twitter:image" content="' + o.image + '">\n  <meta name="twitter:image:alt" content="' + o.ogTitle + '">';
 }
+const DEFAULT_IMG = SITE + '/images/wavzo-og-image.png';
+// Share-ready image: always https, 1200x630, small enough for WhatsApp (< 300 KB)
+function ogImage(u) {
+  u = String(u == null ? '' : u).trim().replace(/&amp;/g, '&');
+  if (!u || /^(none|null|undefined)$/i.test(u) || /^data:/i.test(u)) return DEFAULT_IMG;
+  if (u.startsWith('//')) u = 'https:' + u;
+  else if (u.startsWith('/')) u = SITE + u;
+  if (!/^https?:\/\//i.test(u)) return DEFAULT_IMG;
+  if (/^https?:\/\/res\.cloudinary\.com\//i.test(u) && u.indexOf('/image/upload/') > -1) {
+    return u.replace('/image/upload/', '/image/upload/c_fill,g_auto,w_1200,h_630,q_auto,f_jpg/').replace(/^http:/, 'https:');
+  }
+  if (u.indexOf(SITE) === 0) return u;
+  return 'https://wsrv.nl/?url=' + encodeURIComponent(u) + '&w=1200&h=630&fit=cover&output=jpg&q=80';
+}
+const plain = (h) => String(h == null ? '' : h).replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+
 const safeId = (v) => String(v == null ? '' : v).replace(/[^\w.-]/g, '');
 
 function renderPost(doc, post) {
   const slug = safeId(post.slug);
   const url = SITE + '/posts/' + slug + '.html';
   let page = put(read('post.html'), '<title>WAVZO</title>', head({
-    title: esc(post.title || 'WAVZO') + ' — WAVZO', desc: attr(post.excerpt, 200), url, type: 'article',
-    ogTitle: esc(post.title || 'WAVZO'), image: esc(post.coverImage || SITE + '/images/default-cover.jpg')
+    title: esc(post.title || 'WAVZO') + ' — WAVZO', desc: attr(post.excerpt || plain(post.content), 200), url, type: 'article',
+    ogTitle: esc(post.title || 'WAVZO'), image: esc(ogImage(post.coverImage))
   }));
   page = put(page, "let slug=new URLSearchParams(window.location.search).get('slug');", "const slug='" + slug + "';");
   const same = (doc.posts || []).filter((p) => p.slug !== post.slug && p.category === post.category).slice(-3)
@@ -46,7 +63,7 @@ function renderSong(doc, song) {
   const url = SITE + '/songs/' + slug + '.html';
   let page = put(read('song.html'), '<title>WAVZO</title>', head({
     title: esc(title) + ' — ' + esc(aname) + ' | WAVZO', desc: attr(song.excerpt || (title + ' by ' + aname), 200), url, type: 'music.song',
-    ogTitle: esc(title) + ' — ' + esc(aname), image: esc(song.cover || SITE + '/images/default-cover.jpg')
+    ogTitle: esc(title) + ' — ' + esc(aname), image: esc(ogImage(song.cover))
   }));
   page = put(page, "const songId='__SONG_ID__';", "const songId='" + safeId(song.id) + "';");
   const pre = js({ song, artist: artist.id ? artist : null, titles: (doc.posts || []).slice(0, 6).map((p) => p.title || '') });
@@ -57,7 +74,7 @@ function renderArtist(doc, artist) {
   const url = SITE + '/artists/' + slug + '.html';
   let page = put(read('artist.html'), '<title>WAVZO</title>', head({
     title: esc(name) + ' — WAVZO', desc: attr(artist.bio, 200), url, type: 'profile', ogTitle: esc(name) + ' — WAVZO',
-    image: esc(artist.photo || SITE + '/images/default-cover.jpg')
+    image: esc(ogImage(artist.photo))
   }));
   page = put(page, "const artistId='__ARTIST_ID__';", "const artistId='" + safeId(artist.id) + "';");
   const songs = (doc.songs || []).filter((s) => s.artistId === artist.id);

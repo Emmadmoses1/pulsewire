@@ -88,6 +88,14 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public'), { index: false, maxAge: '1d' })); // FAST-SERVER
+app.get('/posts/:slug', instant.handler('post'));
+app.get('/songs/:slug', instant.handler('song'));
+app.get('/artists/:slug', instant.handler('artist'));
+app.get('/post.html', (req, res, next) => {
+  const s = String(req.query.slug || '').trim();
+  if (!/^[\w.%-]{1,160}$/.test(s)) return next();
+  res.redirect(301, '/posts/' + encodeURIComponent(decodeURIComponent(s)) + '.html');
+});
 app.use('/posts', express.static(path.join(__dirname, 'posts'), { extensions: ['html'] }));
 app.use('/songs', express.static(path.join(__dirname, 'songs'), { extensions: ['html'] }));
 app.use('/artists', express.static(path.join(__dirname, 'artists'), { extensions: ['html'] }));
@@ -101,9 +109,6 @@ app.get('/data/db.json', async (req, res, next) => {
   try { res.set('Cache-Control', 'public, max-age=20').json(await instant.dbJson()); } catch (e) { next(); }
 });
 app.use('/data', require('express').static(path.join(__dirname, 'data'), { maxAge: '60s' }));
-app.get('/posts/:slug', instant.handler('post'));
-app.get('/songs/:slug', instant.handler('song'));
-app.get('/artists/:slug', instant.handler('artist'));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/livescores.html', (req, res) => res.sendFile(path.join(__dirname, 'livescores.html')));
 app.get('/privacy-policy.html', (req, res) => res.sendFile(path.join(__dirname, 'privacy-policy.html')));

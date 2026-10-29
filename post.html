@@ -178,8 +178,9 @@ function startDownload(url,type,slug){
 }
 
 function sharePost(platform){
-  const slug=new URLSearchParams(window.location.search).get('slug')||'';
-  const staticUrl='https://wavzo.com.ng/posts/'+slug+'.html';
+  let slug=new URLSearchParams(window.location.search).get('slug')||'';
+  if(!slug){const m=window.location.pathname.match(/\/posts\/([^\/]+?)(?:\.html)?$/);if(m)slug=decodeURIComponent(m[1]);}
+  const staticUrl='https://wavzo.com.ng/posts/'+encodeURIComponent(slug)+'.html';
   const url=encodeURIComponent(staticUrl);
   const title=encodeURIComponent(document.title);
   if(platform==='whatsapp')window.open('https://wa.me/?text='+title+'%20'+url);
