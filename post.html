@@ -367,7 +367,7 @@ function renderPost(post,posts){
   const related=posts.filter(p=>p.slug!==slug&&p.category===post.category).slice(-3).reverse();
   document.title=post.title+' — WAVZO';
   document.getElementById('articleInner').innerHTML=`
-    <div class="article-breadcrumb"><a href="/">Home</a> <span>/</span> ${post.category}</div>
+    <div class="article-breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/category/${String(post.category||'').toLowerCase().replace(/[^a-z0-9]+/g,'-')}">${post.category}</a></div>
     <div class="article-cat-tag">${post.category}</div>
     <h1 class="article-title">${post.title}</h1>
     <div class="views-bar">

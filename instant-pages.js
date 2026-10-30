@@ -99,8 +99,9 @@ function seoState(doc, post) {
 }
 function ssrArticle(post, doc) {
   const cat = esc(post.category || ''), title = esc(post.title || '');
+  const catLink = '<a href="/category/' + catSlug(post.category) + '">' + cat + '</a>';
   const rel = (doc.posts || []).filter((p) => p.slug !== post.slug && p.category === post.category).slice(-3).reverse();
-  return '<div class="article-breadcrumb"><a href="/">Home</a> <span>/</span> ' + cat + '</div>' +
+  return '<div class="article-breadcrumb"><a href="/">Home</a> <span>/</span> ' + catLink + '</div>' +
     '<div class="article-cat-tag">' + cat + '</div><h1 class="article-title">' + title + '</h1>' +
     '<div class="views-bar"><span>📅 ' + esc(post.date || '') + '</span></div>' +
     (/^https?:\/\//i.test(post.coverImage || '') ? '<img src="' + esc(ogImage(post.coverImage)) + '" class="article-cover" alt="' + title + '">' : '') +
@@ -163,6 +164,7 @@ async function sitemap() {
   const doc = await getDoc(60000);
   const rows = [[SITE + '/', ''], [SITE + '/artists.html', ''], [SITE + '/about.html', ''], [SITE + '/contact.html', ''], [SITE + '/dmca.html', ''], [SITE + '/privacy-policy.html', ''], [SITE + '/terms.html', '']];
   for (const p of doc.posts || []) if (p.slug && seoState(doc, p).index) rows.push([SITE + '/posts/' + p.slug + '.html', day(p.createdAt)]);
+  for (const c of categoryList(doc)) if ((typeof seoState !== 'function' ? c.all.length : c.good.length) >= CAT_MIN_INDEX) rows.push([SITE + '/category/' + c.slug, day(c.latest)]);
   for (const s of doc.songs || []) if (s.slug) rows.push([SITE + '/songs/' + s.slug + '.html', day(s.createdAt)]);
   for (const a of doc.artists || []) if (a.slug) rows.push([SITE + '/artists/' + a.slug + '.html', day(a.createdAt)]);
   return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
@@ -189,6 +191,93 @@ function homePayload(doc) {
   homeFor = doc;
   return homeOut;
 }
+// ---- Category pages: /category/music, /category/news ... (crawlable lists of posts) ----
+const CAT_INFO = {
+  NEWS: 'Latest Nigerian and world news headlines from WAVZO.',
+  MUSIC: 'New music, Afrobeats releases, lyrics and downloads on WAVZO.',
+  GOSPEL: 'Gospel songs, worship music and Christian news on WAVZO.',
+  SPORTS: 'Football and sports news, scores and updates on WAVZO.',
+  ENTERTAINMENT: 'Entertainment news, movies, celebrities and showbiz on WAVZO.',
+  TRENDING: 'What Nigerians are talking about right now on WAVZO.',
+  CULTURE: 'Nigerian and African culture, lifestyle and stories on WAVZO.'
+};
+const CAT_PER_PAGE = 24, CAT_MIN_INDEX = 5; // a category with fewer strong posts stays visible but is hidden from Google
+const catSlug = (c) => String(c || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const catName = (c) => { const s = String(c || '').toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); };
+function sizedImg(u, w, h) {
+  const full = ogImage(u);
+  if (full.indexOf('w_1200,h_630') > -1) return full.replace('w_1200,h_630', 'w_' + w + ',h_' + h);
+  if (full.indexOf('https://wsrv.nl/') === 0) return full.replace('w=1200&h=630', 'w=' + w + '&h=' + h);
+  return full;
+}
+function categoryList(doc) {
+  const map = new Map();
+  for (const p of doc.posts || []) {
+    if (!p || !p.slug || !p.category) continue;
+    const k = catSlug(p.category);
+    if (!k) continue;
+    if (!map.has(k)) map.set(k, { slug: k, name: String(p.category).toUpperCase(), all: [], good: [], latest: 0 });
+    const c = map.get(k);
+    c.all.push(p);
+    if (typeof seoState !== 'function' || seoState(doc, p).index) c.good.push(p);
+    const t = Number(p.createdAt) || 0;
+    if (t > c.latest) c.latest = t;
+  }
+  return [...map.values()].sort((a, b) => b.all.length - a.all.length);
+}
+function renderCategory(doc, slug, pageNo) {
+  const list = categoryList(doc);
+  const c = list.find((x) => x.slug === slug);
+  if (!c) return null;
+  const indexable = c.good.length >= CAT_MIN_INDEX;
+  const shown = (indexable ? c.good : c.all).slice().sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
+  const pages = Math.max(1, Math.ceil(shown.length / CAT_PER_PAGE));
+  if (!(pageNo >= 1 && pageNo <= pages)) return null;
+  const base = SITE + '/category/' + c.slug;
+  const urlOf = (n) => (n === 1 ? base : base + '/page/' + n);
+  const name = catName(c.name);
+  const title = pageNo === 1 ? name + ' — Latest ' + name + ' Stories | WAVZO' : name + ' — Page ' + pageNo + ' | WAVZO';
+  const desc = CAT_INFO[c.name] || ('Latest ' + name.toLowerCase() + ' stories on WAVZO.');
+  const cards = shown.slice((pageNo - 1) * CAT_PER_PAGE, pageNo * CAT_PER_PAGE).map((p) =>
+    '<a class="card" href="/posts/' + safeId(p.slug) + '.html"><img src="' + esc(sizedImg(p.coverImage, 480, 270)) + '" width="480" height="270" loading="lazy" alt="' + esc(p.title) + '">' +
+    '<div class="ct"><h2>' + esc(p.title) + '</h2><p>' + esc(String(p.excerpt || plain(p.content)).slice(0, 140)) + '</p><span>' + esc(p.date || '') + '</span></div></a>').join('\n');
+  const chips = list.map((x) => '<a class="chip' + (x.slug === c.slug ? ' on' : '') + '" href="/category/' + x.slug + '">' + esc(catName(x.name)) + '</a>').join('');
+  const nav = (pageNo > 1 ? '<a class="pg" href="' + urlOf(pageNo - 1) + '">&larr; Newer</a>' : '<span></span>') +
+    '<span class="pn">Page ' + pageNo + ' of ' + pages + '</span>' +
+    (pageNo < pages ? '<a class="pg" href="' + urlOf(pageNo + 1) + '">Older &rarr;</a>' : '<span></span>');
+  const ld = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: name + ' — WAVZO', url: urlOf(pageNo), description: desc,
+    isPartOf: { '@type': 'WebSite', name: 'WAVZO', url: SITE },
+    breadcrumb: { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Home', item: SITE + '/' }, { '@type': 'ListItem', position: 2, name: name, item: base }] } };
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+    '<title>' + esc(title) + '</title>\n<meta name="description" content="' + esc(desc) + '">\n<link rel="canonical" href="' + urlOf(pageNo) + '">\n' +
+    (indexable ? '' : '<meta name="robots" content="noindex,follow">\n') +
+    (pageNo > 1 ? '<link rel="prev" href="' + urlOf(pageNo - 1) + '">\n' : '') + (pageNo < pages ? '<link rel="next" href="' + urlOf(pageNo + 1) + '">\n' : '') +
+    '<link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">\n' +
+    '<meta property="og:site_name" content="WAVZO">\n<meta property="og:type" content="website">\n<meta property="og:title" content="' + esc(title) + '">\n<meta property="og:description" content="' + esc(desc) + '">\n' +
+    '<meta property="og:image" content="' + DEFAULT_IMG + '">\n<meta property="og:url" content="' + urlOf(pageNo) + '">\n<meta name="twitter:card" content="summary_large_image">\n' +
+    '<script type="application/ld+json">' + js(ld) + '</script>\n' +
+    '<style>body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#111;margin:0;line-height:1.5}.wrap{max-width:1000px;margin:0 auto;padding:18px 14px 60px}' +
+    '.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.brand{font-weight:800;font-size:22px;letter-spacing:1px;color:#111;text-decoration:none}.brand span{color:#e11}' +
+    'h1{font-size:26px;margin:14px 0 4px}.sub{font-size:14px;color:#555;margin:0 0 14px}.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}' +
+    '.chip{background:#fff;border:1px solid #ddd;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:#111;text-decoration:none}.chip.on{background:#e11;border-color:#e11;color:#fff}' +
+    '.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}.card{display:block;background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;color:inherit;text-decoration:none}' +
+    '.card img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#ddd}.ct{padding:10px 12px 12px}.ct h2{font-size:15px;margin:0 0 6px;line-height:1.3}.ct p{font-size:13px;color:#555;margin:0 0 6px}.ct span{font-size:11px;color:#888}' +
+    '.nav{display:flex;align-items:center;justify-content:space-between;margin:22px 0}.pg{background:#e11;color:#fff;font-weight:700;text-decoration:none;padding:10px 16px;border-radius:8px;font-size:14px}.pn{font-size:13px;color:#555}' +
+    '.links{margin-top:30px;font-size:12px;color:#777}.links a{color:#e11;margin-right:12px}</style>\n</head>\n<body>\n<div class="wrap">\n' +
+    '<div class="top"><a class="brand" href="/">WAV<span>ZO</span></a><a href="/" style="font-size:13px;font-weight:700;color:#e11;text-decoration:none">Home</a></div>\n' +
+    '<h1>' + esc(name) + '</h1>\n<p class="sub">' + esc(desc) + '</p>\n<div class="chips">' + chips + '</div>\n<div class="grid">\n' + cards + '\n</div>\n<div class="nav">' + nav + '</div>\n' +
+    '<div class="links"><a href="/">Home</a><a href="/about.html">About</a><a href="/contact.html">Contact</a><a href="/dmca.html">DMCA</a><a href="/privacy-policy.html">Privacy</a><a href="/terms.html">Terms</a></div>\n</div>\n</body>\n</html>\n';
+}
+function categoryRoute() {
+  return async (req, res, next) => {
+    try {
+      const html = renderCategory(await getDoc(30000), String(req.params.slug || '').toLowerCase(), req.params.n ? parseInt(req.params.n, 10) : 1);
+      if (!html) return next();
+      res.set('Cache-Control', 'public, max-age=60').type('html').send(html);
+    } catch (e) { next(); }
+  };
+}
+
 function handler(kind) {
   return async (req, res, next) => {
     try {
@@ -233,4 +322,4 @@ function startIndexNowWatcher() {
   if (watching) return;
   watching = true; refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
 
-module.exports = { homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
+module.exports = { categoryRoute, homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
