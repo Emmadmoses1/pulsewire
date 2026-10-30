@@ -123,6 +123,11 @@ app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.ht
 app.get('/livescores.html', (req, res) => res.sendFile(path.join(__dirname, 'livescores.html')));
 app.get('/privacy-policy.html', (req, res) => res.sendFile(path.join(__dirname, 'privacy-policy.html')));
 app.get('/terms.html', (req, res) => res.sendFile(path.join(__dirname, 'terms.html')));
+['about', 'contact', 'dmca'].forEach((n) => {
+  const send = (req, res) => res.sendFile(path.join(__dirname, n + '.html'));
+  app.get('/' + n + '.html', send);
+  app.get('/' + n, send);
+});
 // FILE-ROUTES: root files that were returning 404
 ['ads.txt', 'robots.txt', 'wavzo2026indexnow.txt'].forEach((f) => {
   app.get('/' + f, (req, res) => {
@@ -553,6 +558,12 @@ app.get('/api/proxy-image', async (req, res) => {
 module.exports = app;
 
 const PORT = process.env.PORT || 3000;
+// 404 page for anything that did not match a route above
+app.use((req, res) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/admin/') || /\.(json|js|css|png|jpe?g|webp|svg|ico|mp3|mp4)$/i.test(req.path)) return res.status(404).type('text/plain').send('Not found');
+  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+});
+
 // Catch-all error handler — must be last, before app.listen
 app.use((err, req, res, next) => {
   console.error('Unhandled route error:', err.message);
@@ -560,4 +571,7 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something went wrong on our end. Please try again shortly.');
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  try { require('./instant-pages').startIndexNowWatcher(); } catch (e) { console.log('IndexNow watcher not started: ' + e.message); }
+});

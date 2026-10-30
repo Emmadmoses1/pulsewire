@@ -161,7 +161,7 @@ async function page(kind, slug) {
 const day = (ms) => { const n = Number(ms); const d = new Date(isNaN(n) ? ms : n); return isNaN(d) ? '' : d.toISOString().slice(0, 10); };
 async function sitemap() {
   const doc = await getDoc(60000);
-  const rows = [[SITE + '/', ''], [SITE + '/artists.html', '']];
+  const rows = [[SITE + '/', ''], [SITE + '/artists.html', ''], [SITE + '/about.html', ''], [SITE + '/contact.html', ''], [SITE + '/dmca.html', ''], [SITE + '/privacy-policy.html', ''], [SITE + '/terms.html', '']];
   for (const p of doc.posts || []) if (p.slug && seoState(doc, p).index) rows.push([SITE + '/posts/' + p.slug + '.html', day(p.createdAt)]);
   for (const s of doc.songs || []) if (s.slug) rows.push([SITE + '/songs/' + s.slug + '.html', day(s.createdAt)]);
   for (const a of doc.artists || []) if (a.slug) rows.push([SITE + '/artists/' + a.slug + '.html', day(a.createdAt)]);
@@ -228,6 +228,9 @@ async function checkNew() {
     if (fresh.length) await submitIndexNow(fresh.map((r) => r.url).concat(SITE + '/'));
   } catch (e) { console.log('IndexNow check failed: ' + e.message); }
 }
-function startIndexNowWatcher() { refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
+let watching = false;
+function startIndexNowWatcher() {
+  if (watching) return;
+  watching = true; refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
 
 module.exports = { homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
