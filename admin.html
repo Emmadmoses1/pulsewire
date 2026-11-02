@@ -272,6 +272,51 @@ button:focus-visible,a:focus-visible{outline:2px solid rgba(239,68,82,.75);outli
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<style id="wz-v2">
+/* poster maker */
+.pv-seg{display:flex;gap:8px}.pv-seg .btn{flex:1}.pv-seg .btn.on{background:linear-gradient(135deg,#ef4452,#ff7a45);border-color:transparent;color:#fff}
+.pv-row{display:flex;gap:8px;margin-top:8px}.pv-row .btn{width:auto;flex-shrink:0}.pv-row input{flex:1;min-width:0}
+.pv-row .btn-sm{flex:1}
+.pv-lbl{margin-top:12px!important}
+.field input[type=range]{padding:0;border:0;background:none;box-shadow:none;height:26px;accent-color:#ef4452}
+.field input[type=color]{width:100%;cursor:pointer}
+.pv-sw{display:flex;gap:10px;flex-wrap:wrap}
+.pv-sw button{width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.18);cursor:pointer;padding:0}
+.pv-sw button.on{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.22)}
+.pv-grid2{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:560px){.pv-grid2{grid-template-columns:1fr 1fr}}
+.pv-sug{display:flex;gap:10px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:8px;margin-bottom:8px;background:rgba(255,255,255,.02)}
+.pv-sug img,.pv-noimg{width:46px;height:46px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#222;display:flex;align-items:center;justify-content:center}
+.pv-st{flex:1;min-width:0}.pv-t{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pv-m{font-size:11px;color:var(--muted)}
+.pv-sug .btn{padding:7px 12px;font-size:12px;width:auto}
+.pv-b2{display:none}#sec-poster.pv-two .pv-b2{display:inline-block}
+.pv-gal{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.pv-gi{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.02)}
+.pv-gi img{width:100%;display:block}.pv-gi .btn{display:block;margin:8px;text-align:center;text-decoration:none;font-size:12px;padding:9px}
+.pv-gn{padding:10px;font-size:12px;color:var(--muted)}
+/* dashboard + posts tools */
+.wz-act{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px}
+.wz-act button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border-radius:14px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:#e9e9ef;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
+.wz-act button span{font-size:20px}.wz-act button:hover{border-color:rgba(239,68,82,.5);background:rgba(239,68,82,.08)}
+.wz-kv{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.wz-kv:last-child{border-bottom:0}.wz-kv b{font-weight:700}
+.wz-ok{color:#34d399}.wz-bad{color:#ff8f98}.wz-mid{color:#fbbf24}
+.wz-mini{display:inline-block;width:auto!important;padding:7px 12px!important;font-size:12px!important;margin:4px 6px 0 0}
+.wz-top{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.wz-top:last-child{border-bottom:0}.wz-top i{font-style:normal;font-weight:800;color:var(--muted);width:18px}.wz-top div{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wz-top small{color:var(--muted);flex-shrink:0}
+.wz-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.wz-toolbar input,.wz-toolbar select{flex:1 1 140px;min-width:0;padding:11px 13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-size:13px;font-family:inherit}
+.wz-toolbar select option{background:#16161d}
+.wz-bulk{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;font-size:12px;color:var(--muted)}
+.wz-bulk label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.pm-chk{display:flex;align-items:center;padding-right:10px}.pm-chk input{width:18px;height:18px;accent-color:#ef4452}
+.pm-act{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.post-row{flex-wrap:wrap;gap:8px}
+.wz-pager{display:flex;align-items:center;justify-content:space-between;margin-top:14px;font-size:12px;color:var(--muted)}
+.wz-pager .btn{width:auto}
+#wzBackupNote{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.06)}
+@media(min-width:960px){#wzQuick,#wzBackupNote{grid-column:1/-1}}
+</style>
 </head>
 <body>
 <div id="toast" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;border:1px solid #333;color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap" ></div>
@@ -528,70 +573,65 @@ button:focus-visible,a:focus-visible{outline:2px solid rgba(239,68,82,.75);outli
   <div class="section" id="sec-poster">
     <div class="card">
       <div class="card-title">Poster Maker</div>
-
       <div class="field">
-        <label>Select Template</label>
-        <div class="template-grid">
-          <div class="tpl-card selected" onclick="selectTpl(this,'trending')" id="tpl-trending">
-            <div class="tpl-preview" style="background:linear-gradient(135deg,#1a1a2e,#e63946)">
-              🔥<br>TRENDING<br>SONG
-            </div>
-            <div class="tpl-name">Trending Song</div>
-          </div>
-          <div class="tpl-card" onclick="selectTpl(this,'newmusic')" id="tpl-newmusic">
-            <div class="tpl-preview" style="background:linear-gradient(135deg,#0a0a1a,#7c3aed)">
-              🎵<br>NEW MUSIC<br>ALERT
-            </div>
-            <div class="tpl-name">New Music Alert</div>
-          </div>
-          <div class="tpl-card" onclick="selectTpl(this,'news')" id="tpl-news">
-            <div class="tpl-preview" style="background:linear-gradient(135deg,#0a1a0a,#15803d)">
-              📰<br>BREAKING<br>NEWS
-            </div>
-            <div class="tpl-name">Breaking News</div>
-          </div>
-          <div class="tpl-card" onclick="selectTpl(this,'download')" id="tpl-download">
-            <div class="tpl-preview" style="background:linear-gradient(135deg,#1a0a0a,#b45309)">
-              ⬇️<br>OUT NOW<br>DOWNLOAD
-            </div>
-            <div class="tpl-name">Out Now</div>
-          </div>
+        <label>Quick start — pick a recent post</label>
+        <div id="posterSuggestions" style="max-height:300px;overflow-y:auto"><p class="wz-note">Open this tab after logging in to see your latest posts.</p></div>
+      </div>
+      <div class="field">
+        <label>Headline</label>
+        <textarea id="pvTitle" rows="3" placeholder="e.g. 2027: Abbo pledges ₦1 billion annually to each ward" oninput="pvRender()"></textarea>
+        <div class="wz-note" id="pvFit"></div>
+      </div>
+      <div class="field">
+        <label>Layout</label>
+        <div class="pv-seg">
+          <button type="button" class="btn btn-grey btn-sm on" id="pvL1" onclick="pvSetLayout(1)">1 Photo</button>
+          <button type="button" class="btn btn-grey btn-sm" id="pvL2" onclick="pvSetLayout(2)">2 Photos (split)</button>
         </div>
       </div>
-
       <div class="field">
-        <label>Suggested From Your Posts</label>
-        <div id="posterSuggestions" style="max-height:280px;overflow-y:auto"></div>
+        <label>Photo 1</label>
+        <div class="upload-box"><input type="file" accept="image/*" onchange="pvFile(this,1)"><div class="upload-icon">🖼️</div><div class="upload-text">Tap to upload a photo<br><strong id="pvF1">or use a post photo above</strong></div></div>
+        <div class="pv-row"><input type="text" id="pvU1" placeholder="…or paste an image link"><button type="button" class="btn btn-grey btn-sm" onclick="pvUrl(1)">Load</button></div>
+        <label class="pv-lbl">Move left / right</label><input type="range" class="pv-range" id="pvX1" min="0" max="100" value="50" oninput="pvRender()">
+        <label class="pv-lbl">Move up / down</label><input type="range" class="pv-range" id="pvY1" min="0" max="100" value="25" oninput="pvRender()">
       </div>
-
-      <div class="field">
-        <button type="button" id="genFlyersBtn" class="btn" style="background:#333" onclick="generateFlyerGallery()">🎨 Generate Flyers for Recent Music</button>
-        <div id="flyerGallery" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"></div>
+      <div class="field" id="pvP2" style="display:none">
+        <label>Photo 2</label>
+        <div class="upload-box"><input type="file" accept="image/*" onchange="pvFile(this,2)"><div class="upload-icon">🖼️</div><div class="upload-text">Tap to upload the second photo<br><strong id="pvF2"></strong></div></div>
+        <div class="pv-row"><input type="text" id="pvU2" placeholder="…or paste an image link"><button type="button" class="btn btn-grey btn-sm" onclick="pvUrl(2)">Load</button></div>
+        <label class="pv-lbl">Move left / right</label><input type="range" class="pv-range" id="pvX2" min="0" max="100" value="50" oninput="pvRender()">
+        <label class="pv-lbl">Move up / down</label><input type="range" class="pv-range" id="pvY2" min="0" max="100" value="25" oninput="pvRender()">
       </div>
-
-      <div class="field"><label>Title / Song Name</label><input type="text" id="posterTitle" placeholder="e.g. Song Name - Artist" oninput="renderPoster()"></div>
-      <div class="field"><label>Subtitle / Views / Info</label><input type="text" id="posterSub" placeholder="e.g. 1.2M Views · Week's Top" oninput="renderPoster()"></div>
-      <div class="field"><label>Extra Text (optional)</label><input type="text" id="posterExtra" placeholder="e.g. Out Now · Stream Everywhere" oninput="renderPoster()"></div>
-
       <div class="field">
-        <label>Cover Image</label>
-        <div class="upload-box">
-          <input type="file" id="posterImg" accept="image/*" onchange="loadPosterImg(this)">
-          <div class="upload-icon">🖼️</div>
-          <div class="upload-text">Tap to upload cover<br><strong>Recommended: Square</strong></div>
-          <div class="upload-fname" id="posterImgFname"></div>
+        <label>Headline panel colour</label>
+        <div class="pv-sw" id="pvSw"></div>
+        <input type="color" id="pvColorPick" value="#c4161c" oninput="pvColor(this.value)" style="margin-top:10px;height:40px;padding:3px">
+      </div>
+      <div class="field">
+        <label>Contact bar</label>
+        <div class="pv-grid2">
+          <input type="text" id="pvEmail" placeholder="Email" oninput="pvRender()">
+          <input type="text" id="pvPhone" placeholder="WhatsApp number (optional)" oninput="pvRender()">
+          <input type="text" id="pvWeb" placeholder="Website" oninput="pvRender()">
+          <input type="text" id="pvTag" placeholder="Logo tag, e.g. NEWS" oninput="pvRender()">
         </div>
+        <div class="wz-note">Leave the WhatsApp number empty to show your website instead. These settings are remembered on this device.</div>
       </div>
-
       <div class="canvas-wrap">
         <label style="font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:10px">Preview</label>
         <canvas id="posterCanvas" width="1080" height="1080"></canvas>
       </div>
-
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-green btn-sm" onclick="downloadPoster()">⬇ DOWNLOAD POSTER</button>
-        <button class="btn btn-grey btn-sm" onclick="renderPoster()">🔄 REFRESH</button>
+      <div class="pv-row">
+        <button class="btn btn-green btn-sm" onclick="pvDownload()">⬇ DOWNLOAD</button>
+        <button class="btn btn-sm" onclick="pvShare()">📤 SHARE</button>
       </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Batch posters</div>
+      <div class="wz-note">Creates a finished poster for each of your 6 latest posts that have a photo, using the style and contact bar above.</div>
+      <button type="button" id="genFlyersBtn" class="btn btn-grey" onclick="generateFlyerGallery()">🎨 Generate posters for the latest posts</button>
+      <div id="flyerGallery" class="pv-gal"></div>
     </div>
   </div>
 
@@ -4128,6 +4168,445 @@ async function uploadOwnMp3(){
   }
   build();
   document.addEventListener('DOMContentLoaded',build);
+})();
+</script>
+<script id="wz-v2-js">
+/* WAVZO Admin v2: new poster design, faster posts list, dashboard tools, backup. */
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var E=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+function toast(m,ms){if(typeof showToast==='function')showToast(m,ms||3000);}
+function goSec(n){var b=document.querySelector('.bnav-item[onclick*="\''+n+'\'"]');if(typeof showSec==='function'&&b)showSec(n,b);}
+
+/* ---- 0. fewer 2 MB downloads: reuse a database read for a few seconds ---- */
+(function(){
+  var rawLoad=window.loadDB,rawSave=window.saveDB;
+  if(typeof rawLoad==='function'){
+    window.loadDB=async function(){
+      var c=window.__wzRead;
+      if(c&&Date.now()-c.t<8000){try{return JSON.parse(c.body);}catch(e){}}
+      var d=await rawLoad.apply(this,arguments);
+      try{window.__wzRead={t:Date.now(),body:JSON.stringify(d)};}catch(e){}
+      return d;
+    };
+  }
+  if(typeof rawSave==='function'){
+    window.saveDB=async function(){window.__wzRead=null;var r=await rawSave.apply(this,arguments);window.__wzRead=null;return r;};
+  }
+})();
+
+/* ---- 1. poster maker: news-strip design ---- */
+var F='Inter,"Arial Black",Arial,sans-serif';
+var ICON={
+  mail:'M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z',
+  phone:'M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z',
+  globe:'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'
+};
+var COLORS=['#c4161c','#0b4fb3','#0f7a3b','#6d28d9','#d9480f','#111111'];
+var DEF={email:'hello@wavzo.com.ng',phone:'',website:'wavzo.com.ng',tag:'NEWS'};
+var S={layout:1,color:COLORS[0],img:[null,null]};
+
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function wrapLines(ctx,text,maxW){
+  var words=text.split(' '),lines=[],line='';
+  for(var i=0;i<words.length;i++){
+    var t=line?line+' '+words[i]:words[i];
+    if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=words[i];}else line=t;
+  }
+  if(line)lines.push(line);
+  return lines;
+}
+function fitHeadline(ctx,text,maxW,maxH){
+  text=String(text||'').toUpperCase().replace(/\s+/g,' ').trim();
+  for(var size=66;size>=30;size-=2){
+    ctx.font='900 '+size+'px '+F;
+    var lines=wrapLines(ctx,text,maxW),lh=Math.round(size*1.17);
+    if(lines.length<=4&&lines.length*lh<=maxH)return {lines:lines,size:size,lh:lh,ok:true};
+  }
+  ctx.font='900 30px '+F;
+  var l=wrapLines(ctx,text,maxW),cut=l.length>4;
+  l=l.slice(0,4);
+  if(cut)l[3]=l[3].replace(/\s*\S*$/,'')+'\u2026';
+  return {lines:l,size:30,lh:35,ok:false};
+}
+function coverDraw(ctx,img,x,y,w,h,fx,fy){
+  var iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;
+  if(!iw||!ih)return;
+  var sc=Math.max(w/iw,h/ih),dw=iw*sc,dh=ih*sc;
+  ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();
+  ctx.drawImage(img,x+(w-dw)*fx,y+(h-dh)*fy,dw,dh);
+  ctx.restore();
+}
+function drawBar(ctx,W,top,b,color){
+  var items=[];
+  if(b.email)items.push({i:'mail',t:b.email});
+  if(b.phone)items.push({i:'phone',t:b.phone});else if(b.website)items.push({i:'globe',t:b.website});
+  var logoW=150,gapB=14,h=92,y=top-h,icon=44,gap=12,padX=26,sepGap=22,size=26,barW=0;
+  function total(sz){
+    ctx.font='600 '+sz+'px '+F;
+    var w=padX*2;
+    items.forEach(function(it,k){it.w=ctx.measureText(it.t).width;w+=icon+gap+it.w;if(k)w+=sepGap*2+2;});
+    return w;
+  }
+  if(items.length){barW=total(size);while(logoW+gapB+barW>W-60&&size>16){size-=1;barW=total(size);}}
+  var gw=logoW+(items.length?gapB+barW:0),x0=Math.round((W-gw)/2);
+  ctx.fillStyle='#fff';ctx.fillRect(x0,y,logoW,h);
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.font='900 34px '+F;
+  var a=ctx.measureText('WAV').width,z=ctx.measureText('ZO').width,lx=x0+(logoW-a-z)/2;
+  ctx.fillStyle='#111';ctx.fillText('WAV',lx,y+44);ctx.fillStyle=color;ctx.fillText('ZO',lx+a,y+44);
+  var tag=String(b.tag||'').toUpperCase().trim();
+  if(tag){
+    ctx.font='800 17px '+F;
+    var tw=ctx.measureText(tag).width+30;
+    ctx.fillStyle=color;rr(ctx,x0+(logoW-tw)/2,y+55,tw,28,14);ctx.fill();
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText(tag,x0+logoW/2,y+75);ctx.textAlign='left';
+  }
+  if(!items.length)return;
+  var bx=x0+logoW+gapB,cy=y+h/2,cx=bx+padX;
+  ctx.fillStyle='#fff';ctx.fillRect(bx,y,barW,h);
+  items.forEach(function(it,k){
+    if(k){ctx.fillStyle='#d4d4d9';ctx.fillRect(cx+sepGap,y+22,2,h-44);cx+=sepGap*2+2;}
+    ctx.fillStyle=color;ctx.beginPath();ctx.arc(cx+icon/2,cy,icon/2,0,Math.PI*2);ctx.fill();
+    var sc=1.08;
+    ctx.save();ctx.translate(cx+icon/2-12*sc,cy-12*sc);ctx.scale(sc,sc);ctx.fillStyle='#fff';ctx.fill(new Path2D(ICON[it.i]));ctx.restore();
+    ctx.fillStyle='#1f1f24';ctx.font='600 '+size+'px '+F;ctx.textAlign='left';
+    ctx.fillText(it.t,cx+icon+gap,cy+size*0.36);
+    cx+=icon+gap+it.w;
+  });
+}
+function drawNews(ctx,W,H,o){
+  var panelH=Math.round(H*0.232),photoH=H-panelH;
+  ctx.fillStyle='#14141a';ctx.fillRect(0,0,W,H);
+  var slots=o.layout===2?[[0,W/2],[W/2,W/2]]:[[0,W]];
+  slots.forEach(function(sl,k){
+    var im=o.imgs[k],fo=o.focus[k]||{x:.5,y:.25};
+    if(im){coverDraw(ctx,im,sl[0],0,sl[1],photoH,fo.x,fo.y);}
+    else{
+      var g=ctx.createLinearGradient(sl[0],0,sl[0]+sl[1],photoH);g.addColorStop(0,'#26262f');g.addColorStop(1,'#15151b');
+      ctx.fillStyle=g;ctx.fillRect(sl[0],0,sl[1],photoH);
+      ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='800 34px '+F;ctx.textAlign='center';ctx.fillText('ADD PHOTO '+(k+1),sl[0]+sl[1]/2,photoH/2);
+    }
+  });
+  ctx.fillStyle=o.color;ctx.fillRect(0,photoH,W,panelH);
+  drawBar(ctx,W,photoH,o.brand,o.color);
+  var f=fitHeadline(ctx,o.title||'YOUR HEADLINE GOES HERE',W-110,panelH-44);
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.font='900 '+f.size+'px '+F;
+  var top=photoH+(panelH-f.lines.length*f.lh)/2;
+  f.lines.forEach(function(l,i){ctx.fillText(l,W/2,Math.round(top+i*f.lh+(f.lh+f.size*0.73)/2));});
+  return f;
+}
+function brand(){return {email:($('pvEmail')||{}).value||'',phone:($('pvPhone')||{}).value||'',website:($('pvWeb')||{}).value||'',tag:($('pvTag')||{}).value||''};}
+function state(){
+  var v=function(id,d){var e=$(id);return e?(+e.value)/100:d;};
+  return {title:($('pvTitle')||{}).value||'',layout:S.layout,color:S.color,imgs:S.img,
+    focus:[{x:v('pvX1',.5),y:v('pvY1',.25)},{x:v('pvX2',.5),y:v('pvY2',.25)}],brand:brand()};
+}
+function saveCfg(){try{localStorage.setItem('wz_poster_v2',JSON.stringify({b:brand(),color:S.color,layout:S.layout}));}catch(e){}}
+function loadCfg(){
+  var c={};try{c=JSON.parse(localStorage.getItem('wz_poster_v2')||'{}');}catch(e){}
+  var b=Object.assign({},DEF,c.b||{});
+  if($('pvEmail')){$('pvEmail').value=b.email;$('pvPhone').value=b.phone;$('pvWeb').value=b.website;$('pvTag').value=b.tag;}
+  if(c.color)S.color=c.color;
+  S.layout=c.layout===2?2:1;
+}
+function paintUI(){
+  if(!$('pvL1'))return;
+  $('pvL1').classList.toggle('on',S.layout===1);$('pvL2').classList.toggle('on',S.layout===2);
+  $('pvP2').style.display=S.layout===2?'':'none';
+  $('sec-poster').classList.toggle('pv-two',S.layout===2);
+  $('pvColorPick').value=S.color;
+  [].slice.call($('pvSw').children).forEach(function(b){b.classList.toggle('on',b.getAttribute('data-c')===S.color);});
+}
+function pvRender(){
+  var c=$('posterCanvas');if(!c||!c.getContext)return;
+  var ctx=c.getContext('2d');c.width=1080;c.height=1080;
+  var f=drawNews(ctx,1080,1080,state());
+  var n=$('pvFit');if(n)n.textContent=f.ok?'':'The headline is long, so it was shortened to fit. Try fewer words.';
+  saveCfg();
+}
+function pvSetLayout(n){S.layout=n;paintUI();pvRender();}
+function pvColor(c){S.color=c;paintUI();pvRender();}
+function loadImg(url){
+  return new Promise(function(res){
+    function viaProxy(){
+      if(typeof proxyFetch!=='function')return res(null);
+      proxyFetch(url,'blob').then(function(b){var im=new Image();im.onload=function(){res(im);};im.onerror=function(){res(null);};im.src=URL.createObjectURL(b);}).catch(function(){res(null);});
+    }
+    var im=new Image();im.crossOrigin='anonymous';im.onload=function(){res(im);};im.onerror=viaProxy;
+    im.src=(typeof upscaleImage==='function'?upscaleImage(url):url);
+  });
+}
+function pvFile(inp,n){
+  var f=inp.files&&inp.files[0];if(!f)return;
+  $('pvF'+n).textContent='\u2713 '+f.name;
+  var r=new FileReader();
+  r.onload=function(e){var im=new Image();im.onload=function(){S.img[n-1]=im;pvRender();};im.src=e.target.result;};
+  r.readAsDataURL(f);
+}
+function pvUrl(n){
+  var u=(($('pvU'+n)||{}).value||'').trim();
+  if(!/^https?:\/\//i.test(u)){toast('Paste a full image link starting with https://');return;}
+  toast('Loading photo...',1500);
+  loadImg(u).then(function(im){if(!im){toast('That photo could not be loaded. Save it and upload it instead.',5000);return;}S.img[n-1]=im;pvRender();});
+}
+function pvUse(i,which){
+  var p=(window._pvList||[])[i];if(!p)return;
+  if(which!==2)$('pvTitle').value=p.title;
+  var slot=which===2?1:0;
+  if(p.coverImage){
+    toast('Loading photo...',1500);
+    loadImg(p.coverImage).then(function(im){if(im)S.img[slot]=im;else toast('That photo is blocked by its website. Upload it instead.',5000);pvRender();});
+  }else pvRender();
+}
+async function pvLoadSuggestions(){
+  var box=$('posterSuggestions');if(!box)return;
+  box.innerHTML='<p class="wz-note">Loading...</p>';
+  var db;
+  try{db=await loadDB();}catch(e){box.innerHTML='<p class="wz-note">Log in, then open this tab again to see your posts.</p>';return;}
+  var list=(db.posts||[]).slice().reverse().filter(function(p){return p&&p.title;}).slice(0,15);
+  window._pvList=list;
+  box.innerHTML=list.map(function(p,i){
+    return '<div class="pv-sug">'+(p.coverImage?'<img src="'+E(p.coverImage)+'" loading="lazy" alt="">':'<span class="pv-noimg">\uD83D\uDDBC\uFE0F</span>')+
+      '<div class="pv-st"><div class="pv-t">'+E(p.title)+'</div><div class="pv-m">'+E(p.category)+' \u00B7 '+E(p.date||'')+'</div></div>'+
+      '<button type="button" class="btn btn-sm" onclick="pvUse('+i+')">Use</button>'+
+      '<button type="button" class="btn btn-sm btn-grey pv-b2" onclick="pvUse('+i+',2)">+ Photo 2</button></div>';
+  }).join('')||'<p class="wz-note">No posts yet.</p>';
+}
+function pvName(t){return (String(t||'poster').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,50)||'poster');}
+function pvBlob(cb){try{$('posterCanvas').toBlob(function(b){cb(b);},'image/png');}catch(e){cb(null);}}
+function pvDownload(){
+  pvBlob(function(b){
+    if(!b){toast('This photo blocks saving. Upload the photo instead of using a link.',5000);return;}
+    var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=pvName($('pvTitle').value)+'-wavzo.png';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
+  });
+}
+function pvShare(){
+  pvBlob(function(b){
+    if(!b){toast('This photo blocks saving. Upload the photo instead of using a link.',5000);return;}
+    var file=new File([b],pvName($('pvTitle').value)+'-wavzo.png',{type:'image/png'});
+    var cap=($('pvTitle').value||'')+'\nhttps://wavzo.com.ng';
+    if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],text:cap}).catch(function(){});}
+    else pvDownload();
+  });
+}
+async function pvGallery(){
+  var g=$('flyerGallery'),btn=$('genFlyersBtn');
+  btn.disabled=true;btn.textContent='Generating...';g.innerHTML='';
+  try{
+    var db=await loadDB();
+    var posts=(db.posts||[]).slice().reverse().filter(function(p){return p&&p.coverImage&&p.title;}).slice(0,6);
+    if(!posts.length){g.innerHTML='<p class="wz-note">No posts with photos yet.</p>';return;}
+    var st=state();
+    for(var i=0;i<posts.length;i++){
+      var p=posts[i],wrap=document.createElement('div');wrap.className='pv-gi';
+      var im=await loadImg(p.coverImage);
+      if(!im){wrap.innerHTML='<div class="pv-gn">'+E(p.title)+'<br>\u26A0 Photo blocked by its website. Use the poster maker above and upload it.</div>';g.appendChild(wrap);continue;}
+      var c=document.createElement('canvas');c.width=1080;c.height=1080;
+      drawNews(c.getContext('2d'),1080,1080,{title:p.title,layout:1,color:st.color,brand:st.brand,imgs:[im,null],focus:[{x:.5,y:.25}]});
+      var url=await new Promise(function(r){try{c.toBlob(function(b){r(b?URL.createObjectURL(b):null);},'image/jpeg',.92);}catch(e){r(null);}});
+      if(!url){wrap.innerHTML='<div class="pv-gn">'+E(p.title)+'<br>\u26A0 Could not export this one.</div>';g.appendChild(wrap);continue;}
+      wrap.innerHTML='<img src="'+url+'" alt=""><a class="btn btn-sm" href="'+url+'" download="'+E(pvName(p.title))+'-wavzo.jpg">\u2B07 Download</a>';
+      g.appendChild(wrap);
+    }
+  }catch(e){g.innerHTML='<p class="wz-note">Could not generate: '+E(e.message)+'</p>';}
+  finally{btn.disabled=false;btn.textContent='\uD83C\uDFA8 Generate posters for the latest posts';}
+}
+function initPoster(){
+  var sw=$('pvSw');if(!sw)return;
+  sw.innerHTML=COLORS.map(function(c){return '<button type="button" data-c="'+c+'" style="background:'+c+'" onclick="pvColor(\''+c+'\')" aria-label="Colour '+c+'"></button>';}).join('');
+  loadCfg();paintUI();pvRender();
+  if(document.fonts&&document.fonts.load){document.fonts.load('900 40px Inter').then(pvRender,function(){});}
+}
+
+/* ---- 2. posts list: search, filters, pages, bulk delete ---- */
+var PER=30,PM={page:1,sel:{}};
+var norm=function(t){return String(t||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();};
+var plain=function(h){return String(h||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();};
+var tlen=function(p){return plain(p.content).length;};
+var hasMedia=function(p){return !!((p.musicFile&&p.musicFile!=='None')||(p.videoFile&&p.videoFile!=='None'));};
+function issues(posts){
+  var best={};
+  posts.forEach(function(p){var k=norm(p.title);if(!k)return;var c=best[k];if(!c||tlen(p)>tlen(c)||(tlen(p)===tlen(c)&&(+p.createdAt||0)<(+c.createdAt||0)))best[k]=p;});
+  return {
+    dups:posts.filter(function(p){var b=best[norm(p.title)];return b&&b!==p;}),
+    thin:posts.filter(function(p){return !hasMedia(p)&&tlen(p)<300;}),
+    noCover:posts.filter(function(p){return !p.coverImage;})
+  };
+}
+function pmBuild(){
+  if($('pmQ')||!$('postsList'))return;
+  $('postsList').insertAdjacentHTML('beforebegin',
+    '<div class="wz-toolbar"><input id="pmQ" type="search" placeholder="Search posts..." oninput="pmGo(1)">'+
+    '<select id="pmCat" onchange="pmGo(1)"><option value="">All categories</option></select>'+
+    '<select id="pmIss" onchange="pmGo(1)"><option value="">All posts</option><option value="dups">Duplicates</option><option value="thin">Short posts</option><option value="nocover">No photo</option></select>'+
+    '<select id="pmSort" onchange="pmGo(1)"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="views">Most viewed</option><option value="dl">Most downloaded</option></select></div>'+
+    '<div class="wz-bulk"><label><input type="checkbox" id="pmAll" onchange="pmAll(this.checked)"> Select this page</label><span id="pmCount"></span>'+
+    '<button type="button" class="btn btn-sm" id="pmDel" style="display:none" onclick="pmDelSel()">Delete selected</button></div>');
+}
+async function pmRender(){
+  pmBuild();
+  var list=$('postsList');if(!list)return;
+  var db=await loadDB(),posts=(db.posts||[]).slice();
+  var cats={};posts.forEach(function(p){if(p.category)cats[p.category]=1;});
+  var cs=$('pmCat'),cur=cs.value;
+  cs.innerHTML='<option value="">All categories</option>'+Object.keys(cats).sort().map(function(c){return '<option value="'+E(c)+'"'+(c===cur?' selected':'')+'>'+E(c)+'</option>';}).join('');
+  var q=norm($('pmQ').value),cat=cs.value,iss=$('pmIss').value,sort=$('pmSort').value,I=issues(posts);
+  var set=function(a){var m=new Set(a);return function(p){return m.has(p);};};
+  var inI=iss==='dups'?set(I.dups):iss==='thin'?set(I.thin):iss==='nocover'?set(I.noCover):null;
+  var rows=posts.filter(function(p){return (!cat||p.category===cat)&&(!q||norm(p.title).indexOf(q)>-1)&&(!inI||inI(p));});
+  if(sort==='new')rows.reverse();
+  else if(sort==='views')rows.sort(function(a,b){return (b.views||0)-(a.views||0);});
+  else if(sort==='dl')rows.sort(function(a,b){return ((b.downloads||0)+(b.audioDownloads||0))-((a.downloads||0)+(a.audioDownloads||0));});
+  var pages=Math.max(1,Math.ceil(rows.length/PER));
+  if(PM.page>pages)PM.page=pages;
+  var slice=rows.slice((PM.page-1)*PER,PM.page*PER);
+  PM.pageSlugs=slice.map(function(p){return p.slug;});
+  $('pmCount').textContent=rows.length+' post'+(rows.length===1?'':'s');
+  if(!slice.length){list.innerHTML='<p class="wz-note">No posts match.</p>';pmSync();return;}
+  var dupSet=new Set(I.dups);
+  list.innerHTML=slice.map(function(p){
+    var sl=E(p.slug);
+    return '<div class="post-row"><label class="pm-chk"><input type="checkbox" '+(PM.sel[p.slug]?'checked ':'')+'onchange="pmSel(\''+sl+'\',this.checked)"></label>'+
+      '<div class="post-row-info" style="flex:1;min-width:0"><h4>'+E(p.title)+'</h4><small>'+E(p.category)+' \u00B7 '+E(p.date)+' \u00B7 \uD83D\uDC41 '+(p.views||0)+'</small>'+
+      '<div class="badges">'+(p.coverImage?'<span class="badge img">IMG</span>':'')+(p.musicFile?'<span class="badge audio">AUDIO</span>':'')+(p.videoFile?'<span class="badge video">VIDEO</span>':'')+(dupSet.has(p)?'<span class="badge">DUPLICATE</span>':'')+'</div></div>'+
+      '<div class="pm-act"><button class="del-btn" id="fb-btn-'+sl+'" style="background:#1877f2" onclick="postToFacebook(\''+sl+'\')">\uD83D\uDCD8 Facebook</button>'+
+      '<button class="del-btn" style="background:#3b5bef" onclick="editPost(\''+sl+'\')">EDIT</button>'+
+      '<button class="del-btn" onclick="deletePost(\''+sl+'\')">DEL</button></div></div>';
+  }).join('')+
+  '<div class="wz-pager"><button type="button" class="btn btn-grey btn-sm" '+(PM.page<=1?'disabled ':'')+'onclick="pmGo('+(PM.page-1)+',1)">\u2190 Newer</button><span>Page '+PM.page+' of '+pages+'</span>'+
+  '<button type="button" class="btn btn-grey btn-sm" '+(PM.page>=pages?'disabled ':'')+'onclick="pmGo('+(PM.page+1)+',1)">Older \u2192</button></div>';
+  pmSync();
+}
+function pmSync(){
+  var n=Object.keys(PM.sel).filter(function(k){return PM.sel[k];}).length,b=$('pmDel');
+  if(b){b.style.display=n?'':'none';b.textContent='Delete selected ('+n+')';}
+  var a=$('pmAll');if(a)a.checked=!!(PM.pageSlugs&&PM.pageSlugs.length&&PM.pageSlugs.every(function(s){return PM.sel[s];}));
+}
+function pmGo(n,keep){PM.page=n;if(!keep)PM.sel={};pmRender().then(function(){if(keep){var l=$('postsList');if(l&&l.scrollIntoView)l.scrollIntoView({behavior:'smooth',block:'start'});}});}
+function pmSel(slug,on){PM.sel[slug]=on;pmSync();}
+function pmAll(on){(PM.pageSlugs||[]).forEach(function(s){PM.sel[s]=on;});pmRender();}
+async function pmDelSel(){
+  var slugs=Object.keys(PM.sel).filter(function(k){return PM.sel[k];});
+  if(!slugs.length)return;
+  if(!confirm('Delete '+slugs.length+' selected post'+(slugs.length===1?'':'s')+'? This cannot be undone. Tip: use Backup in Settings first.'))return;
+  var db=await loadDB(),gone={};slugs.forEach(function(s){gone[s]=1;});
+  var before=(db.posts||[]).length;
+  db.posts=(db.posts||[]).filter(function(p){return !gone[p.slug];});
+  await saveDB(db);
+  PM.sel={};toast('Deleted '+(before-db.posts.length)+' posts',3500);
+  pmRender();if(typeof loadDash==='function')loadDash();
+}
+window.loadPosts=function(){return pmRender();};
+
+/* ---- 3. dashboard: quick actions, content health, top posts, backup reminder ---- */
+function ensureDash(){
+  var sec=$('sec-dash');if(!sec||$('wzQuick'))return;
+  var anchor=sec.querySelector('.stats-grid');
+  var html=
+  '<div class="card" id="wzQuick"><div class="card-title">Quick actions</div><div class="wz-act">'+
+    '<button type="button" onclick="wzGo(\'create\')"><span>\u270F\uFE0F</span>New post</button>'+
+    '<button type="button" onclick="wzSuggest()"><span>\uD83D\uDCF0</span>Suggest news</button>'+
+    '<button type="button" onclick="wzGo(\'poster\')"><span>\uD83C\uDFA8</span>Poster</button>'+
+    '<button type="button" onclick="wzBackup()"><span>\uD83D\uDCBE</span>Backup</button>'+
+    '<button type="button" onclick="wzPing()"><span>\uD83D\uDD0E</span>Ping search</button>'+
+    '<button type="button" onclick="window.open(\'https://wavzo.com.ng/\',\'_blank\')"><span>\uD83C\uDF10</span>View site</button>'+
+  '</div></div>'+
+  '<div class="card" id="wzBackupNote" style="display:none"><div class="card-title">Backup reminder</div><div class="wz-note" id="wzBackupTxt"></div><button type="button" class="btn btn-sm" onclick="wzBackup()">\uD83D\uDCBE Download backup now</button></div>'+
+  '<div class="card" id="wzHealth"><div class="card-title">Content health</div><div id="wzHealthBody"><p class="wz-note">Loading...</p></div></div>'+
+  '<div class="card" id="wzTop"><div class="card-title">Top posts</div><div id="wzTopBody"><p class="wz-note">Loading...</p></div></div>';
+  if(anchor)anchor.insertAdjacentHTML('afterend',html);else sec.insertAdjacentHTML('afterbegin',html);
+}
+function wzGo(n){goSec(n);}
+function wzSuggest(){goSec('create');setTimeout(function(){if(typeof loadNews==='function')loadNews();},200);}
+async function wzRefreshDash(){
+  ensureDash();
+  var db;try{db=await loadDB();}catch(e){return;}
+  var posts=db.posts||[],I=issues(posts);
+  var row=function(label,n,help,fn){
+    return '<div class="wz-kv"><span>'+label+'</span><span><b class="'+(n?'wz-mid':'wz-ok')+'">'+(n?n:'\u2713 0')+'</b>'+(n&&fn?' <button type="button" class="btn btn-grey wz-mini" onclick="'+fn+'">Review</button>':'')+'</span></div>'+(n&&help?'<div class="wz-note">'+help+'</div>':'');
+  };
+  $('wzHealthBody').innerHTML=
+    row('Duplicate posts',I.dups.length,'Same headline posted more than once. Google ignores extra copies.','wzReview(\'dups\')')+
+    row('Short posts (under 300 characters)',I.thin.length,'Very short posts rarely rank on Google. Expand them or remove them.','wzReview(\'thin\')')+
+    row('Posts without a photo',I.noCover.length,'Posts with photos look better in shares and search.','wzReview(\'nocover\')')+
+    '<div class="wz-kv"><span>Total posts</span><b>'+posts.length+'</b></div>'+
+    (I.dups.length?'<button type="button" class="btn btn-sm" style="margin-top:12px" onclick="wzRemoveDups()">Remove '+I.dups.length+' duplicate'+(I.dups.length===1?'':'s')+'</button>':'');
+  var top=posts.slice().sort(function(a,b){return (b.views||0)-(a.views||0);}).slice(0,5);
+  $('wzTopBody').innerHTML=top.length?top.map(function(p,i){return '<div class="wz-top"><i>'+(i+1)+'</i><div>'+E(p.title)+'</div><small>\uD83D\uDC41 '+(p.views||0)+' \u00B7 \u2B07 '+((p.downloads||0)+(p.audioDownloads||0))+'</small></div>';}).join(''):'<p class="wz-note">No views recorded yet.</p>';
+  var last=+localStorage.getItem('wz_last_backup')||0,days=last?Math.floor((Date.now()-last)/864e5):null;
+  var note=$('wzBackupNote');
+  if(days===null||days>=7){note.style.display='';$('wzBackupTxt').textContent=days===null?'You have not downloaded a backup on this device yet. A backup protects your '+posts.length+' posts if anything goes wrong.':'Your last backup was '+days+' days ago.';}
+  else note.style.display='none';
+  var bs=$('wzBackupInfo');if(bs)bs.textContent=last?'Last backup on this device: '+new Date(last).toLocaleString():'No backup downloaded on this device yet.';
+}
+function wzReview(kind){var s=$('pmIss');goSec('posts');setTimeout(function(){pmBuild();$('pmIss').value=kind;$('pmQ').value='';$('pmCat').value='';PM.sel={};PM.page=1;pmRender();},150);}
+async function wzRemoveDups(){
+  var db=await loadDB(),I=issues(db.posts||[]);
+  if(!I.dups.length)return;
+  if(!confirm('Remove '+I.dups.length+' duplicate posts and keep the best copy of each? A backup file will be downloaded first.'))return;
+  await wzBackup();
+  var gone=new Set(I.dups);
+  db.posts=db.posts.filter(function(p){return !gone.has(p);});
+  await saveDB(db);
+  toast('Removed '+I.dups.length+' duplicates',4000);
+  if(typeof loadDash==='function')loadDash();else wzRefreshDash();
+}
+async function wzBackup(){
+  var db=await loadDB(),txt=JSON.stringify(db);
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));
+  a.download='wavzo-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
+  try{localStorage.setItem('wz_last_backup',String(Date.now()));}catch(e){}
+  toast('Backup downloaded ('+Math.round(txt.length/1024)+' KB)',4000);
+  var n=$('wzBackupNote');if(n)n.style.display='none';
+  var bs=$('wzBackupInfo');if(bs)bs.textContent='Last backup on this device: '+new Date().toLocaleString();
+}
+function wzRestore(inp){
+  var f=inp.files&&inp.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=async function(e){
+    var j;try{j=JSON.parse(e.target.result);}catch(x){toast('That file is not a valid backup.',4500);inp.value='';return;}
+    if(!j||!Array.isArray(j.posts)){toast('That file is not a WAVZO backup.',4500);inp.value='';return;}
+    if(!confirm('Restore this backup?\n\nIt has '+j.posts.length+' posts, '+(j.songs||[]).length+' songs and '+(j.artists||[]).length+' artists.\nThis REPLACES everything on your site now. A backup of the current data is downloaded first.'))return void(inp.value='');
+    try{await wzBackup();await saveDB(j);toast('Backup restored',4500);if(typeof loadDash==='function')loadDash();}catch(x){toast('Restore failed: '+x.message,6000);}
+    inp.value='';
+  };
+  r.readAsText(f);
+}
+async function wzPing(){
+  try{
+    var db=await loadDB(),W=BIN_URL.replace(/\/v3\/b\/.*$/,'');
+    var urls=(db.posts||[]).slice(-50).reverse().map(function(p){return 'https://wavzo.com.ng/posts/'+p.slug+'.html';}).concat(['https://wavzo.com.ng/']);
+    var r=await fetch(W+'/indexnow',{method:'POST',headers:{'X-Master-Key':BIN_KEY},body:JSON.stringify({urls:urls})});
+    toast(r.ok?'Search engines notified ('+urls.length+' pages)':'Ping failed (HTTP '+r.status+')',4000);
+  }catch(e){toast('Ping failed: '+e.message,5000);}
+}
+function ensureSettings(){
+  var sec=$('sec-settings');if(!sec||$('wzBackupCard'))return;
+  sec.insertAdjacentHTML('beforeend',
+  '<div class="card" id="wzBackupCard"><div class="card-title">Backup &amp; restore</div>'+
+  '<div class="wz-note">Download a copy of all your posts, songs and artists. Keep it somewhere safe, such as Google Drive.</div>'+
+  '<div class="wz-note" id="wzBackupInfo"></div>'+
+  '<button type="button" class="btn" onclick="wzBackup()">\uD83D\uDCBE DOWNLOAD BACKUP</button>'+
+  '<div class="field" style="margin-top:16px"><label>Restore from a backup file</label><div class="upload-box"><input type="file" accept=".json,application/json" onchange="wzRestore(this)"><div class="upload-icon">\u267B\uFE0F</div><div class="upload-text">Tap to choose a backup file<br><strong>This replaces everything online</strong></div></div></div></div>');
+}
+
+/* ---- wiring ---- */
+['pvRender','pvSetLayout','pvColor','pvFile','pvUrl','pvUse','pvDownload','pvShare','pmGo','pmSel','pmAll','pmDelSel','wzGo','wzSuggest','wzReview','wzRemoveDups','wzBackup','wzRestore','wzPing'].forEach(function(n){
+  window[n]={pvRender:pvRender,pvSetLayout:pvSetLayout,pvColor:pvColor,pvFile:pvFile,pvUrl:pvUrl,pvUse:pvUse,pvDownload:pvDownload,pvShare:pvShare,pmGo:pmGo,pmSel:pmSel,pmAll:pmAll,pmDelSel:pmDelSel,wzGo:wzGo,wzSuggest:wzSuggest,wzReview:wzReview,wzRemoveDups:wzRemoveDups,wzBackup:wzBackup,wzRestore:wzRestore,wzPing:wzPing}[n];
+});
+window.renderPoster=pvRender;window.loadPosterSuggestions=pvLoadSuggestions;window.generateFlyerGallery=pvGallery;window.downloadPoster=pvDownload;window.selectTpl=function(){};
+window.drawPosterToCanvas=function(ctx,W,H,tpl,title,sub,extra,img){return drawNews(ctx,W,H,{title:title,layout:1,color:S.color,brand:brand(),imgs:[img,null],focus:[{x:.5,y:.25}]});};
+window.wzV2={fitHeadline:fitHeadline,drawNews:drawNews,issues:issues};
+
+var oldDash=window.loadDash;
+if(typeof oldDash==='function'){window.loadDash=async function(){var r=await oldDash.apply(this,arguments);try{await wzRefreshDash();}catch(e){}return r;};}
+var oldSec=window.showSec;
+if(typeof oldSec==='function'){window.showSec=function(n,el){var r=oldSec.apply(this,arguments);try{if(n==='poster')pvLoadSuggestions();if(n==='settings'){ensureSettings();wzRefreshDash();}}catch(e){}return r;};}
+ensureDash();ensureSettings();initPoster();pmBuild();
 })();
 </script>
 </body>
