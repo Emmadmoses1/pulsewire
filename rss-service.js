@@ -14,7 +14,10 @@ const FEEDS = {
   SPORTS: [F('BBC Sport', 'http://feeds.bbci.co.uk/sport/football/rss.xml'), F('Sky Sports', 'https://www.skysports.com/rss/12040'), F('Goal.com', 'https://www.goal.com/feeds/en/news'), F('CompleteSports', 'https://www.completesports.com/feed/'), F('90min', 'https://www.90min.com/posts.rss'), F('Football Italia', 'https://www.football-italia.net/rss.xml'), F('Brila Sports', 'https://brila.net/category/sports/feed/')],
   NEWS: [F('BBC', 'http://feeds.bbci.co.uk/news/rss.xml'), F('Fox News', 'https://moxie.foxnews.com/google-publisher/latest.xml'), F('The Guardian', 'https://www.theguardian.com/world/rss'), F('Al Jazeera', 'https://www.aljazeera.com/xml/rss/all.xml'), F('CNN', 'http://rss.cnn.com/rss/edition.rss'), F('Premium Times', 'https://www.premiumtimesng.com/feed'), F('Daily Post Nigeria', 'https://dailypost.ng/feed'), F('Punch', 'https://punchng.com/feed/'), F('Vanguard', 'https://www.vanguardngr.com/feed/'), F('Channels TV', 'https://www.channelstv.com/feed/'), F('ThisDay', 'https://www.thisdaylive.com/feed/'), F('Legit.ng', 'https://www.legit.ng/rss/all.rss')]
 };
-FEEDS.TRENDING = FEEDS.MUSIC;
+// celebrity gist and stories people talk about (a feed that is down is skipped automatically)
+FEEDS.GIST = [F('BellaNaija', 'https://www.bellanaija.com/feed/'), F('Pulse Nigeria', 'https://www.pulse.ng/rss'), F("Linda Ikeji's Blog", 'https://www.lindaikejisblog.com/feeds/posts/default?alt=rss'), F('Stella Dimoko Korkus', 'https://www.stelladimokokorkus.com/feeds/posts/default?alt=rss'), F('Legit.ng Entertainment', 'https://www.legit.ng/rss/entertainment.rss'), F('Vanguard Entertainment', 'https://www.vanguardngr.com/category/entertainment/feed/'), F('Instablog9ja', 'https://www.instablog9ja.com/feed/'), F('Gistlover', 'https://www.gistlover.com/feed/'), F('Information Nigeria', 'https://www.informationng.com/feed')];
+FEEDS.ENTERTAINMENT = FEEDS.ENTERTAINMENT.concat(FEEDS.GIST.filter((g) => !FEEDS.ENTERTAINMENT.some((e) => e.url === g.url)));
+FEEDS.TRENDING = FEEDS.GIST.concat(FEEDS.MUSIC);
 
 const UA = 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36';
 const TTL = 3 * 60 * 1000;
@@ -147,4 +150,4 @@ function register(app) {
   });
 }
 
-module.exports = { register, htmlToText, toItem, postedSets, normLink, normTitle, getCategory, _FEEDS: FEEDS };
+module.exports = { ogImage, register, htmlToText, toItem, postedSets, normLink, normTitle, getCategory, _FEEDS: FEEDS };

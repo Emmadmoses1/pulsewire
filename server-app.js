@@ -429,6 +429,7 @@ Source: WAVZO
 });
 app.get('/admin/news-suggestions', requireAdmin, async (req, res) => res.json(await fetchTrustedNews()));
 require('./rss-service').register(app);
+require('./autopost').register(app);
 app.post('/admin/ai-correct', requireAdmin, async (req, res) => res.json(await correctGrammar(req.body.text || '')));
 app.post('/admin/ai-scan-cover', requireAdmin, async (req, res) => res.json(await scanCoverArt(req.body.imageBase64 || '', req.body.mediaType || '')));
 
@@ -576,4 +577,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   try { require('./instant-pages').startIndexNowWatcher(); } catch (e) { console.log('IndexNow watcher not started: ' + e.message); }
+  try { require('./autopost').start(); } catch (e) { console.log('Auto-post not started: ' + e.message); }
 });
