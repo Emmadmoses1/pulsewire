@@ -317,6 +317,29 @@ button:focus-visible,a:focus-visible{outline:2px solid rgba(239,68,82,.75);outli
 #wzBackupNote{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.06)}
 @media(min-width:960px){#wzQuick,#wzBackupNote{grid-column:1/-1}}
 </style>
+<style id="wz-v3">
+.wz-sw{position:relative;display:inline-block;width:50px;height:28px;flex-shrink:0}
+.wz-sw input{opacity:0;width:0;height:0}
+.wz-sw i{position:absolute;inset:0;border-radius:99px;background:rgba(255,255,255,.14);transition:.2s;cursor:pointer}
+.wz-sw i::before{content:'';position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
+.wz-sw input:checked+i{background:linear-gradient(135deg,#16a34a,#22c55e)}
+.wz-sw input:checked+i::before{transform:translateX(22px)}
+.ap-cats{display:flex;flex-wrap:wrap;gap:8px}
+.ap-cats label{display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--border);border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;background:rgba(255,255,255,.03);letter-spacing:0;text-transform:none;margin:0;color:#ddd}
+.ap-cats input{width:auto;accent-color:#ef4452}
+.wz-log{margin-top:12px;max-height:170px;overflow-y:auto;font-size:12px;color:var(--muted)}
+.wz-log div{padding:6px 0;border-bottom:1px solid var(--border)}.wz-log b{color:#cfcfda;font-weight:600}
+.pb-bar{height:6px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;margin:12px 0 4px}
+.pb-bar div{height:100%;width:0;background:linear-gradient(90deg,#ef4452,#ff7a45);transition:width .2s}
+.pb-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.pb-opts select{width:100%;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:inherit;font-size:13px}
+.pb-opts select option{background:#16161d}
+.pb-chk{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:10px}
+.pv-sug .pb-q{background:linear-gradient(135deg,#16a34a,#22c55e)}
+.ar-row{display:flex;align-items:center;gap:12px}
+.ar-row img,.ar-ph{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#222;display:flex;align-items:center;justify-content:center}
+.wz-search{width:100%;margin-bottom:12px;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-size:13px;font-family:inherit}
+</style>
 </head>
 <body>
 <div id="toast" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;border:1px solid #333;color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap" ></div>
@@ -4600,13 +4623,217 @@ function ensureSettings(){
 });
 window.renderPoster=pvRender;window.loadPosterSuggestions=pvLoadSuggestions;window.generateFlyerGallery=pvGallery;window.downloadPoster=pvDownload;window.selectTpl=function(){};
 window.drawPosterToCanvas=function(ctx,W,H,tpl,title,sub,extra,img){return drawNews(ctx,W,H,{title:title,layout:1,color:S.color,brand:brand(),imgs:[img,null],focus:[{x:.5,y:.25}]});};
-window.wzV2={fitHeadline:fitHeadline,drawNews:drawNews,issues:issues};
+window.wzV2={fitHeadline:fitHeadline,drawNews:drawNews,issues:issues,loadImg:loadImg,state:state,E:E,pvName:pvName};
 
 var oldDash=window.loadDash;
 if(typeof oldDash==='function'){window.loadDash=async function(){var r=await oldDash.apply(this,arguments);try{await wzRefreshDash();}catch(e){}return r;};}
 var oldSec=window.showSec;
 if(typeof oldSec==='function'){window.showSec=function(n,el){var r=oldSec.apply(this,arguments);try{if(n==='poster')pvLoadSuggestions();if(n==='settings'){ensureSettings();wzRefreshDash();}}catch(e){}return r;};}
 ensureDash();ensureSettings();initPoster();pmBuild();
+})();
+</script>
+<script id="wz-v3-js">
+/* WAVZO Admin v3: auto-posting controls, bulk posters with ZIP, tidier artists tab. */
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var V=window.wzV2||{};
+var E=V.E||function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+function toast(m,ms){if(typeof showToast==='function')showToast(m,ms||3500);}
+
+/* ---------- 1. auto-posting ---------- */
+var CATS=[['NEWS','News'],['SPORTS','Sports'],['ENTERTAINMENT','Entertainment'],['TRENDING','Trending / gist'],['MUSIC','Music'],['GOSPEL','Gospel']];
+function ago(t){if(!t)return 'never';var m=Math.round((Date.now()-t)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago';}
+function ensureAuto(){
+  var sec=$('sec-dash');if(!sec||$('wzAuto'))return;
+  var opt=function(vals,fmt){return vals.map(function(v){return '<option value="'+v+'">'+fmt(v)+'</option>';}).join('');};
+  var html='<div class="card" id="wzAuto"><div class="card-title">Auto-posting</div>'+
+    '<div class="wz-kv"><span><b>Post news automatically</b><br><small style="color:var(--muted)">Even when you are offline. Only stories with a picture.</small></span><label class="wz-sw"><input type="checkbox" id="apOn" onchange="apSave(true)"><i></i></label></div>'+
+    '<div class="wz-note" id="apMsg"></div>'+
+    '<div class="pb-opts">'+
+      '<div><div class="wz-note">Check every</div><select id="apEvery">'+opt([10,20,30,60],function(v){return v<60?v+' minutes':'1 hour';})+'</select></div>'+
+      '<div><div class="wz-note">Stories per check</div><select id="apPer">'+opt([1,2,3,4,5,6],function(v){return v;})+'</select></div>'+
+      '<div><div class="wz-note">Daily limit</div><select id="apDay">'+opt([10,20,30,50,80],function(v){return v+' stories';})+'</select></div>'+
+      '<div><div class="wz-note">Story length</div><select id="apChars"><option value="800">Short</option><option value="1500">Medium</option><option value="2500">Long</option></select></div>'+
+    '</div>'+
+    '<div class="wz-note">Sections to post</div><div class="ap-cats" id="apCats">'+CATS.map(function(c){return '<label><input type="checkbox" value="'+c[0]+'"> '+c[1]+'</label>';}).join('')+'</div>'+
+    '<div style="display:flex;gap:8px;margin-top:14px"><button type="button" class="btn btn-sm" onclick="apSave(false)">Save settings</button><button type="button" class="btn btn-green btn-sm" onclick="apRun()">\u25B6 Run now</button><button type="button" class="btn btn-grey btn-sm" onclick="apStatus()">\u21BB</button></div>'+
+    '<div class="wz-log" id="apLog"></div></div>';
+  var q=$('wzQuick');
+  if(q)q.insertAdjacentHTML('afterend',html);else sec.insertAdjacentHTML('beforeend',html);
+}
+async function apLoad(){
+  ensureAuto();
+  var db;try{db=await loadDB();}catch(e){return;}
+  var c=db.autopost||{};
+  $('apOn').checked=!!c.enabled;
+  $('apEvery').value=String(c.every||20);$('apPer').value=String(c.perRun||3);$('apDay').value=String(c.maxPerDay||30);$('apChars').value=String(c.maxChars||1500);
+  var cats=c.cats||['NEWS','SPORTS','ENTERTAINMENT','TRENDING'];
+  [].slice.call($('apCats').querySelectorAll('input')).forEach(function(i){i.checked=cats.indexOf(i.value)>-1;});
+  apStatus();
+}
+async function apSave(fromToggle){
+  try{
+    var db=await loadDB();
+    db.autopost={enabled:$('apOn').checked,every:+$('apEvery').value,perRun:+$('apPer').value,maxPerDay:+$('apDay').value,maxChars:+$('apChars').value,maxAgeHours:36,
+      cats:[].slice.call($('apCats').querySelectorAll('input:checked')).map(function(i){return i.value;})};
+    if(!db.autopost.cats.length){toast('Pick at least one section.');if(fromToggle)$('apOn').checked=false;return;}
+    await saveDB(db);
+    toast(db.autopost.enabled?'Auto-posting is ON':'Settings saved');
+    apStatus();
+  }catch(e){toast('Could not save: '+e.message,5000);}
+}
+async function apStatus(){
+  var msg=$('apMsg'),log=$('apLog');if(!msg)return;
+  try{
+    var r=await fetch('/admin/autopost/status',{headers:{'X-Master-Key':BIN_KEY}});
+    var j=await r.json();
+    if(j.keySet===false){msg.innerHTML='\u26A0 The server needs one setting before it can post for you. In Render, open your service > Environment, add <b>WZ_DB_KEY</b> with the same password you use to log in here, then redeploy.';log.innerHTML='';return;}
+    if(r.status===401){msg.innerHTML='\u26A0 WZ_DB_KEY on the server does not match your admin password.';return;}
+    msg.textContent=($('apOn').checked?'\u2705 ON':'\u23F8 OFF')+' \u00B7 last check: '+ago(j.lastRun)+(j.running?' \u00B7 running now...':'');
+    log.innerHTML=(j.events||[]).map(function(e){return '<div><b>'+ago(e.t)+'</b> \u2014 '+E(e.m)+'</div>';}).join('')||'<div>No activity yet.</div>';
+  }catch(e){msg.textContent='Could not reach the server.';}
+}
+async function apRun(){
+  toast('Checking the news feeds...',2500);
+  try{
+    var r=await fetch('/admin/autopost/run',{method:'POST',headers:{'X-Master-Key':BIN_KEY}});
+    var j=await r.json();
+    toast(j.posted?('Posted '+j.posted+' stories'):(j.msg||'Done'),5000);
+    window.__wzRead=null;apStatus();if(j.posted&&typeof loadDash==='function')loadDash();
+  }catch(e){toast('Failed: '+e.message,5000);}
+}
+
+/* ---------- 2. bulk posters + ZIP ---------- */
+var PB={stop:false,files:[]};
+var doneGet=function(){try{return JSON.parse(localStorage.getItem('wz_flyer_done')||'{}');}catch(e){return {};}};
+var doneSet=function(o){try{var k=Object.keys(o);if(k.length>3000)k.sort(function(a,b){return o[a]-o[b];}).slice(0,k.length-3000).forEach(function(x){delete o[x];});localStorage.setItem('wz_flyer_done',JSON.stringify(o));}catch(e){}};
+var CRC=(function(){var t=[],c,n,k;for(n=0;n<256;n++){c=n;for(k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(u){var c=0xFFFFFFFF;for(var i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function zipStore(files){
+  var enc=new TextEncoder(),parts=[],cd=[],off=0;
+  files.forEach(function(f){
+    var nm=enc.encode(f.name),crc=crc32(f.data),sz=f.data.length;
+    var lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(12,0x21,true);
+    lh.setUint32(14,crc,true);lh.setUint32(18,sz,true);lh.setUint32(22,sz,true);lh.setUint16(26,nm.length,true);
+    parts.push(new Uint8Array(lh.buffer),nm,f.data);
+    var ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(14,0x21,true);
+    ch.setUint32(16,crc,true);ch.setUint32(20,sz,true);ch.setUint32(24,sz,true);ch.setUint16(28,nm.length,true);ch.setUint32(42,off,true);
+    cd.push(new Uint8Array(ch.buffer),nm);
+    off+=30+nm.length+sz;
+  });
+  var size=0;cd.forEach(function(p){size+=p.length;});
+  var end=new DataView(new ArrayBuffer(22));
+  end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,size,true);end.setUint32(16,off,true);
+  return new Blob(parts.concat(cd,[new Uint8Array(end.buffer)]),{type:'application/zip'});
+}
+function ensureBatch(){
+  var btn=$('genFlyersBtn');if(!btn||$('pbCount'))return;
+  btn.insertAdjacentHTML('beforebegin',
+    '<div class="pb-opts"><div><div class="wz-note">How many posters</div><select id="pbCount"><option value="6">6</option><option value="12">12</option><option value="24" selected>24</option><option value="48">48</option><option value="96">96</option></select></div>'+
+    '<div><div class="wz-note">From section</div><select id="pbCat"><option value="">All sections</option><option>NEWS</option><option>SPORTS</option><option>ENTERTAINMENT</option><option>TRENDING</option><option>MUSIC</option><option>GOSPEL</option></select></div></div>'+
+    '<label class="pb-chk"><input type="checkbox" id="pbSkip" checked> Skip posts I already made posters for</label>');
+  btn.insertAdjacentHTML('afterend',
+    '<div style="display:flex;gap:8px;margin-top:10px"><button type="button" class="btn btn-grey btn-sm" onclick="pbStop()">Stop</button><button type="button" class="btn btn-green btn-sm" id="pbZip" style="display:none" onclick="pbZip()">\u2B07 Download all (ZIP)</button></div>'+
+    '<div class="pb-bar"><div id="pbFill"></div></div><div class="wz-note" id="pbSum"></div>');
+  btn.textContent='\uD83C\uDFA8 Generate posters';
+}
+function setProg(a,b){var f=$('pbFill');if(f)f.style.width=(b?Math.round(a*100/b):0)+'%';var s=$('pbSum');if(s)s.textContent=a+' of '+b+' done';}
+async function pbRun(){
+  var btn=$('genFlyersBtn'),g=$('flyerGallery');ensureBatch();
+  var n=+$('pbCount').value,cat=$('pbCat').value,skip=$('pbSkip').checked;
+  btn.disabled=true;PB.stop=false;PB.files=[];g.innerHTML='';$('pbZip').style.display='none';
+  try{
+    var db=await loadDB(),done=doneGet();
+    var posts=(db.posts||[]).slice().reverse().filter(function(p){return p&&p.title&&p.coverImage&&(!cat||p.category===cat)&&(!skip||!done[p.slug]);}).slice(0,n);
+    if(!posts.length){g.innerHTML='<p class="wz-note">No matching posts with photos'+(skip?' that you have not already made posters for. Untick the box to remake them.':'.')+'</p>';return;}
+    var st=V.state(),ok=0,bad=0,next=0;setProg(0,posts.length);
+    var worker=async function(){
+      while(!PB.stop){
+        var i=next++;if(i>=posts.length)return;
+        var p=posts[i],card=document.createElement('div');card.className='pv-gi';card.innerHTML='<div class="pv-gn">Making...</div>';g.appendChild(card);
+        var im=await V.loadImg(p.coverImage);
+        if(!im){bad++;card.innerHTML='<div class="pv-gn">'+E(p.title)+'<br>\u26A0 Photo blocked by its website</div>';}
+        else{
+          var c=document.createElement('canvas');c.width=1080;c.height=1080;
+          V.drawNews(c.getContext('2d'),1080,1080,{title:p.title,layout:1,color:st.color,brand:st.brand,imgs:[im,null],focus:[{x:.5,y:.25}]});
+          var blob=await new Promise(function(r){try{c.toBlob(r,'image/jpeg',.92);}catch(e){r(null);}});
+          if(!blob){bad++;card.innerHTML='<div class="pv-gn">'+E(p.title)+'<br>\u26A0 Could not save</div>';}
+          else{
+            ok++;var name=V.pvName(p.title)+'-wavzo.jpg',url=URL.createObjectURL(blob);
+            PB.files.push({name:name,blob:blob,i:i});done[p.slug]=Date.now();
+            card.innerHTML='<img src="'+url+'" alt=""><a class="btn btn-sm" href="'+url+'" download="'+E(name)+'">\u2B07 Download</a>';
+          }
+        }
+        setProg(ok+bad,posts.length);
+      }
+    };
+    await Promise.all([worker(),worker(),worker()]);
+    doneSet(done);
+    var s=$('pbSum');if(s)s.textContent='Made '+ok+' poster'+(ok===1?'':'s')+(bad?' ('+bad+' skipped because the photo is blocked)':'')+(PB.stop?' (stopped)':'');
+    if(ok>0)$('pbZip').style.display='';
+  }catch(e){g.innerHTML='<p class="wz-note">Could not generate: '+E(e.message)+'</p>';}
+  finally{btn.disabled=false;}
+}
+function pbStop(){PB.stop=true;}
+async function pbZip(){
+  if(!PB.files.length)return;
+  toast('Packing '+PB.files.length+' posters...',2500);
+  var used={},list=[];
+  var files=PB.files.slice().sort(function(a,b){return a.i-b.i;});
+  for(var i=0;i<files.length;i++){
+    var f=files[i],nm=f.name;if(used[nm]){nm=String(i+1)+'-'+nm;}used[nm]=1;
+    list.push({name:nm,data:new Uint8Array(await f.blob.arrayBuffer())});
+  }
+  var blob=zipStore(list),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='wavzo-posters-'+new Date().toISOString().slice(0,10)+'.zip';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(a.href);},8000);
+}
+async function pbQuick(i){
+  var p=(window._pvList||[])[i];if(!p)return;
+  if(!p.coverImage){toast('This post has no photo.');return;}
+  toast('Making poster...',1500);
+  var im=await V.loadImg(p.coverImage);
+  if(!im){toast('That photo is blocked by its website. Upload it in the poster maker instead.',5000);return;}
+  var st=V.state(),c=document.createElement('canvas');c.width=1080;c.height=1080;
+  V.drawNews(c.getContext('2d'),1080,1080,{title:p.title,layout:1,color:st.color,brand:st.brand,imgs:[im,null],focus:[{x:.5,y:.25}]});
+  c.toBlob(function(b){if(!b)return;var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=V.pvName(p.title)+'-wavzo.jpg';document.body.appendChild(a);a.click();document.body.removeChild(a);},'image/jpeg',.92);
+}
+
+/* ---------- 3. artists tab ---------- */
+window.loadArtists=async function(){
+  var db=await loadDB();db.artists=db.artists||[];
+  var list=$('artistsList');if(!list)return;
+  if(!$('arQ'))list.insertAdjacentHTML('beforebegin','<input class="wz-search" id="arQ" type="search" placeholder="Search artists..." oninput="loadArtists()">');
+  var q=($('arQ').value||'').toLowerCase().trim(),count={};
+  (db.songs||[]).forEach(function(s){count[s.artistId]=(count[s.artistId]||0)+1;});
+  var cn=$('artistCount');if(cn)cn.textContent=db.artists.length;
+  var rows=db.artists.filter(function(a){return !q||String(a.name||'').toLowerCase().indexOf(q)>-1||String(a.genre||'').toLowerCase().indexOf(q)>-1;});
+  list.innerHTML=rows.length?rows.map(function(a){
+    return '<div class="post-row"><div class="ar-row" style="flex:1;min-width:0">'+(a.photo?'<img src="'+E(a.photo)+'" loading="lazy" alt="">':'<span class="ar-ph">\uD83C\uDFA4</span>')+
+      '<div class="post-row-info"><h4>'+E(a.name)+'</h4><small>'+E(a.genre||'')+' \u00B7 '+(count[a.id]||0)+' song'+((count[a.id]||0)===1?'':'s')+'</small></div></div>'+
+      '<button class="del-btn" style="background:#3b5bef" onclick="editArtist(\''+E(a.id)+'\')">EDIT</button><button class="del-btn" onclick="deleteArtist(\''+E(a.id)+'\')">DEL</button></div>';
+  }).join(''):'<p class="wz-note">'+(db.artists.length?'No artists match.':'No artists yet.')+'</p>';
+  var sel=$('songArtist');if(sel)sel.innerHTML=db.artists.map(function(a){return '<option value="'+E(a.id)+'">'+E(a.name)+'</option>';}).join('');
+};
+
+/* ---------- wiring ---------- */
+window.apSave=apSave;window.apRun=apRun;window.apStatus=apStatus;window.pbStop=pbStop;window.pbZip=pbZip;window.pbQuick=pbQuick;
+window.generateFlyerGallery=pbRun;
+var oldSug=window.loadPosterSuggestions;
+if(typeof oldSug==='function'){window.loadPosterSuggestions=async function(){
+  var r=await oldSug.apply(this,arguments);
+  [].slice.call(document.querySelectorAll('#posterSuggestions .pv-sug')).forEach(function(row,i){
+    if(row.querySelector('.pb-q'))return;
+    row.insertAdjacentHTML('beforeend','<button type="button" class="btn btn-sm pb-q" onclick="pbQuick('+i+')" aria-label="Download poster">\u2B07</button>');
+  });
+  return r;};}
+var oldDash=window.loadDash,apOnce=false;
+if(typeof oldDash==='function'){window.loadDash=async function(){var r=await oldDash.apply(this,arguments);try{if(!apOnce){apOnce=true;await apLoad();}}catch(e){}return r;};}
+ensureAuto();ensureBatch();
+window.wzV3={zipStore:zipStore,crc32:crc32};
 })();
 </script>
 </body>
