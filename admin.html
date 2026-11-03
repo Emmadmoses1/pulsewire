@@ -4657,7 +4657,7 @@ function ensureAuto(){
       '<div><div class="wz-note">Story length</div><select id="apChars"><option value="800">Short</option><option value="1500">Medium</option><option value="2500">Long</option></select></div>'+
     '</div>'+
     '<div class="wz-note">Sections to post</div><div class="ap-cats" id="apCats">'+CATS.map(function(c){return '<label><input type="checkbox" value="'+c[0]+'"> '+c[1]+'</label>';}).join('')+'</div>'+
-    '<div style="display:flex;gap:8px;margin-top:14px"><button type="button" class="btn btn-sm" onclick="apSave(false)">Save settings</button><button type="button" class="btn btn-green btn-sm" onclick="apRun()">\u25B6 Run now</button><button type="button" class="btn btn-grey btn-sm" onclick="apStatus()">\u21BB</button></div>'+
+    '<div style="display:flex;gap:8px;margin-top:14px"><button type="button" class="btn btn-sm" onclick="apSave(false)">Save settings</button><button type="button" class="btn btn-green btn-sm" onclick="apRun()">\u25B6 Run now</button><button type="button" class="btn btn-grey btn-sm" onclick="apStatus()">\u21BB</button><button type="button" class="btn btn-grey btn-sm" onclick="apFeeds()">\uD83D\uDD0D Check feeds</button></div>'+
     '<div class="wz-log" id="apLog"></div></div>';
   var q=$('wzQuick');
   if(q)q.insertAdjacentHTML('afterend',html);else sec.insertAdjacentHTML('beforeend',html);
@@ -4692,6 +4692,8 @@ async function apStatus(){
     if(r.status===401){msg.innerHTML='\u26A0 WZ_DB_KEY on the server does not match your admin password.';return;}
     msg.textContent=($('apOn').checked?'\u2705 ON':'\u23F8 OFF')+' \u00B7 last check: '+ago(j.lastRun)+(j.running?' \u00B7 running now...':'');
     log.innerHTML=(j.events||[]).map(function(e){return '<div><b>'+ago(e.t)+'</b> \u2014 '+E(e.m)+'</div>';}).join('')||'<div>No activity yet.</div>';
+    var hl=Object.keys(j.health||{}).map(function(k){var x=j.health[k];return '<div><b>'+k+'</b> \u2014 '+x.ok+' of '+x.total+' feeds working'+(x.failed&&x.failed.length?' (down: '+E(x.failed.slice(0,3).join(', '))+')':'')+'</div>';}).join('');
+    if(hl)log.innerHTML='<div style="padding:6px 0"><b>Feed health</b></div>'+hl+'<div style="padding:6px 0"><b>Activity</b></div>'+log.innerHTML;
   }catch(e){msg.textContent='Could not reach the server.';}
 }
 async function apRun(){
@@ -4699,7 +4701,7 @@ async function apRun(){
   try{
     var r=await fetch('/admin/autopost/run',{method:'POST',headers:{'X-Master-Key':BIN_KEY}});
     var j=await r.json();
-    toast(j.posted?('Posted '+j.posted+' stories'):(j.msg||'Done'),5000);
+    toast(j.posted?('Posted '+j.posted+' stories'):(j.summary||j.msg||'Done'),7000);
     window.__wzRead=null;apStatus();if(j.posted&&typeof loadDash==='function')loadDash();
   }catch(e){toast('Failed: '+e.message,5000);}
 }
@@ -4820,6 +4822,18 @@ window.loadArtists=async function(){
 };
 
 /* ---------- wiring ---------- */
+async function apFeeds(){
+  var log=$('apLog');if(!log)return;
+  log.innerHTML='<div>Checking every news feed. This can take up to a minute...</div>';
+  try{
+    var r=await fetch('/admin/autopost/feeds',{headers:{'X-Master-Key':BIN_KEY}});
+    var j=await r.json();
+    if(!j.ok){log.innerHTML='<div>Could not check. Is WZ_DB_KEY set to your admin password on the server?</div>';return;}
+    log.innerHTML=Object.keys(j.cats).map(function(k){var c=j.cats[k];
+      return '<div><b>'+k+'</b> \u2014 '+c.ok.length+' of '+c.total+' working'+(c.ok.length?'<br>\u2705 '+E(c.ok.join(', ')):'')+(c.failed.length?'<br>\u274C '+E(c.failed.join(', ')):'')+'</div>';}).join('');
+  }catch(e){log.innerHTML='<div>Could not reach the server.</div>';}
+}
+window.apFeeds=apFeeds;
 window.apSave=apSave;window.apRun=apRun;window.apStatus=apStatus;window.pbStop=pbStop;window.pbZip=pbZip;window.pbQuick=pbQuick;
 window.generateFlyerGallery=pbRun;
 var oldSug=window.loadPosterSuggestions;
