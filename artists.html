@@ -40,6 +40,23 @@ footer{text-align:center;padding:30px;color:#999;font-size:12px}
   <link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/images/wavzo-icon-192.png">
   <link rel="apple-touch-icon" href="/images/wavzo-icon-192.png">
+<style id="wz-artists">
+.ar-hero{max-width:1100px;margin:30px auto 0;padding:0 20px}
+.ar-hero .page-title{margin:0 0 4px;padding:0;max-width:none;font-size:32px;letter-spacing:-.8px}
+.ar-sub{color:#777;font-size:14px;margin-bottom:16px}
+.ar-search{width:100%;padding:14px 16px;border:1px solid #ddd;border-radius:14px;font-size:15px;background:#fff;outline:none;font-family:inherit}
+.ar-search:focus{border-color:#e11;box-shadow:0 0 0 4px rgba(238,17,17,.1)}
+.ar-chips{display:flex;gap:8px;overflow-x:auto;padding:14px 0 4px;scrollbar-width:none}.ar-chips::-webkit-scrollbar{display:none}
+.ar-chip{flex-shrink:0;border:1px solid #ddd;background:#fff;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.ar-chip.on{background:#e11;border-color:#e11;color:#fff}
+.artist-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important;gap:18px 14px!important}
+.artist-grid-card{display:block;background:#fff;border:1px solid #eee;border-radius:18px;padding:18px 12px 14px;transition:.2s}
+.artist-grid-card:hover{transform:translateY(-4px);box-shadow:0 18px 30px -18px rgba(0,0,0,.35);border-color:#e11}
+.artist-grid-img{max-width:130px;margin:0 auto;border:3px solid #fff!important;box-shadow:0 0 0 2px #eee}
+.artist-grid-card:hover .artist-grid-img{box-shadow:0 0 0 3px #e11}
+.artist-grid-name{font-size:15px;font-weight:800}
+footer a{color:#e11;margin:0 6px}
+</style>
 </head>
 <body>
 <div class="ticker-bar">
@@ -55,7 +72,9 @@ footer{text-align:center;padding:30px;color:#999;font-size:12px}
   </div>
 </nav>
 
-<h1 class="page-title">All Artists</h1>
+<div class="ar-hero"><h1 class="page-title">All Artists</h1><p class="ar-sub" id="arSub">Discover the voices behind the music.</p>
+<input type="search" id="arSearch" class="ar-search" placeholder="Search artists..." autocomplete="off">
+<div class="ar-chips" id="arChips"></div></div>
 <div class="artist-grid" id="artistGrid"></div>
 <p class="empty-msg" id="emptyMsg" style="display:none">No artists yet.</p>
 
@@ -88,21 +107,35 @@ async function init(){
     const data=await res.json();
     db=data.record||{};
   }
-  const artists=db.artists||[];
-
-  if(!artists.length){
-    document.getElementById('emptyMsg').style.display='block';
-  } else {
-    const grid=document.getElementById('artistGrid');
-    grid.innerHTML=artists.map(a=>`
-      <a class="artist-grid-card" href="/artists/${a.slug}.html">
-        <div class="artist-grid-img">
-          ${a.photo?`<img src="${IMG(a.photo,640)}" data-o="${a.photo}" onerror="IMGFB(this)" alt="${a.name}" loading="lazy">`:`<div class="artist-grid-img-placeholder">🎤</div>`}
-        </div>
-        <div class="artist-grid-name">${a.name}</div>
-        <div class="artist-grid-genre">${a.genre||''}</div>
-      </a>`).join('');
+  const songs=db.songs||[],cnt={};
+  songs.forEach(s=>{cnt[s.artistId]=(cnt[s.artistId]||0)+1;});
+  const list=(db.artists||[]).filter(a=>a&&a.slug).sort((a,b)=>(cnt[b.id]||0)-(cnt[a.id]||0)||String(a.name).localeCompare(String(b.name)));
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const grid=document.getElementById('artistGrid'),input=document.getElementById('arSearch'),chips=document.getElementById('arChips');
+  let genre='';
+  const genres=[...new Set(list.map(a=>a.genre).filter(Boolean))].sort();
+  function draw(){
+    const q=(input.value||'').toLowerCase().trim();
+    const rows=list.filter(a=>(!genre||a.genre===genre)&&(!q||String(a.name).toLowerCase().includes(q)));
+    grid.innerHTML=rows.map(a=>{
+      const n=cnt[a.id]||0;
+      return '<a class="artist-grid-card" href="/artists/'+esc(a.slug)+'.html"><div class="artist-grid-img">'+
+        (a.photo?'<img src="'+esc(IMG(a.photo,480))+'" data-o="'+esc(a.photo)+'" onerror="IMGFB(this)" alt="'+esc(a.name)+'" loading="lazy">':'<div class="artist-grid-img-placeholder">\uD83C\uDFA4</div>')+
+        '</div><div class="artist-grid-name">'+esc(a.name)+'</div><div class="artist-grid-genre">'+esc(a.genre||'')+(n?' \u00B7 '+n+' song'+(n===1?'':'s'):'')+'</div></a>';
+    }).join('');
+    document.getElementById('emptyMsg').style.display=rows.length?'none':'block';
+    const sub=document.getElementById('arSub');
+    if(sub)sub.textContent=list.length+' artist'+(list.length===1?'':'s')+(rows.length!==list.length?' \u00B7 showing '+rows.length:'');
   }
+  chips.innerHTML=['All'].concat(genres).map(g=>'<button type="button" class="ar-chip'+(g==='All'?' on':'')+'" data-g="'+esc(g)+'">'+esc(g)+'</button>').join('');
+  chips.addEventListener('click',e=>{
+    const b=e.target.closest('.ar-chip');if(!b)return;
+    genre=b.dataset.g==='All'?'':b.dataset.g;
+    [...chips.children].forEach(c=>c.classList.toggle('on',c===b));
+    draw();
+  });
+  input.addEventListener('input',draw);
+  draw();
 
   const track=document.getElementById('tickerTrack');
   [...(db.posts||[]).slice(0,6),...(db.posts||[]).slice(0,6)].forEach(p=>{const t=document.createElement('span');t.textContent=p.title;track.appendChild(t);});

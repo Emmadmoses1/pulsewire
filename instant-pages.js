@@ -135,15 +135,67 @@ function renderSong(doc, song) {
   const pre = js({ song, artist: artist.id ? artist : null, titles: (doc.posts || []).slice(0, 6).map((p) => p.title || '') });
   return put(page, "const songId='" + safeId(song.id) + "';", "const songId='" + safeId(song.id) + "';\nconst PRE=" + pre + ';');
 }
+// ---- Artists: server-built list page + richer artist pages (so Google sees every artist and song) ----
+function sqImg(u, n) {
+  u = String(u || '').trim().replace(/&amp;/g, '&');
+  if (!/^https?:\/\//i.test(u)) return '';
+  if (/^https?:\/\/res\.cloudinary\.com\//i.test(u) && u.indexOf('/image/upload/') > -1 && u.indexOf('/c_fill') < 0) return u.replace('/image/upload/', '/image/upload/c_fill,g_auto,w_' + n + ',h_' + n + ',q_auto,f_auto/');
+  if (u.indexOf(SITE) === 0) return u;
+  return 'https://wsrv.nl/?url=' + encodeURIComponent(u) + '&w=' + n + '&h=' + n + '&fit=cover&output=webp&q=78';
+}
+function artistCards(doc) {
+  const count = {};
+  (doc.songs || []).forEach((s) => { count[s.artistId] = (count[s.artistId] || 0) + 1; });
+  return (doc.artists || []).filter((a) => a && a.slug).sort((a, b) => (count[b.id] || 0) - (count[a.id] || 0) || String(a.name).localeCompare(String(b.name))).map((a) => {
+    const n = count[a.id] || 0, im = sqImg(a.photo, 320);
+    return '<a class="artist-grid-card" href="/artists/' + safeId(a.slug) + '.html"><div class="artist-grid-img">' +
+      (im ? '<img src="' + esc(im) + '" width="320" height="320" loading="lazy" alt="' + esc(a.name) + '">' : '<div class="artist-grid-img-placeholder">&#127908;</div>') + '</div>' +
+      '<div class="artist-grid-name">' + esc(a.name) + '</div><div class="artist-grid-genre">' + esc(a.genre || '') + (n ? ' &middot; ' + n + ' song' + (n === 1 ? '' : 's') : '') + '</div></a>';
+  }).join('');
+}
+function renderArtistsIndex(doc) {
+  const total = (doc.artists || []).length;
+  const desc = 'Browse ' + total + ' music artists on WAVZO: Afrobeats, gospel, hip-hop and more. Find their songs and downloads.';
+  const page = put(read('artists.html'), '<title>All Artists \u2014 WAVZO</title>', head({
+    title: 'Music Artists \u2014 WAVZO', desc: attr(desc, 200), url: SITE + '/artists.html', type: 'website', ogTitle: 'Music Artists \u2014 WAVZO', image: DEFAULT_IMG,
+    ld: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Music Artists \u2014 WAVZO', url: SITE + '/artists.html', description: desc }
+  }));
+  return put(page, '<div class="artist-grid" id="artistGrid"></div>', '<div class="artist-grid" id="artistGrid">' + artistCards(doc) + '</div>');
+}
+function artistsRoute() {
+  return async (req, res, next) => {
+    try { res.set('Cache-Control', 'public, max-age=60').type('html').send(renderArtistsIndex(await getDoc(30000))); } catch (e) { next(); }
+  };
+}
+function artistLd(doc, artist, url) {
+  return { '@context': 'https://schema.org', '@type': 'MusicGroup', name: artist.name, url, image: ogImage(artist.photo), description: String(artist.bio || '').slice(0, 300), genre: artist.genre || undefined,
+    track: (doc.songs || []).filter((s) => s.artistId === artist.id).slice(0, 25).map((s) => ({ '@type': 'MusicRecording', name: s.title, url: SITE + '/songs/' + safeId(s.slug) + '.html' })) };
+}
+function artistSsr(page, artist, songs, name) {
+  const im = sqImg(artist.photo, 400);
+  page = put(page, '<h1 class="article-title" id="artistName" style="margin-bottom:4px"></h1>', '<h1 class="article-title" id="artistName" style="margin-bottom:4px">' + esc(name) + '</h1>');
+  page = put(page, '<span class="article-cat-tag" id="artistGenre"></span>', '<span class="article-cat-tag" id="artistGenre">' + esc(artist.genre || '') + '</span>');
+  page = put(page, '<p class="article-body" id="artistBio"></p>', '<p class="article-body" id="artistBio">' + esc(artist.bio || '') + '</p>');
+  page = put(page, '<span id="crumbArtist"></span>', '<span id="crumbArtist">' + esc(name) + '</span>');
+  if (im) page = put(page, '<img id="artistPhoto" src="" alt="" style="width:96px;height:96px;border-radius:50%;object-fit:cover;flex-shrink:0;display:none">', '<img id="artistPhoto" src="' + esc(im) + '" alt="' + esc(name) + '" style="width:96px;height:96px;border-radius:50%;object-fit:cover;flex-shrink:0">');
+  if (songs.length) {
+    page = put(page, '<div class="media-block" id="songsBlock" style="display:none">', '<div class="media-block" id="songsBlock">');
+    page = put(page, '<div id="artistSongsList" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>', '<div id="artistSongsList" style="display:flex;flex-direction:column;gap:10px;margin-top:10px">' +
+      songs.map((s) => '<a href="/songs/' + safeId(s.slug) + '.html" style="padding:8px;border:1px solid #eee;border-radius:6px;color:inherit;text-decoration:none;font-weight:600">' + esc(s.title) + '</a>').join('') + '</div>');
+  }
+  return page;
+}
+
 function renderArtist(doc, artist) {
   const slug = safeId(artist.slug), name = artist.name || 'Artist';
   const url = SITE + '/artists/' + slug + '.html';
   let page = put(read('artist.html'), '<title>WAVZO</title>', head({
     title: esc(name) + ' — WAVZO', desc: attr(artist.bio, 200), url, type: 'profile', ogTitle: esc(name) + ' — WAVZO',
-    image: esc(ogImage(artist.photo))
+    image: esc(ogImage(artist.photo)), ld: artistLd(doc, artist, url)
   }));
   page = put(page, "const artistId='__ARTIST_ID__';", "const artistId='" + safeId(artist.id) + "';");
   const songs = (doc.songs || []).filter((s) => s.artistId === artist.id);
+  page = artistSsr(page, artist, songs, name);
   const pre = js({ artist, songs, titles: (doc.posts || []).slice(0, 6).map((p) => p.title || '') });
   return put(page, "const artistId='" + safeId(artist.id) + "';", "const artistId='" + safeId(artist.id) + "';\nconst PREART=" + pre + ';');
 }
@@ -322,4 +374,4 @@ function startIndexNowWatcher() {
   if (watching) return;
   watching = true; refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
 
-module.exports = { categoryRoute, homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
+module.exports = { artistsRoute, categoryRoute, homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };

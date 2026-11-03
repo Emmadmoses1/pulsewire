@@ -91,6 +91,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public'), { index: false, maxAge: '1d' })); // FAST-SERVER
 app.get('/category/:slug', instant.categoryRoute());
 app.get('/category/:slug/page/:n', instant.categoryRoute());
+app.get('/artists.html', instant.artistsRoute());
 app.get('/posts/:slug', instant.handler('post'));
 app.get('/songs/:slug', instant.handler('song'));
 app.get('/artists/:slug', instant.handler('artist'));

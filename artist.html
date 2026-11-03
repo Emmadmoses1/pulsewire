@@ -15,6 +15,14 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/images/wavzo-icon-192.png">
   <link rel="apple-touch-icon" href="/images/wavzo-icon-192.png">
+<style id="wz-artist">
+#artistPhoto{width:124px!important;height:124px!important;border:3px solid #fff;box-shadow:0 0 0 3px #e11,0 14px 30px -14px rgba(0,0,0,.45)}
+#artistName{font-size:30px;font-weight:900;letter-spacing:-.6px;line-height:1.15}
+#artistBio{background:#fff;border:1px solid #eee;border-radius:16px;padding:16px 18px;line-height:1.75;font-size:15px;color:#333;margin-top:14px}
+#songsBlock .media-label{font-size:13px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
+#artistSongsList a,#artistSongsList>div{background:#fff!important;border:1px solid #eee!important;border-radius:14px!important;padding:10px 12px!important;transition:.15s}
+#artistSongsList a:hover,#artistSongsList>div:hover{border-color:#e11!important;transform:translateX(3px)}
+</style>
 </head>
 <body>
 <div class="ticker-bar">
@@ -92,7 +100,7 @@ async function init(){
   /* ALBUM-MODAL */
   const songs=(db.songs||[]).filter(s=>s.artistId===artistId);
   if(songs.length){
-    const list=document.getElementById('artistSongsList');
+    const list=document.getElementById('artistSongsList');list.innerHTML='';
     document.getElementById('songsBlock').style.display='block';
     const singles=songs.filter(s=>!s.albumId);
     const albums={};
@@ -103,7 +111,7 @@ async function init(){
       const a=document.createElement('a');
       a.href='/songs/'+s.slug+'.html';
       a.style.cssText='display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;padding:8px;border:1px solid #eee;border-radius:6px'+(indent?';margin-left:20px':'');
-      a.innerHTML=coverImg(s.cover,160)+`<span style="font-weight:600">${s.title}</span>`;
+      a.innerHTML=coverImg(s.cover,160)+`<span style="font-weight:600">${esc(s.title)}</span>`;
       return a;
     }
     let albumModal=document.getElementById('albumModal');
