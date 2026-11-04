@@ -1,0 +1,24 @@
+{
+  "name": "WAVZO",
+  "short_name": "WAVZO",
+  "description": "Nigerian music, news and culture",
+  "start_url": "/?utm_source=app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#07070b",
+  "theme_color": "#e5202f",
+  "icons": [
+    {
+      "src": "/images/wavzo-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/wavzo-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
