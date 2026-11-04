@@ -224,7 +224,7 @@ async function sitemap() {
 }
 async function dbJson() {
   const doc = await getDoc(20000);
-  return { posts: doc.posts || [], songs: doc.songs || [], artists: doc.artists || [] };
+  return { posts: (doc.posts || []).map((p) => Object.assign({}, p, { q: homeQ(doc, p) })), songs: doc.songs || [], artists: doc.artists || [] };
 }
 // Small, compressed list for the home page (no article bodies): ~2 MB becomes ~100 KB
 const crypto = require('crypto');
@@ -236,6 +236,7 @@ function homePayload(doc) {
     const rest = Object.assign({}, p);
     delete rest.content;
     rest.excerpt = String(p.excerpt || plain(p.content)).slice(0, 220);
+    rest.q = homeQ(doc, p);
     return rest;
   });
   const body = Buffer.from(JSON.stringify({ posts, songs: doc.songs || [], artists: doc.artists || [] }));
@@ -330,6 +331,29 @@ function categoryRoute() {
   };
 }
 
+// ---- Homepage built on the server from the live database (same renderer as the browser: public/wz-home.js) ----
+const homeQ = (doc, p) => (typeof seoState === 'function' ? (seoState(doc, p).index ? 1 : 0) : 1);
+function renderHome(doc) {
+  const WZH = require('./public/wz-home.js');
+  const posts = (doc.posts || []).slice().reverse().filter((p) => p && p.slug && p.title).map((p) => ({
+    slug: p.slug, title: p.title, category: p.category, excerpt: p.excerpt || plain(p.content).slice(0, 200), coverImage: p.coverImage, date: p.date, views: p.views, q: homeQ(doc, p)
+  }));
+  const o = WZH.build({ posts, songs: doc.songs || [], artists: doc.artists || [] });
+  let html = read('index.html');
+  const rep = (k, v) => { html = html.split('<!--SSR:' + k + '-->').join(v); };
+  rep('ticker', o.ticker); rep('bars', o.bars); rep('hero', o.hero); rep('trending', o.trending); rep('music', o.music);
+  rep('artists', o.artists); rep('sections', o.sections); rep('chips', o.chips); rep('latest', o.latest);
+  rep('preload', o.preload ? '<link rel="preload" as="image" href="' + esc(o.preload) + '" fetchpriority="high">' : '');
+  return html.split('/*SSR:SIG*/').join('window.__SIG=' + JSON.stringify(o.sig) + ';');
+}
+function homeRoute() {
+  return async (req, res, next) => {
+    try {
+      res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300').type('html').send(renderHome(await getDoc(30000)));
+    } catch (e) { next(); }
+  };
+}
+
 function handler(kind) {
   return async (req, res, next) => {
     try {
@@ -374,4 +398,4 @@ function startIndexNowWatcher() {
   if (watching) return;
   watching = true; refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
 
-module.exports = { artistsRoute, categoryRoute, homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
+module.exports = { homeRoute, artistsRoute, categoryRoute, homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
