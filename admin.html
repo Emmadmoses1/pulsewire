@@ -488,7 +488,7 @@ button:focus-visible,a:focus-visible{outline:2px solid rgba(239,68,82,.75);outli
       <div class="field"><label>Genre</label>
         <select id="artistGenre">
           <option>Afrobeats</option><option>Hip-Hop</option><option>Gospel</option>
-          <option>R&B</option><option>Amapiano</option><option>Highlife</option><option>Other</option>
+          <option>R&B</option><option>Amapiano</option><option>Highlife</option><option>Afro-pop</option><option>Dancehall</option><option>Reggae</option><option>Pop</option><option>Rap</option><option>Drill</option><option>Fuji</option><option>Juju</option><option>Worship</option><option>Other</option>
         </select>
       </div>
       <div class="field"><label>Bio</label><textarea id="artistBio" rows="4" placeholder="Short bio..."></textarea></div>
@@ -499,6 +499,21 @@ button:focus-visible,a:focus-visible{outline:2px solid rgba(239,68,82,.75);outli
           <img id="artistPhotoPrev" class="cover-preview hidden" alt="preview">
           <div class="upload-placeholder" id="artistPhotoPlaceholder"><span>Click to upload photo</span></div>
         </div>
+      </div>
+      <div class="field"><label>Country / hometown</label><input type="text" id="arCountry" placeholder="e.g. Nigeria"></div>
+      <div class="field"><label>Banner image link (optional, wide photo)</label><input type="text" id="arBanner" placeholder="https://..."></div>
+      <div class="field"><label>Social links (optional, must start with https://)</label>
+        <div class="pv-grid2">
+          <input type="text" id="arInstagram" placeholder="Instagram link"><input type="text" id="arFacebook" placeholder="Facebook link">
+          <input type="text" id="arX" placeholder="X (Twitter) link"><input type="text" id="arYouTube" placeholder="YouTube link">
+          <input type="text" id="arTikTok" placeholder="TikTok link"><input type="text" id="arAudiomack" placeholder="Audiomack link">
+          <input type="text" id="arSpotify" placeholder="Spotify link"><input type="text" id="arApple" placeholder="Apple Music link">
+          <input type="text" id="arWebsite" placeholder="Website link">
+        </div>
+      </div>
+      <div class="field">
+        <label class="pb-chk"><input type="checkbox" id="arVerified"> Verified artist &#10004; (shows a tick on the artist page)</label>
+        <label class="pb-chk"><input type="checkbox" id="arFeatured"> Featured (shown first on the homepage and artists page)</label>
       </div>
       <button class="btn" id="saveArtistBtn" onclick="saveArtist()">SAVE ARTIST</button>
       <button class="btn" style="background:#555;display:none" onclick="cancelArtistEdit()" id="cancelArtistBtn">CANCEL</button>
@@ -1107,6 +1122,7 @@ async function loadNews(){
     } catch (e) { console.log('Feed failed:', feed.name); }
   }));
   if (!_serverOk) items = _buckets.flat();
+  items = items.filter(function(it){return it.image||it.mediaUrl;});
 
   try {
     const _mine = __postedLinks();
@@ -1468,6 +1484,7 @@ function resetArtistForm(){
   document.getElementById('artistPhotoPlaceholder').style.display='';
   document.getElementById('cancelArtistBtn').style.display='none';
   window._pendingArtistPhotoUrl=null;
+  if(window.wzArtistFill)wzArtistFill(null);
 }
 var _savingArtist=false;
 async function saveArtist(){
@@ -1494,10 +1511,10 @@ async function saveArtist(){
     if(editId){
       const idx=db.artists.findIndex(a=>a.id===editId);
       if(idx<0)throw new Error('That artist no longer exists - refresh and try again.');
-      db.artists[idx]={...db.artists[idx],name,genre,bio,slug,photo:photo||db.artists[idx].photo};
+      db.artists[idx]={...db.artists[idx],name,genre,bio,slug,photo:photo||db.artists[idx].photo,...wzArtistExtra()};
     } else {
       if(db.artists.some(a=>a.slug===slug))throw new Error('"'+name+'" already exists - tap EDIT on it instead.');
-      db.artists.push({id:'art-'+Date.now(),name,genre,bio,slug,photo});
+      db.artists.push({id:'art-'+Date.now(),name,genre,bio,slug,photo,...wzArtistExtra()});
     }
     await saveDB(db);
     resetArtistForm();
@@ -1523,6 +1540,7 @@ async function editArtist(id){
   document.getElementById('artistName').value=a.name;
   if(a.genre)document.getElementById('artistGenre').value=a.genre;
   document.getElementById('artistBio').value=a.bio||'';
+  wzArtistFill(a);
   const prev=document.getElementById('artistPhotoPrev');
   if(a.photo){prev.src=a.photo;prev.classList.remove('hidden');document.getElementById('artistPhotoPlaceholder').style.display='none';}
   else{prev.classList.add('hidden');document.getElementById('artistPhotoPlaceholder').style.display='';}
@@ -4463,7 +4481,7 @@ function pmBuild(){
   $('postsList').insertAdjacentHTML('beforebegin',
     '<div class="wz-toolbar"><input id="pmQ" type="search" placeholder="Search posts..." oninput="pmGo(1)">'+
     '<select id="pmCat" onchange="pmGo(1)"><option value="">All categories</option></select>'+
-    '<select id="pmIss" onchange="pmGo(1)"><option value="">All posts</option><option value="dups">Duplicates</option><option value="thin">Short posts</option><option value="nocover">No photo</option></select>'+
+    '<select id="pmIss" onchange="pmGo(1)"><option value="">All posts</option><option value="dups">Duplicates</option><option value="thin">Short posts</option><option value="nocover">No photo</option><option value="pinned">Pinned</option></select>'+
     '<select id="pmSort" onchange="pmGo(1)"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="views">Most viewed</option><option value="dl">Most downloaded</option></select></div>'+
     '<div class="wz-bulk"><label><input type="checkbox" id="pmAll" onchange="pmAll(this.checked)"> Select this page</label><span id="pmCount"></span>'+
     '<button type="button" class="btn btn-sm" id="pmDel" style="display:none" onclick="pmDelSel()">Delete selected</button></div>');
@@ -4477,7 +4495,7 @@ async function pmRender(){
   cs.innerHTML='<option value="">All categories</option>'+Object.keys(cats).sort().map(function(c){return '<option value="'+E(c)+'"'+(c===cur?' selected':'')+'>'+E(c)+'</option>';}).join('');
   var q=norm($('pmQ').value),cat=cs.value,iss=$('pmIss').value,sort=$('pmSort').value,I=issues(posts);
   var set=function(a){var m=new Set(a);return function(p){return m.has(p);};};
-  var inI=iss==='dups'?set(I.dups):iss==='thin'?set(I.thin):iss==='nocover'?set(I.noCover):null;
+  var inI=iss==='pinned'?function(p){return !!p.pinned;}:iss==='dups'?set(I.dups):iss==='thin'?set(I.thin):iss==='nocover'?set(I.noCover):null;
   var rows=posts.filter(function(p){return (!cat||p.category===cat)&&(!q||norm(p.title).indexOf(q)>-1)&&(!inI||inI(p));});
   if(sort==='new')rows.reverse();
   else if(sort==='views')rows.sort(function(a,b){return (b.views||0)-(a.views||0);});
@@ -4493,9 +4511,9 @@ async function pmRender(){
     var sl=E(p.slug);
     return '<div class="post-row"><label class="pm-chk"><input type="checkbox" '+(PM.sel[p.slug]?'checked ':'')+'onchange="pmSel(\''+sl+'\',this.checked)"></label>'+
       '<div class="post-row-info" style="flex:1;min-width:0"><h4>'+E(p.title)+'</h4><small>'+E(p.category)+' \u00B7 '+E(p.date)+' \u00B7 \uD83D\uDC41 '+(p.views||0)+'</small>'+
-      '<div class="badges">'+(p.coverImage?'<span class="badge img">IMG</span>':'')+(p.musicFile?'<span class="badge audio">AUDIO</span>':'')+(p.videoFile?'<span class="badge video">VIDEO</span>':'')+(dupSet.has(p)?'<span class="badge">DUPLICATE</span>':'')+'</div></div>'+
+      '<div class="badges">'+(p.coverImage?'<span class="badge img">IMG</span>':'')+(p.musicFile?'<span class="badge audio">AUDIO</span>':'')+(p.videoFile?'<span class="badge video">VIDEO</span>':'')+(dupSet.has(p)?'<span class="badge">DUPLICATE</span>':'')+(p.pinned?'<span class="badge" style="color:#fbbf24;border-color:#fbbf24">\uD83D\uDCCC PINNED</span>':'')+'</div></div>'+
       '<div class="pm-act"><button class="del-btn" id="fb-btn-'+sl+'" style="background:#1877f2" onclick="postToFacebook(\''+sl+'\')">\uD83D\uDCD8 Facebook</button>'+
-      '<button class="del-btn" style="background:#3b5bef" onclick="editPost(\''+sl+'\')">EDIT</button>'+
+      '<button class="del-btn" style="background:#b45309" onclick="pmPin(\''+sl+'\')">'+(p.pinned?'\uD83D\uDCCC Unpin':'\uD83D\uDCCC Pin')+'</button>'+'<button class="del-btn" style="background:#3b5bef" onclick="editPost(\''+sl+'\')">EDIT</button>'+
       '<button class="del-btn" onclick="deletePost(\''+sl+'\')">DEL</button></div></div>';
   }).join('')+
   '<div class="wz-pager"><button type="button" class="btn btn-grey btn-sm" '+(PM.page<=1?'disabled ':'')+'onclick="pmGo('+(PM.page-1)+',1)">\u2190 Newer</button><span>Page '+PM.page+' of '+pages+'</span>'+
@@ -4848,6 +4866,87 @@ var oldDash=window.loadDash,apOnce=false;
 if(typeof oldDash==='function'){window.loadDash=async function(){var r=await oldDash.apply(this,arguments);try{if(!apOnce){apOnce=true;await apLoad();}}catch(e){}return r;};}
 ensureAuto();ensureBatch();
 window.wzV3={zipStore:zipStore,crc32:crc32};
+})();
+</script>
+<script id="wz-v4-js">
+/* WAVZO Admin v4: pin posts to the homepage, POST ALL button, artist fields. */
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var E=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+function toast(m,ms){if(typeof showToast==='function')showToast(m,ms||3500);}
+
+/* ---- artist fields ---- */
+var SOC=[['arInstagram','instagram'],['arFacebook','facebook'],['arX','x'],['arYouTube','youtube'],['arTikTok','tiktok'],['arAudiomack','audiomack'],['arSpotify','spotify'],['arApple','apple'],['arWebsite','website']];
+window.wzArtistExtra=function(){
+  var social={};
+  SOC.forEach(function(s){var v=(($(s[0])||{}).value||'').trim();if(/^https:\/\//i.test(v))social[s[1]]=v;});
+  var bn=(($('arBanner')||{}).value||'').trim();
+  return {country:(($('arCountry')||{}).value||'').trim(),banner:/^https:\/\//i.test(bn)?bn:'',social:social,verified:!!($('arVerified')||{}).checked,featured:!!($('arFeatured')||{}).checked};
+};
+window.wzArtistFill=function(a){
+  a=a||{};
+  if($('arCountry'))$('arCountry').value=a.country||'';
+  if($('arBanner'))$('arBanner').value=a.banner||'';
+  SOC.forEach(function(s){if($(s[0]))$(s[0]).value=(a.social&&a.social[s[1]])||'';});
+  if($('arVerified'))$('arVerified').checked=!!a.verified;
+  if($('arFeatured'))$('arFeatured').checked=!!a.featured;
+};
+
+/* ---- pin posts to the homepage ---- */
+window.pmPin=async function(slug){
+  try{
+    var db=await loadDB(),p=(db.posts||[]).find(function(x){return x.slug===slug;});
+    if(!p)return;
+    if(p.pinned){delete p.pinned;}
+    else{
+      var n=(db.posts||[]).filter(function(x){return x.pinned;}).length;
+      if(n>=6){toast('You can pin up to 6 posts. Unpin one first.',5000);return;}
+      p.pinned=Date.now();
+      if(!p.coverImage)toast('Pinned. Posts with a photo look best in the homepage slider.',5000);
+    }
+    await saveDB(db);
+    toast(p.pinned?'Pinned to the homepage \uD83D\uDCCC (live in about a minute)':'Unpinned',4000);
+    if(typeof loadPosts==='function')loadPosts();
+    pinRefresh();
+  }catch(e){toast('Could not pin: '+e.message,5000);}
+};
+function ensurePinCard(){
+  var sec=$('sec-dash');if(!sec||$('wzPinned'))return;
+  var html='<div class="card" id="wzPinned"><div class="card-title">\uD83D\uDCCC Pinned on homepage</div><div id="wzPinBody"><p class="wz-note">Loading...</p></div></div>';
+  var q=$('wzQuick');
+  if(q)q.insertAdjacentHTML('afterend',html);else sec.insertAdjacentHTML('beforeend',html);
+}
+async function pinRefresh(){
+  ensurePinCard();
+  var body=$('wzPinBody');if(!body)return;
+  var db;try{db=await loadDB();}catch(e){return;}
+  var list=(db.posts||[]).filter(function(p){return p.pinned;}).sort(function(a,b){return (+b.pinned||0)-(+a.pinned||0);});
+  body.innerHTML=list.length?list.map(function(p){
+    return '<div class="wz-kv"><span style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+E(p.title)+'</span><button type="button" class="btn btn-grey wz-mini" onclick="pmPin(\''+E(p.slug)+'\')">Unpin</button></div>';
+  }).join('')+'<div class="wz-note">Pinned posts lead the homepage slider (up to 3 show there). You can pin up to 6.</div>'
+  :'<p class="wz-note">Nothing pinned. In the Posts tab, tap <b>Pin</b> on a post to show it first on the homepage.</p>';
+}
+
+/* ---- POST ALL button next to Publish selected ---- */
+function addPostAll(){
+  var b=$('bulkPubBtn');
+  if(!b||$('postAllBtn'))return;
+  b.insertAdjacentHTML('afterend',' <button type="button" class="btn btn-green btn-sm" id="postAllBtn" style="width:auto" onclick="wzPostAll()">\u26A1 POST ALL</button>');
+}
+window.wzPostAll=function(){
+  var boxes=[].slice.call(document.querySelectorAll('.rssBulkChk'));
+  if(!boxes.length){toast('No stories in the list yet. Tap Suggest first.');return;}
+  if(!confirm('Post all '+boxes.length+' stories in the list now? Every one has a picture.'))return;
+  boxes.forEach(function(c){c.checked=true;});
+  var go=$('bulkPubBtn');if(go)go.click();
+};
+try{new MutationObserver(addPostAll).observe($('sec-create')||document.body,{childList:true,subtree:true});}catch(e){}
+
+/* ---- wiring ---- */
+var oldDash=window.loadDash;
+if(typeof oldDash==='function'){window.loadDash=async function(){var r=await oldDash.apply(this,arguments);try{await pinRefresh();}catch(e){}return r;};}
+ensurePinCard();addPostAll();
 })();
 </script>
 </body>
