@@ -1,0 +1,401 @@
+// INSTANT PAGES: builds post / song / artist pages on demand from the live database,
+// so a new item has a working, crawlable address the moment it is published.
+const fs = require('fs');
+const path = require('path');
+const DB_URL = 'https://wavzo-db.dakudinamoses.workers.dev/v3/b/main/latest';
+const SITE = 'https://wavzo.com.ng';
+let cache = { t: 0, doc: null };
+
+let inflight = null;
+function refreshDoc() {
+  if (inflight) return inflight;
+  inflight = (async () => {
+    const r = await fetch(DB_URL, { headers: { 'X-Master-Key': 'public' } });
+    if (!r.ok) throw new Error('database returned ' + r.status);
+    const j = await r.json();
+    cache = { t: Date.now(), doc: j.record || {} };
+    return cache.doc;
+  })().finally(() => { inflight = null; });
+  return inflight;
+}
+// Old data is served instantly while fresh data loads in the background
+async function getDoc(maxAgeMs) {
+  if (cache.doc && Date.now() - cache.t < maxAgeMs) return cache.doc;
+  if (cache.doc && maxAgeMs > 0) { refreshDoc().catch(() => {}); return cache.doc; }
+  return refreshDoc();
+}
+const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const js = (o) => JSON.stringify(o).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+const attr = (s, n) => esc(String(s || '').slice(0, n).replace(/"/g, "'"));
+const read = (name) => fs.readFileSync(path.join(__dirname, name), 'utf8');
+const put = (tpl, from, to) => tpl.split(from).join(to); // no special replacement patterns
+
+function head(o) {
+  return '<title>' + o.title + '</title>\n  <meta name="description" content="' + o.desc + '">\n  <link rel="canonical" href="' + o.url + '">\n' +
+    '  <meta property="og:site_name" content="WAVZO">\n  <meta property="og:type" content="' + o.type + '">\n  <meta property="og:title" content="' + o.ogTitle + '">\n  <meta property="og:description" content="' + o.desc + '">\n' +
+    '  <meta property="og:image" content="' + o.image + '">\n  <meta property="og:image:secure_url" content="' + o.image + '">\n  <meta property="og:image:width" content="1200">\n  <meta property="og:image:height" content="630">\n  <meta property="og:image:alt" content="' + o.ogTitle + '">\n' +
+    '  <meta property="og:url" content="' + o.url + '">\n  <meta name="twitter:card" content="summary_large_image">\n' +
+    '  <meta name="twitter:title" content="' + o.ogTitle + '">\n  <meta name="twitter:description" content="' + o.desc + '">\n  <meta name="twitter:image" content="' + o.image + '">\n  <meta name="twitter:image:alt" content="' + o.ogTitle + '">' +
+    (o.robots ? '\n  <meta name="robots" content="' + o.robots + '">' : '') +
+    (o.ld ? '\n  <script type="application/ld+json">' + js(o.ld) + '</script>' : '');
+}
+const DEFAULT_IMG = SITE + '/images/wavzo-og-image.png';
+// Share-ready image: always https, 1200x630, small enough for WhatsApp (< 300 KB)
+function ogImage(u) {
+  u = String(u == null ? '' : u).trim().replace(/&amp;/g, '&');
+  if (!u || /^(none|null|undefined)$/i.test(u) || /^data:/i.test(u)) return DEFAULT_IMG;
+  if (u.startsWith('//')) u = 'https:' + u;
+  else if (u.startsWith('/')) u = SITE + u;
+  if (!/^https?:\/\//i.test(u)) return DEFAULT_IMG;
+  if (/^https?:\/\/res\.cloudinary\.com\//i.test(u) && u.indexOf('/image/upload/') > -1) {
+    return u.replace('/image/upload/', '/image/upload/c_fill,g_auto,w_1200,h_630,q_auto,f_jpg/').replace(/^http:/, 'https:');
+  }
+  if (u.indexOf(SITE) === 0) return u;
+  return 'https://wsrv.nl/?url=' + encodeURIComponent(u) + '&w=1200&h=630&fit=cover&output=jpg&q=80';
+}
+const plain = (h) => String(h == null ? '' : h).replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+
+const safeId = (v) => String(v == null ? '' : v).replace(/[^\w.-]/g, '');
+
+function postLd(post, url) {
+  const n = Number(post.createdAt);
+  let d = new Date(isNaN(n) ? post.createdAt : n);
+  if (isNaN(d)) d = new Date(post.date);
+  const iso = isNaN(d) ? undefined : d.toISOString();
+  return {
+    '@context': 'https://schema.org', '@type': 'NewsArticle', mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    headline: String(post.title || 'WAVZO').slice(0, 110), description: String(post.excerpt || plain(post.content)).slice(0, 200),
+    image: [ogImage(post.coverImage)], datePublished: iso, dateModified: iso,
+    author: { '@type': 'Organization', name: 'WAVZO', url: SITE },
+    publisher: { '@type': 'Organization', name: 'WAVZO', logo: { '@type': 'ImageObject', url: SITE + '/images/wavzo-icon-512.png' } }
+  };
+}
+// ---- Search quality rules: only strong, unique posts are offered to Google ----
+const SEO_MIN_TEXT = 300; // posts with less text (and no audio/video) are kept for readers but hidden from Google
+const normTitle = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const hasMedia = (p) => [p.musicFile, p.videoFile].some((v) => v && v !== 'None');
+const textLen = (p) => plain(p.content).length;
+let seoDoc = null, seoBest = null;
+function seoBestMap(doc) {
+  if (seoDoc === doc && seoBest) return seoBest;
+  const best = new Map();
+  for (const p of doc.posts || []) {
+    if (!p || !p.slug) continue;
+    const k = normTitle(p.title);
+    if (!k) continue;
+    const cur = best.get(k);
+    const better = !cur || textLen(p) > textLen(cur) ||
+      (textLen(p) === textLen(cur) && (Number(p.createdAt) || 0) < (Number(cur.createdAt) || 0));
+    if (better) best.set(k, p);
+  }
+  seoDoc = doc; seoBest = best;
+  return best;
+}
+function seoState(doc, post) {
+  const main = seoBestMap(doc).get(normTitle(post.title));
+  const dupOf = main && main.slug !== post.slug ? main.slug : null;
+  const thin = !hasMedia(post) && textLen(post) < SEO_MIN_TEXT;
+  return { dupOf, thin, index: !dupOf && !thin };
+}
+function ssrArticle(post, doc) {
+  const cat = esc(post.category || ''), title = esc(post.title || '');
+  const catLink = '<a href="/category/' + catSlug(post.category) + '">' + cat + '</a>';
+  const rel = (doc.posts || []).filter((p) => p.slug !== post.slug && p.category === post.category).slice(-3).reverse();
+  return '<div class="article-breadcrumb"><a href="/">Home</a> <span>/</span> ' + catLink + '</div>' +
+    '<div class="article-cat-tag">' + cat + '</div><h1 class="article-title">' + title + '</h1>' +
+    '<div class="views-bar"><span>📅 ' + esc(post.date || '') + '</span></div>' +
+    (/^https?:\/\//i.test(post.coverImage || '') ? '<img src="' + esc(ogImage(post.coverImage)) + '" class="article-cover" alt="' + title + '">' : '') +
+    '<div class="article-body">' + (post.content || '') + '</div>' +
+    (rel.length ? '<div class="related-section"><h3 class="related-title">More from ' + cat + '</h3>' +
+      rel.map((r) => '<p><a href="/posts/' + safeId(r.slug) + '.html">' + esc(r.title || '') + '</a></p>').join('') + '</div>' : '');
+}
+function renderPost(doc, post) {
+  const slug = safeId(post.slug);
+  const st = seoState(doc, post);
+  const url = SITE + '/posts/' + (st.dupOf ? safeId(st.dupOf) : slug) + '.html';
+  let page = put(read('post.html'), '<title>WAVZO</title>', head({
+    title: esc(post.title || 'WAVZO') + ' — WAVZO', desc: attr(post.excerpt || plain(post.content), 200), url, type: 'article',
+    ogTitle: esc(post.title || 'WAVZO'), image: esc(ogImage(post.coverImage)), ld: postLd(post, url), robots: st.thin && !st.dupOf ? 'noindex,follow' : ''
+  }));
+  page = put(page, "let slug=new URLSearchParams(window.location.search).get('slug');", "const slug='" + slug + "';");
+  page = put(page, '<div class="article-inner" id="articleInner"></div>', '<div class="article-inner" id="articleInner">' + ssrArticle(post, doc) + '</div>');
+  const same = (doc.posts || []).filter((p) => p.slug !== post.slug && p.category === post.category).slice(-3)
+    .map((p) => ({ slug: p.slug, title: p.title, category: p.category, coverImage: p.coverImage, date: p.date }));
+  return put(page, "const CACHE_KEY='pw_posts';", "const CACHE_KEY='pw_posts';\nconst PREPOST=" + js({ post, related: same }) + ';');
+}
+function renderSong(doc, song) {
+  const artist = (doc.artists || []).find((a) => a.id === song.artistId) || {};
+  const aname = artist.name || 'WAVZO', slug = safeId(song.slug), title = song.title || 'Song';
+  const url = SITE + '/songs/' + slug + '.html';
+  let page = put(read('song.html'), '<title>WAVZO</title>', head({
+    title: esc(title) + ' — ' + esc(aname) + ' | WAVZO', desc: attr(song.excerpt || (title + ' by ' + aname), 200), url, type: 'music.song',
+    ogTitle: esc(title) + ' — ' + esc(aname), image: esc(ogImage(song.cover))
+  }));
+  page = put(page, "const songId='__SONG_ID__';", "const songId='" + safeId(song.id) + "';");
+  const pre = js({ song, artist: artist.id ? artist : null, titles: (doc.posts || []).slice(0, 6).map((p) => p.title || '') });
+  return put(page, "const songId='" + safeId(song.id) + "';", "const songId='" + safeId(song.id) + "';\nconst PRE=" + pre + ';');
+}
+// ---- Artists: server-built list page + richer artist pages (so Google sees every artist and song) ----
+function sqImg(u, n) {
+  u = String(u || '').trim().replace(/&amp;/g, '&');
+  if (!/^https?:\/\//i.test(u)) return '';
+  if (/^https?:\/\/res\.cloudinary\.com\//i.test(u) && u.indexOf('/image/upload/') > -1 && u.indexOf('/c_fill') < 0) return u.replace('/image/upload/', '/image/upload/c_fill,g_auto,w_' + n + ',h_' + n + ',q_auto,f_auto/');
+  if (u.indexOf(SITE) === 0) return u;
+  return 'https://wsrv.nl/?url=' + encodeURIComponent(u) + '&w=' + n + '&h=' + n + '&fit=cover&output=webp&q=78';
+}
+function artistCards(doc) {
+  const count = {};
+  (doc.songs || []).forEach((s) => { count[s.artistId] = (count[s.artistId] || 0) + 1; });
+  return (doc.artists || []).filter((a) => a && a.slug).sort((a, b) => (count[b.id] || 0) - (count[a.id] || 0) || String(a.name).localeCompare(String(b.name))).map((a) => {
+    const n = count[a.id] || 0, im = sqImg(a.photo, 320);
+    return '<a class="artist-grid-card" href="/artists/' + safeId(a.slug) + '.html"><div class="artist-grid-img">' +
+      (im ? '<img src="' + esc(im) + '" width="320" height="320" loading="lazy" alt="' + esc(a.name) + '">' : '<div class="artist-grid-img-placeholder">&#127908;</div>') + '</div>' +
+      '<div class="artist-grid-name">' + esc(a.name) + '</div><div class="artist-grid-genre">' + esc(a.genre || '') + (n ? ' &middot; ' + n + ' song' + (n === 1 ? '' : 's') : '') + '</div></a>';
+  }).join('');
+}
+function renderArtistsIndex(doc) {
+  const total = (doc.artists || []).length;
+  const desc = 'Browse ' + total + ' music artists on WAVZO: Afrobeats, gospel, hip-hop and more. Find their songs and downloads.';
+  const page = put(read('artists.html'), '<title>All Artists \u2014 WAVZO</title>', head({
+    title: 'Music Artists \u2014 WAVZO', desc: attr(desc, 200), url: SITE + '/artists.html', type: 'website', ogTitle: 'Music Artists \u2014 WAVZO', image: DEFAULT_IMG,
+    ld: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Music Artists \u2014 WAVZO', url: SITE + '/artists.html', description: desc }
+  }));
+  return put(page, '<div class="artist-grid" id="artistGrid"></div>', '<div class="artist-grid" id="artistGrid">' + artistCards(doc) + '</div>');
+}
+function artistsRoute() {
+  return async (req, res, next) => {
+    try { res.set('Cache-Control', 'public, max-age=60').type('html').send(renderArtistsIndex(await getDoc(30000))); } catch (e) { next(); }
+  };
+}
+function artistLd(doc, artist, url) {
+  return { '@context': 'https://schema.org', '@type': 'MusicGroup', name: artist.name, url, image: ogImage(artist.photo), description: String(artist.bio || '').slice(0, 300), genre: artist.genre || undefined,
+    track: (doc.songs || []).filter((s) => s.artistId === artist.id).slice(0, 25).map((s) => ({ '@type': 'MusicRecording', name: s.title, url: SITE + '/songs/' + safeId(s.slug) + '.html' })) };
+}
+function artistSsr(page, artist, songs, name) {
+  const im = sqImg(artist.photo, 400);
+  page = put(page, '<h1 class="article-title" id="artistName" style="margin-bottom:4px"></h1>', '<h1 class="article-title" id="artistName" style="margin-bottom:4px">' + esc(name) + '</h1>');
+  page = put(page, '<span class="article-cat-tag" id="artistGenre"></span>', '<span class="article-cat-tag" id="artistGenre">' + esc(artist.genre || '') + '</span>');
+  page = put(page, '<p class="article-body" id="artistBio"></p>', '<p class="article-body" id="artistBio">' + esc(artist.bio || '') + '</p>');
+  page = put(page, '<span id="crumbArtist"></span>', '<span id="crumbArtist">' + esc(name) + '</span>');
+  if (im) page = put(page, '<img id="artistPhoto" src="" alt="" style="width:96px;height:96px;border-radius:50%;object-fit:cover;flex-shrink:0;display:none">', '<img id="artistPhoto" src="' + esc(im) + '" alt="' + esc(name) + '" style="width:96px;height:96px;border-radius:50%;object-fit:cover;flex-shrink:0">');
+  if (songs.length) {
+    page = put(page, '<div class="media-block" id="songsBlock" style="display:none">', '<div class="media-block" id="songsBlock">');
+    page = put(page, '<div id="artistSongsList" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>', '<div id="artistSongsList" style="display:flex;flex-direction:column;gap:10px;margin-top:10px">' +
+      songs.map((s) => '<a href="/songs/' + safeId(s.slug) + '.html" style="padding:8px;border:1px solid #eee;border-radius:6px;color:inherit;text-decoration:none;font-weight:600">' + esc(s.title) + '</a>').join('') + '</div>');
+  }
+  return page;
+}
+
+function renderArtist(doc, artist) {
+  const slug = safeId(artist.slug), name = artist.name || 'Artist';
+  const url = SITE + '/artists/' + slug + '.html';
+  let page = put(read('artist.html'), '<title>WAVZO</title>', head({
+    title: esc(name) + ' — WAVZO', desc: attr(artist.bio, 200), url, type: 'profile', ogTitle: esc(name) + ' — WAVZO',
+    image: esc(ogImage(artist.photo)), ld: artistLd(doc, artist, url)
+  }));
+  page = put(page, "const artistId='__ARTIST_ID__';", "const artistId='" + safeId(artist.id) + "';");
+  const songs = (doc.songs || []).filter((s) => s.artistId === artist.id);
+  page = artistSsr(page, artist, songs, name);
+  const pre = js({ artist, songs, titles: (doc.posts || []).slice(0, 6).map((p) => p.title || '') });
+  return put(page, "const artistId='" + safeId(artist.id) + "';", "const artistId='" + safeId(artist.id) + "';\nconst PREART=" + pre + ';');
+}
+
+const LISTS = { post: 'posts', song: 'songs', artist: 'artists' };
+const RENDER = { post: renderPost, song: renderSong, artist: renderArtist };
+async function page(kind, slug) {
+  let doc = await getDoc(30000);
+  let item = (doc[LISTS[kind]] || []).find((x) => x && x.slug === slug);
+  if (!item && Date.now() - cache.t > 4000) {          // maybe it was just published: look again
+    doc = await getDoc(0);
+    item = (doc[LISTS[kind]] || []).find((x) => x && x.slug === slug);
+  }
+  return item ? RENDER[kind](doc, item) : null;
+}
+const day = (ms) => { const n = Number(ms); const d = new Date(isNaN(n) ? ms : n); return isNaN(d) ? '' : d.toISOString().slice(0, 10); };
+async function sitemap() {
+  const doc = await getDoc(60000);
+  const rows = [[SITE + '/', ''], [SITE + '/artists.html', ''], [SITE + '/about.html', ''], [SITE + '/contact.html', ''], [SITE + '/dmca.html', ''], [SITE + '/privacy-policy.html', ''], [SITE + '/terms.html', '']];
+  for (const p of doc.posts || []) if (p.slug && seoState(doc, p).index) rows.push([SITE + '/posts/' + p.slug + '.html', day(p.createdAt)]);
+  for (const c of categoryList(doc)) if ((typeof seoState !== 'function' ? c.all.length : c.good.length) >= CAT_MIN_INDEX) rows.push([SITE + '/category/' + c.slug, day(c.latest)]);
+  for (const s of doc.songs || []) if (s.slug) rows.push([SITE + '/songs/' + s.slug + '.html', day(s.createdAt)]);
+  for (const a of doc.artists || []) if (a.slug) rows.push([SITE + '/artists/' + a.slug + '.html', day(a.createdAt)]);
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    rows.map(([u, d]) => '  <url><loc>' + esc(u) + '</loc>' + (d ? '<lastmod>' + d + '</lastmod>' : '') + '</url>').join('\n') + '\n</urlset>\n';
+}
+async function dbJson() {
+  const doc = await getDoc(20000);
+  return { posts: (doc.posts || []).map((p) => Object.assign({}, p, { q: homeQ(doc, p) })), songs: doc.songs || [], artists: doc.artists || [] };
+}
+// Small, compressed list for the home page (no article bodies): ~2 MB becomes ~100 KB
+const crypto = require('crypto');
+const zlib = require('zlib');
+let homeFor = null, homeOut = null;
+function homePayload(doc) {
+  if (homeFor === doc && homeOut) return homeOut;
+  const posts = (doc.posts || []).map((p) => {
+    const rest = Object.assign({}, p);
+    delete rest.content;
+    rest.excerpt = String(p.excerpt || plain(p.content)).slice(0, 220);
+    rest.q = homeQ(doc, p);
+    return rest;
+  });
+  const body = Buffer.from(JSON.stringify({ posts, songs: doc.songs || [], artists: doc.artists || [] }));
+  homeOut = { body, gz: zlib.gzipSync(body, { level: 9 }), etag: '"' + crypto.createHash('md5').update(body).digest('hex').slice(0, 16) + '"' };
+  homeFor = doc;
+  return homeOut;
+}
+// ---- Category pages: /category/music, /category/news ... (crawlable lists of posts) ----
+const CAT_INFO = {
+  NEWS: 'Latest Nigerian and world news headlines from WAVZO.',
+  MUSIC: 'New music, Afrobeats releases, lyrics and downloads on WAVZO.',
+  GOSPEL: 'Gospel songs, worship music and Christian news on WAVZO.',
+  SPORTS: 'Football and sports news, scores and updates on WAVZO.',
+  ENTERTAINMENT: 'Entertainment news, movies, celebrities and showbiz on WAVZO.',
+  TRENDING: 'What Nigerians are talking about right now on WAVZO.',
+  CULTURE: 'Nigerian and African culture, lifestyle and stories on WAVZO.'
+};
+const CAT_PER_PAGE = 24, CAT_MIN_INDEX = 5; // a category with fewer strong posts stays visible but is hidden from Google
+const catSlug = (c) => String(c || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const catName = (c) => { const s = String(c || '').toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); };
+function sizedImg(u, w, h) {
+  const full = ogImage(u);
+  if (full.indexOf('w_1200,h_630') > -1) return full.replace('w_1200,h_630', 'w_' + w + ',h_' + h);
+  if (full.indexOf('https://wsrv.nl/') === 0) return full.replace('w=1200&h=630', 'w=' + w + '&h=' + h);
+  return full;
+}
+function categoryList(doc) {
+  const map = new Map();
+  for (const p of doc.posts || []) {
+    if (!p || !p.slug || !p.category) continue;
+    const k = catSlug(p.category);
+    if (!k) continue;
+    if (!map.has(k)) map.set(k, { slug: k, name: String(p.category).toUpperCase(), all: [], good: [], latest: 0 });
+    const c = map.get(k);
+    c.all.push(p);
+    if (typeof seoState !== 'function' || seoState(doc, p).index) c.good.push(p);
+    const t = Number(p.createdAt) || 0;
+    if (t > c.latest) c.latest = t;
+  }
+  return [...map.values()].sort((a, b) => b.all.length - a.all.length);
+}
+function renderCategory(doc, slug, pageNo) {
+  const list = categoryList(doc);
+  const c = list.find((x) => x.slug === slug);
+  if (!c) return null;
+  const indexable = c.good.length >= CAT_MIN_INDEX;
+  const shown = (indexable ? c.good : c.all).slice().sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
+  const pages = Math.max(1, Math.ceil(shown.length / CAT_PER_PAGE));
+  if (!(pageNo >= 1 && pageNo <= pages)) return null;
+  const base = SITE + '/category/' + c.slug;
+  const urlOf = (n) => (n === 1 ? base : base + '/page/' + n);
+  const name = catName(c.name);
+  const title = pageNo === 1 ? name + ' — Latest ' + name + ' Stories | WAVZO' : name + ' — Page ' + pageNo + ' | WAVZO';
+  const desc = CAT_INFO[c.name] || ('Latest ' + name.toLowerCase() + ' stories on WAVZO.');
+  const cards = shown.slice((pageNo - 1) * CAT_PER_PAGE, pageNo * CAT_PER_PAGE).map((p) =>
+    '<a class="card" href="/posts/' + safeId(p.slug) + '.html"><img src="' + esc(sizedImg(p.coverImage, 480, 270)) + '" width="480" height="270" loading="lazy" alt="' + esc(p.title) + '">' +
+    '<div class="ct"><h2>' + esc(p.title) + '</h2><p>' + esc(String(p.excerpt || plain(p.content)).slice(0, 140)) + '</p><span>' + esc(p.date || '') + '</span></div></a>').join('\n');
+  const chips = list.map((x) => '<a class="chip' + (x.slug === c.slug ? ' on' : '') + '" href="/category/' + x.slug + '">' + esc(catName(x.name)) + '</a>').join('');
+  const nav = (pageNo > 1 ? '<a class="pg" href="' + urlOf(pageNo - 1) + '">&larr; Newer</a>' : '<span></span>') +
+    '<span class="pn">Page ' + pageNo + ' of ' + pages + '</span>' +
+    (pageNo < pages ? '<a class="pg" href="' + urlOf(pageNo + 1) + '">Older &rarr;</a>' : '<span></span>');
+  const ld = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: name + ' — WAVZO', url: urlOf(pageNo), description: desc,
+    isPartOf: { '@type': 'WebSite', name: 'WAVZO', url: SITE },
+    breadcrumb: { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Home', item: SITE + '/' }, { '@type': 'ListItem', position: 2, name: name, item: base }] } };
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+    '<title>' + esc(title) + '</title>\n<meta name="description" content="' + esc(desc) + '">\n<link rel="canonical" href="' + urlOf(pageNo) + '">\n' +
+    (indexable ? '' : '<meta name="robots" content="noindex,follow">\n') +
+    (pageNo > 1 ? '<link rel="prev" href="' + urlOf(pageNo - 1) + '">\n' : '') + (pageNo < pages ? '<link rel="next" href="' + urlOf(pageNo + 1) + '">\n' : '') +
+    '<link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">\n' +
+    '<meta property="og:site_name" content="WAVZO">\n<meta property="og:type" content="website">\n<meta property="og:title" content="' + esc(title) + '">\n<meta property="og:description" content="' + esc(desc) + '">\n' +
+    '<meta property="og:image" content="' + DEFAULT_IMG + '">\n<meta property="og:url" content="' + urlOf(pageNo) + '">\n<meta name="twitter:card" content="summary_large_image">\n' +
+    '<script type="application/ld+json">' + js(ld) + '</script>\n' +
+    '<style>body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#111;margin:0;line-height:1.5}.wrap{max-width:1000px;margin:0 auto;padding:18px 14px 60px}' +
+    '.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.brand{font-weight:800;font-size:22px;letter-spacing:1px;color:#111;text-decoration:none}.brand span{color:#e11}' +
+    'h1{font-size:26px;margin:14px 0 4px}.sub{font-size:14px;color:#555;margin:0 0 14px}.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}' +
+    '.chip{background:#fff;border:1px solid #ddd;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:#111;text-decoration:none}.chip.on{background:#e11;border-color:#e11;color:#fff}' +
+    '.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}.card{display:block;background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;color:inherit;text-decoration:none}' +
+    '.card img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#ddd}.ct{padding:10px 12px 12px}.ct h2{font-size:15px;margin:0 0 6px;line-height:1.3}.ct p{font-size:13px;color:#555;margin:0 0 6px}.ct span{font-size:11px;color:#888}' +
+    '.nav{display:flex;align-items:center;justify-content:space-between;margin:22px 0}.pg{background:#e11;color:#fff;font-weight:700;text-decoration:none;padding:10px 16px;border-radius:8px;font-size:14px}.pn{font-size:13px;color:#555}' +
+    '.links{margin-top:30px;font-size:12px;color:#777}.links a{color:#e11;margin-right:12px}</style>\n</head>\n<body>\n<div class="wrap">\n' +
+    '<div class="top"><a class="brand" href="/">WAV<span>ZO</span></a><a href="/" style="font-size:13px;font-weight:700;color:#e11;text-decoration:none">Home</a></div>\n' +
+    '<h1>' + esc(name) + '</h1>\n<p class="sub">' + esc(desc) + '</p>\n<div class="chips">' + chips + '</div>\n<div class="grid">\n' + cards + '\n</div>\n<div class="nav">' + nav + '</div>\n' +
+    '<div class="links"><a href="/">Home</a><a href="/about.html">About</a><a href="/contact.html">Contact</a><a href="/dmca.html">DMCA</a><a href="/privacy-policy.html">Privacy</a><a href="/terms.html">Terms</a></div>\n</div>\n</body>\n</html>\n';
+}
+function categoryRoute() {
+  return async (req, res, next) => {
+    try {
+      const html = renderCategory(await getDoc(30000), String(req.params.slug || '').toLowerCase(), req.params.n ? parseInt(req.params.n, 10) : 1);
+      if (!html) return next();
+      res.set('Cache-Control', 'public, max-age=60').type('html').send(html);
+    } catch (e) { next(); }
+  };
+}
+
+// ---- Homepage built on the server from the live database (same renderer as the browser: public/wz-home.js) ----
+const homeQ = (doc, p) => (typeof seoState === 'function' ? (seoState(doc, p).index ? 1 : 0) : 1);
+function renderHome(doc) {
+  const WZH = require('./public/wz-home.js');
+  const posts = (doc.posts || []).slice().reverse().filter((p) => p && p.slug && p.title).map((p) => ({
+    slug: p.slug, title: p.title, category: p.category, excerpt: p.excerpt || plain(p.content).slice(0, 200), coverImage: p.coverImage, date: p.date, views: p.views, q: homeQ(doc, p)
+  }));
+  const o = WZH.build({ posts, songs: doc.songs || [], artists: doc.artists || [] });
+  let html = read('index.html');
+  const rep = (k, v) => { html = html.split('<!--SSR:' + k + '-->').join(v); };
+  rep('ticker', o.ticker); rep('bars', o.bars); rep('hero', o.hero); rep('trending', o.trending); rep('music', o.music);
+  rep('artists', o.artists); rep('sections', o.sections); rep('chips', o.chips); rep('latest', o.latest);
+  rep('preload', o.preload ? '<link rel="preload" as="image" href="' + esc(o.preload) + '" fetchpriority="high">' : '');
+  return html.split('/*SSR:SIG*/').join('window.__SIG=' + JSON.stringify(o.sig) + ';');
+}
+function homeRoute() {
+  return async (req, res, next) => {
+    try {
+      res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300').type('html').send(renderHome(await getDoc(30000)));
+    } catch (e) { next(); }
+  };
+}
+
+function handler(kind) {
+  return async (req, res, next) => {
+    try {
+      const slug = String(req.params.slug || '').replace(/\.html$/, '');
+      if (!/^[\w.%-]{1,160}$/.test(slug)) return next();
+      const html = await page(kind, decodeURIComponent(slug));
+      if (!html) return next();
+      res.set('Cache-Control', 'public, max-age=60').type('html').send(html);
+    } catch (e) { next(); }
+  };
+}
+// Notifies search engines (IndexNow) about new posts/songs/artists, no admin action needed
+const INDEXNOW_KEY = process.env.INDEXNOW_KEY || 'wavzo2026indexnow';
+let known = null;
+async function submitIndexNow(urls) {
+  if (!urls.length) return;
+  try {
+    const r = await fetch('https://api.indexnow.org/indexnow', {
+      method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ host: 'wavzo.com.ng', key: INDEXNOW_KEY, keyLocation: SITE + '/' + INDEXNOW_KEY + '.txt', urlList: urls.slice(0, 100) })
+    });
+    console.log('IndexNow: sent ' + Math.min(urls.length, 100) + ' url(s), status ' + r.status);
+  } catch (e) { console.log('IndexNow failed: ' + e.message); }
+}
+async function checkNew() {
+  try {
+    const doc = await getDoc(0);
+    const rows = [];
+    for (const k of ['posts', 'songs', 'artists']) for (const x of doc[k] || []) if (x && x.slug && (k !== 'posts' || seoState(doc, x).index)) rows.push({ url: SITE + '/' + k + '/' + x.slug + '.html', t: Number(x.createdAt) || 0 });
+    if (known === null) {
+      known = new Set(rows.map((r) => r.url));
+      await submitIndexNow(rows.filter((r) => r.t > Date.now() - 6 * 3600 * 1000).map((r) => r.url)); // published while the server slept
+      return;
+    }
+    const fresh = rows.filter((r) => !known.has(r.url));
+    fresh.forEach((r) => known.add(r.url));
+    if (fresh.length) await submitIndexNow(fresh.map((r) => r.url).concat(SITE + '/'));
+  } catch (e) { console.log('IndexNow check failed: ' + e.message); }
+}
+let watching = false;
+function startIndexNowWatcher() {
+  if (watching) return;
+  watching = true; refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
+
+module.exports = { homeRoute, artistsRoute, categoryRoute, homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };

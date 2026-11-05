@@ -85,6 +85,15 @@ function postedSets(doc) {
   return { links, titles };
 }
 
+// Stories without a picture are never offered. If the feed has no picture, try the story page; give up after 14 seconds.
+async function withPictures(items) {
+  const need = items.filter((x) => !x.image && !x.mediaUrl).slice(0, 36);
+  let i = 0;
+  const work = async () => { while (i < need.length) { const it = need[i++]; try { it.image = await ogImage(it.link); } catch (e) { it.image = null; } } };
+  await Promise.race([Promise.all([work(), work(), work(), work(), work(), work()]), new Promise((r) => setTimeout(r, 14000))]);
+  return items.filter((x) => x.image || x.mediaUrl);
+}
+
 const cache = new Map(), inflight = new Map(), known = new Set();
 async function getCategory(cat, fresh) {
   const feeds = FEEDS[cat] || FEEDS.NEWS;
@@ -100,8 +109,9 @@ async function getCategory(cat, fresh) {
     });
     if (!items.length && hit) return hit; // every feed failed: keep the last good list
     items.sort((a, b) => (b.pub || 0) - (a.pub || 0));
-    items.forEach((x) => known.add(x.link));
-    const out = { t: Date.now(), items, failed };
+    const shown = await withPictures(items);
+    shown.forEach((x) => known.add(x.link));
+    const out = { t: Date.now(), items: shown, failed };
     cache.set(cat, out);
     return out;
   })().finally(() => inflight.delete(cat));

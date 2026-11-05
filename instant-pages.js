@@ -146,11 +146,11 @@ function sqImg(u, n) {
 function artistCards(doc) {
   const count = {};
   (doc.songs || []).forEach((s) => { count[s.artistId] = (count[s.artistId] || 0) + 1; });
-  return (doc.artists || []).filter((a) => a && a.slug).sort((a, b) => (count[b.id] || 0) - (count[a.id] || 0) || String(a.name).localeCompare(String(b.name))).map((a) => {
+  return (doc.artists || []).filter((a) => a && a.slug).sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || (count[b.id] || 0) - (count[a.id] || 0) || String(a.name).localeCompare(String(b.name))).map((a) => {
     const n = count[a.id] || 0, im = sqImg(a.photo, 320);
     return '<a class="artist-grid-card" href="/artists/' + safeId(a.slug) + '.html"><div class="artist-grid-img">' +
       (im ? '<img src="' + esc(im) + '" width="320" height="320" loading="lazy" alt="' + esc(a.name) + '">' : '<div class="artist-grid-img-placeholder">&#127908;</div>') + '</div>' +
-      '<div class="artist-grid-name">' + esc(a.name) + '</div><div class="artist-grid-genre">' + esc(a.genre || '') + (n ? ' &middot; ' + n + ' song' + (n === 1 ? '' : 's') : '') + '</div></a>';
+      '<div class="artist-grid-name">' + esc(a.name) + (a.verified ? ' <span class="vf">&#10004;</span>' : '') + '</div><div class="artist-grid-genre">' + esc(a.genre || '') + (n ? ' &middot; ' + n + ' song' + (n === 1 ? '' : 's') : '') + '</div></a>';
   }).join('');
 }
 function renderArtistsIndex(doc) {
@@ -168,7 +168,7 @@ function artistsRoute() {
   };
 }
 function artistLd(doc, artist, url) {
-  return { '@context': 'https://schema.org', '@type': 'MusicGroup', name: artist.name, url, image: ogImage(artist.photo), description: String(artist.bio || '').slice(0, 300), genre: artist.genre || undefined,
+  return { '@context': 'https://schema.org', '@type': 'MusicGroup', name: artist.name, url, image: ogImage(artist.photo), description: String(artist.bio || '').slice(0, 300), genre: artist.genre || undefined, sameAs: Object.values(artist.social || {}).filter((u) => /^https:\/\//i.test(u)),
     track: (doc.songs || []).filter((s) => s.artistId === artist.id).slice(0, 25).map((s) => ({ '@type': 'MusicRecording', name: s.title, url: SITE + '/songs/' + safeId(s.slug) + '.html' })) };
 }
 function artistSsr(page, artist, songs, name) {
@@ -186,6 +186,54 @@ function artistSsr(page, artist, songs, name) {
   return page;
 }
 
+// ---- Artist page extras: social links, country, banner, verified badge, news about the artist, related artists ----
+const SOCIAL_LABELS = [['instagram', 'Instagram'], ['facebook', 'Facebook'], ['x', 'X'], ['youtube', 'YouTube'], ['tiktok', 'TikTok'], ['audiomack', 'Audiomack'], ['spotify', 'Spotify'], ['apple', 'Apple Music'], ['website', 'Website']];
+function wideImg(u, w) {
+  u = String(u || '').trim().replace(/&amp;/g, '&');
+  if (!/^https?:\/\//i.test(u)) return '';
+  if (/^https?:\/\/res\.cloudinary\.com\//i.test(u) && u.indexOf('/image/upload/') > -1) return u.replace('/image/upload/', '/image/upload/f_auto,q_auto,w_' + w + '/');
+  return u.indexOf(SITE) === 0 ? u : 'https://wsrv.nl/?url=' + encodeURIComponent(u) + '&w=' + w + '&output=webp&q=75';
+}
+function artistExtras(page, artist, songs, name, doc) {
+  const soc = artist.social || {};
+  const links = SOCIAL_LABELS.filter((x) => /^https:\/\//i.test(soc[x[0]] || '')).map((x) => '<a href="' + esc(soc[x[0]]) + '" target="_blank" rel="noopener nofollow me">' + x[1] + '</a>').join('');
+  const chips = [songs.length ? '&#127925; ' + songs.length + ' song' + (songs.length === 1 ? '' : 's') : '', artist.country ? '&#128205; ' + esc(artist.country) : '', artist.verified ? '&#10004; Verified' : ''].filter(Boolean).map((c) => '<span>' + c + '</span>').join('');
+  const meta = '<div class="ar-meta">' + (chips ? '<div class="ar-chips2">' + chips + '</div>' : '') + '<div class="ar-actions">' + links +
+    '<button type="button" class="ar-share" data-t="' + esc(name) + '" data-u="' + SITE + '/artists/' + safeId(artist.slug) + '.html">Share</button></div></div>';
+  const me = normTitle(name);
+  const news = me.length < 3 ? [] : (doc.posts || []).slice().reverse().filter((p) => p && p.slug && p.title && normTitle(p.title + ' ' + (p.excerpt || '')).indexOf(me) > -1 && (p.pinned || typeof seoState !== 'function' || seoState(doc, p).index)).slice(0, 4);
+  const related = (doc.artists || []).filter((a) => a && a.slug && a.id !== artist.id && a.genre && a.genre === artist.genre).slice(0, 8);
+  let extra = '';
+  if (news.length) extra += '<div class="media-block"><div class="media-label">Latest news about ' + esc(name) + '</div><div class="ar-news">' + news.map((p) => '<a href="/posts/' + safeId(p.slug) + '.html">' +
+    (p.coverImage ? '<img src="' + esc(sizedImg(p.coverImage, 320, 180)) + '" width="320" height="180" loading="lazy" alt="' + esc(p.title) + '">' : '') + '<span>' + esc(p.title) + '</span></a>').join('') + '</div></div>';
+  if (related.length) extra += '<div class="media-block"><div class="media-label">More ' + esc(artist.genre) + ' artists</div><div class="ar-rel">' + related.map((a) => {
+    const im = sqImg(a.photo, 160);
+    return '<a href="/artists/' + safeId(a.slug) + '.html">' + (im ? '<img src="' + esc(im) + '" width="160" height="160" loading="lazy" alt="' + esc(a.name) + '">' : '<em>&#127908;</em>') + '<b>' + esc(a.name) + '</b></a>';
+  }).join('') + '</div></div>';
+  const bn = wideImg(artist.banner, 1200);
+  page = put(page, '<div style="display:flex;align-items:center;gap:16px;margin-bottom:10px">', '<div class="ar-hero' + (bn ? ' has-bn' : '') + '"' + (bn ? ' style="--bn:url(&quot;' + esc(bn) + '&quot;)"' : '') + '>');
+  page = put(page, '<p class="article-body" id="artistBio">', meta + '<p class="article-body" id="artistBio">');
+  return put(page, '<div class="article-back">', extra + '<div class="article-back">');
+}
+
+// ---- Your own news feed for readers, aggregators and Google (/feed.xml) ----
+function renderFeed(doc) {
+  const items = (doc.posts || []).slice().reverse().filter((p) => p && p.slug && p.title && p.coverImage && (p.pinned || typeof seoState !== 'function' || seoState(doc, p).index)).slice(0, 40);
+  const x = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">\n<channel>\n<title>WAVZO</title>\n<link>' + SITE + '/</link>\n' +
+    '<description>Nigerian music, breaking news, entertainment and gist</description>\n<language>en</language>\n<atom:link href="' + SITE + '/feed.xml" rel="self" type="application/rss+xml"/>\n' +
+    items.map((p) => {
+      const u = SITE + '/posts/' + safeId(p.slug) + '.html', d = new Date(Number(p.createdAt) || Date.now());
+      return '<item>\n<title>' + x(p.title) + '</title>\n<link>' + u + '</link>\n<guid isPermaLink="true">' + u + '</guid>\n<pubDate>' + d.toUTCString() + '</pubDate>\n<category>' + x(p.category) + '</category>\n' +
+        '<description>' + x(String(p.excerpt || plain(p.content)).slice(0, 300)) + '</description>\n<media:content url="' + x(ogImage(p.coverImage)) + '" medium="image"/>\n</item>';
+    }).join('\n') + '\n</channel>\n</rss>\n';
+}
+function feedRoute() {
+  return async (req, res, next) => {
+    try { res.set('Cache-Control', 'public, max-age=300').type('application/rss+xml; charset=utf-8').send(renderFeed(await getDoc(60000))); } catch (e) { next(); }
+  };
+}
+
 function renderArtist(doc, artist) {
   const slug = safeId(artist.slug), name = artist.name || 'Artist';
   const url = SITE + '/artists/' + slug + '.html';
@@ -195,7 +243,7 @@ function renderArtist(doc, artist) {
   }));
   page = put(page, "const artistId='__ARTIST_ID__';", "const artistId='" + safeId(artist.id) + "';");
   const songs = (doc.songs || []).filter((s) => s.artistId === artist.id);
-  page = artistSsr(page, artist, songs, name);
+  page = artistExtras(artistSsr(page, artist, songs, name), artist, songs, name, doc);
   const pre = js({ artist, songs, titles: (doc.posts || []).slice(0, 6).map((p) => p.title || '') });
   return put(page, "const artistId='" + safeId(artist.id) + "';", "const artistId='" + safeId(artist.id) + "';\nconst PREART=" + pre + ';');
 }
@@ -332,11 +380,11 @@ function categoryRoute() {
 }
 
 // ---- Homepage built on the server from the live database (same renderer as the browser: public/wz-home.js) ----
-const homeQ = (doc, p) => (typeof seoState === 'function' ? (seoState(doc, p).index ? 1 : 0) : 1);
+const homeQ = (doc, p) => (p.pinned ? 1 : (typeof seoState === 'function' ? (seoState(doc, p).index ? 1 : 0) : 1));
 function renderHome(doc) {
   const WZH = require('./public/wz-home.js');
   const posts = (doc.posts || []).slice().reverse().filter((p) => p && p.slug && p.title).map((p) => ({
-    slug: p.slug, title: p.title, category: p.category, excerpt: p.excerpt || plain(p.content).slice(0, 200), coverImage: p.coverImage, date: p.date, views: p.views, q: homeQ(doc, p)
+    slug: p.slug, title: p.title, category: p.category, excerpt: p.excerpt || plain(p.content).slice(0, 200), coverImage: p.coverImage, date: p.date, views: p.views, pinned: p.pinned || 0, q: homeQ(doc, p)
   }));
   const o = WZH.build({ posts, songs: doc.songs || [], artists: doc.artists || [] });
   let html = read('index.html');
@@ -398,4 +446,4 @@ function startIndexNowWatcher() {
   if (watching) return;
   watching = true; refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
 
-module.exports = { homeRoute, artistsRoute, categoryRoute, homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
+module.exports = { feedRoute, homeRoute, artistsRoute, categoryRoute, homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
