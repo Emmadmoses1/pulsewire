@@ -23,6 +23,26 @@
 #artistSongsList a,#artistSongsList>div{background:#fff!important;border:1px solid #eee!important;border-radius:14px!important;padding:10px 12px!important;transition:.15s}
 #artistSongsList a:hover,#artistSongsList>div:hover{border-color:#e11!important;transform:translateX(3px)}
 </style>
+<style id="wz-artist2">
+.ar-hero{display:flex;align-items:center;gap:16px;padding:22px;border-radius:22px;background:linear-gradient(135deg,#1a0d10,#3a0e16);color:#fff;margin-bottom:14px}
+.ar-hero.has-bn{background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,.25)),var(--bn) center/cover no-repeat;min-height:190px;align-items:flex-end}
+.ar-hero #artistName{color:#fff}
+.ar-hero .article-cat-tag{background:rgba(255,255,255,.18);color:#fff;border-radius:999px;padding:4px 12px}
+.ar-meta{margin:12px 0}
+.ar-chips2{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.ar-chips2 span{background:#fff;border:1px solid #eee;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700}
+.ar-actions{display:flex;flex-wrap:wrap;gap:8px}
+.ar-actions a,.ar-share{border:1px solid #e5e5e5;background:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;color:#111;cursor:pointer;font-family:inherit;text-decoration:none}
+.ar-actions a:hover,.ar-share:hover{border-color:#e11;color:#e11}
+.ar-news{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:10px}
+.ar-news a{display:block;background:#fff;border:1px solid #eee;border-radius:14px;overflow:hidden;color:inherit;text-decoration:none}
+.ar-news img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.ar-news span{display:block;padding:10px 12px;font-size:13px;font-weight:700;line-height:1.3}
+.ar-rel{display:flex;gap:14px;overflow-x:auto;padding:10px 0 4px}
+.ar-rel a{flex:0 0 84px;text-align:center;color:inherit;text-decoration:none}
+.ar-rel img,.ar-rel em{width:76px;height:76px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;background:#eee;font-style:normal;border:3px solid #fff;box-shadow:0 0 0 2px #e11}
+.ar-rel b{font-size:11px;font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
 </head>
 <body>
 <div class="ticker-bar">
@@ -284,6 +304,14 @@ window.addEventListener('scroll',()=>{document.getElementById('siteNav').classLi
     setTimeout(function(){el.remove();},600);
   });
 })();
+</script>
+<script>
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('.ar-share');if(!b)return;
+  var d={title:b.getAttribute('data-t'),url:b.getAttribute('data-u')};
+  if(navigator.share){navigator.share(d).catch(function(){});}
+  else if(navigator.clipboard){navigator.clipboard.writeText(d.url);b.textContent='Link copied \u2713';}
+});
 </script>
 </body>
 </html>

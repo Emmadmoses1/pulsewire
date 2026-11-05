@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All Artists — WAVZO</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#111}
+a{text-decoration:none;color:inherit}
+
+.ticker-bar{background:#0a0a0a;color:#fff;display:flex;align-items:center;overflow:hidden;white-space:nowrap;padding:8px 0;font-size:12px;border-bottom:3px solid #e11}
+.ticker-live{background:#e11;padding:4px 12px;border-radius:2px;font-weight:800;margin:0 16px;flex-shrink:0;font-size:10px;letter-spacing:2px;text-transform:uppercase}
+.ticker-viewport{flex:1;overflow:hidden;min-width:0}
+.ticker-track{display:inline-block;animation:tickscroll 35s linear infinite}
+.ticker-track span{margin-right:80px;font-weight:500;opacity:.9}
+.ticker-track span::before{content:'•';margin-right:80px;color:#e11;opacity:.6}
+@keyframes tickscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+.site-nav{background:#fff;border-bottom:1px solid #e8e8e8;position:sticky;top:0;z-index:300;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:62px;box-shadow:0 1px 0 #e8e8e8}
+.nav-logo{font-weight:900;font-size:26px;letter-spacing:-2px;color:#0a0a0a;display:flex;align-items:center;gap:2px}
+.nav-logo span{color:#e11}
+.nav-links{display:flex;align-items:center;gap:2px}
+.nav-links a{font-size:12px;font-weight:700;letter-spacing:.3px;color:#444;padding:8px 14px;border-radius:6px;transition:.15s;text-transform:uppercase}
+.nav-links a:hover{color:#e11;background:#fff5f5}
+@media(max-width:768px){.site-nav{padding:0 16px}.nav-logo{font-size:22px}}
+
+.page-title{max-width:1100px;margin:36px auto 8px;padding:0 20px;font-size:26px;font-weight:900}
+.artist-grid{max-width:1100px;margin:0 auto;padding:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:20px}
+.artist-grid-card{text-align:center;cursor:pointer}
+.artist-grid-img{width:100%;aspect-ratio:1;border-radius:50%;overflow:hidden;background:#eee;border:2px solid #eee;transition:.15s}
+.artist-grid-card:hover .artist-grid-img{border-color:#e11}
+.artist-grid-img img{width:100%;height:100%;object-fit:cover;display:block}
+.artist-grid-img-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;background:#eee}
+.artist-grid-name{margin-top:10px;font-weight:700;font-size:14px}
+.artist-grid-genre{color:#888;font-size:11px;margin-top:2px;text-transform:uppercase}
+.empty-msg{max-width:1100px;margin:60px auto;padding:0 20px;text-align:center;color:#888}
+footer{text-align:center;padding:30px;color:#999;font-size:12px}
+</style>
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/wavzo-icon-192.png">
+  <link rel="apple-touch-icon" href="/images/wavzo-icon-192.png">
+<style id="wz-artists">
+.ar-hero{max-width:1100px;margin:30px auto 0;padding:0 20px}
+.ar-hero .page-title{margin:0 0 4px;padding:0;max-width:none;font-size:32px;letter-spacing:-.8px}
+.ar-sub{color:#777;font-size:14px;margin-bottom:16px}
+.ar-search{width:100%;padding:14px 16px;border:1px solid #ddd;border-radius:14px;font-size:15px;background:#fff;outline:none;font-family:inherit}
+.ar-search:focus{border-color:#e11;box-shadow:0 0 0 4px rgba(238,17,17,.1)}
+.ar-chips{display:flex;gap:8px;overflow-x:auto;padding:14px 0 4px;scrollbar-width:none}.ar-chips::-webkit-scrollbar{display:none}
+.ar-chip{flex-shrink:0;border:1px solid #ddd;background:#fff;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.ar-chip.on{background:#e11;border-color:#e11;color:#fff}
+.artist-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important;gap:18px 14px!important}
+.artist-grid-card{display:block;background:#fff;border:1px solid #eee;border-radius:18px;padding:18px 12px 14px;transition:.2s}
+.artist-grid-card:hover{transform:translateY(-4px);box-shadow:0 18px 30px -18px rgba(0,0,0,.35);border-color:#e11}
+.artist-grid-img{max-width:130px;margin:0 auto;border:3px solid #fff!important;box-shadow:0 0 0 2px #eee}
+.artist-grid-card:hover .artist-grid-img{box-shadow:0 0 0 3px #e11}
+.artist-grid-name{font-size:15px;font-weight:800}
+footer a{color:#e11;margin:0 6px}
+</style>
+</head>
+<body>
+<div class="ticker-bar">
+  <span class="ticker-live">LIVE</span>
+  <div class="ticker-viewport"><div class="ticker-track" id="tickerTrack"></div></div>
+</div>
+<nav class="site-nav">
+  <a href="/" class="nav-logo">WAV<span>ZO</span></a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/artists.html">Artists</a>
+    <a href="/livescores.html">Live Scores</a>
+  </div>
+</nav>
+
+<div class="ar-hero"><h1 class="page-title">All Artists</h1><p class="ar-sub" id="arSub">Discover the voices behind the music.</p>
+<input type="search" id="arSearch" class="ar-search" placeholder="Search artists..." autocomplete="off">
+<div class="ar-chips" id="arChips"></div></div>
+<div class="artist-grid" id="artistGrid"></div>
+<p class="empty-msg" id="emptyMsg" style="display:none">No artists yet.</p>
+
+<footer>&copy; WAVZO · <a href="/about.html">About</a> · <a href="/contact.html">Contact</a> · <a href="/dmca.html">DMCA</a> · <a href="/privacy-policy.html">Privacy</a> · <a href="/terms.html">Terms</a></footer>
+
+<script>
+/* FAST-IMG */
+function IMG(u,w){
+  try{
+    if(!u||!/^https?:\/\//i.test(u)||u.indexOf('wsrv.nl')>-1)return u;
+    var m=u.match(/^(https?:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/)(v\d+\/.*)$/);
+    if(m)return m[1]+'f_auto,q_auto,w_'+w+'/'+m[2];
+    return 'https://wsrv.nl/?url='+encodeURIComponent(u)+'&w='+w+'&output=webp&q=75&we';
+  }catch(e){return u;}
+}
+function IMGFB(el){el.onerror=null;if(el.dataset&&el.dataset.o)el.src=el.dataset.o;}
+const BIN_ID='6aa50e3aac6210605ac3c542';
+const BIN_KEY='public';
+const BIN_URL='https://wavzo-db.dakudinamoses.workers.dev/v3/b/'+BIN_ID;
+
+async function init(){
+  /* FAST-ARTISTS */
+  let db;
+  try{
+    const r=await fetch('/data/db.json');
+    if(!r.ok)throw new Error('static db missing');
+    db=await r.json();
+  }catch(e){
+    const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
+    const data=await res.json();
+    db=data.record||{};
+  }
+  const songs=db.songs||[],cnt={};
+  songs.forEach(s=>{cnt[s.artistId]=(cnt[s.artistId]||0)+1;});
+  const list=(db.artists||[]).filter(a=>a&&a.slug).sort((a,b)=>(cnt[b.id]||0)-(cnt[a.id]||0)||String(a.name).localeCompare(String(b.name)));
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const grid=document.getElementById('artistGrid'),input=document.getElementById('arSearch'),chips=document.getElementById('arChips');
+  let genre='';
+  const genres=[...new Set(list.map(a=>a.genre).filter(Boolean))].sort();
+  function draw(){
+    const q=(input.value||'').toLowerCase().trim();
+    const rows=list.filter(a=>(!genre||a.genre===genre)&&(!q||String(a.name).toLowerCase().includes(q)));
+    grid.innerHTML=rows.map(a=>{
+      const n=cnt[a.id]||0;
+      return '<a class="artist-grid-card" href="/artists/'+esc(a.slug)+'.html"><div class="artist-grid-img">'+
+        (a.photo?'<img src="'+esc(IMG(a.photo,480))+'" data-o="'+esc(a.photo)+'" onerror="IMGFB(this)" alt="'+esc(a.name)+'" loading="lazy">':'<div class="artist-grid-img-placeholder">\uD83C\uDFA4</div>')+
+        '</div><div class="artist-grid-name">'+esc(a.name)+'</div><div class="artist-grid-genre">'+esc(a.genre||'')+(n?' \u00B7 '+n+' song'+(n===1?'':'s'):'')+'</div></a>';
+    }).join('');
+    document.getElementById('emptyMsg').style.display=rows.length?'none':'block';
+    const sub=document.getElementById('arSub');
+    if(sub)sub.textContent=list.length+' artist'+(list.length===1?'':'s')+(rows.length!==list.length?' \u00B7 showing '+rows.length:'');
+  }
+  chips.innerHTML=['All'].concat(genres).map(g=>'<button type="button" class="ar-chip'+(g==='All'?' on':'')+'" data-g="'+esc(g)+'">'+esc(g)+'</button>').join('');
+  chips.addEventListener('click',e=>{
+    const b=e.target.closest('.ar-chip');if(!b)return;
+    genre=b.dataset.g==='All'?'':b.dataset.g;
+    [...chips.children].forEach(c=>c.classList.toggle('on',c===b));
+    draw();
+  });
+  input.addEventListener('input',draw);
+  draw();
+
+  const track=document.getElementById('tickerTrack');
+  [...(db.posts||[]).slice(0,6),...(db.posts||[]).slice(0,6)].forEach(p=>{const t=document.createElement('span');t.textContent=p.title;track.appendChild(t);});
+}
+init();
+</script>
+<script>
+/* WZ-TRACK */
+(function(){
+  var API='https://wavzo-db.dakudinamoses.workers.dev/track';
+  var host=location.hostname;
+  var live=(host==='wavzo.com.ng'||host==='www.wavzo.com.ng');
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  function send(ev,kind,key){
+    try{
+      if(!live||owner||!key||!/^[\w.\-:~%]{1,120}$/.test(key))return;
+      var body=JSON.stringify({ev:ev,kind:kind,key:key,ref:document.referrer||''});
+      if(navigator.sendBeacon){navigator.sendBeacon(API,new Blob([body],{type:'text/plain'}));return;}
+      fetch(API,{method:'POST',body:body,keepalive:true,headers:{'Content-Type':'text/plain'}});
+    }catch(e){}
+  }
+  window.WZ={track:send};
+  function pathSlug(dir){
+    var m=location.pathname.match(new RegExp('^/'+dir+'/([^/]+?)(?:\\.html)?$'));
+    if(!m)return '';
+    try{return decodeURIComponent(m[1]);}catch(e){return m[1];}
+  }
+  function wrap(name,fn){
+    var old=window[name];
+    if(typeof old!=='function')return;
+    window[name]=function(){try{fn.apply(null,arguments);}catch(e){} return old.apply(this,arguments);};
+  }
+  var path=location.pathname,kind='',key='';
+  if(pathSlug('posts')){kind='post';key=pathSlug('posts');}
+  else if(pathSlug('songs')){kind='song';key=pathSlug('songs');}
+  else if(pathSlug('artists')){kind='artist';key=pathSlug('artists');}
+  else if(path==='/'||path==='/index.html'){kind='page';key='home';}
+  else if(path==='/artists.html'){kind='page';key='artists';}
+  if(!kind)return;
+  send('view',kind,key);
+
+  // first play of any audio/video on the page
+  var played={};
+  document.addEventListener('play',function(e){
+    var t=e.target;if(!t||!t.tagName)return;
+    var id=(t.currentSrc||t.src||t.tagName);
+    if(played[id])return;played[id]=1;
+    send('play',kind,key);
+  },true);
+
+  if(kind==='post'){
+    wrap('trackDownload',function(){send('download','post',key);});
+    wrap('sharePost',function(){send('share','post',key);});
+  }
+  if(kind==='song'){
+    wrap('downloadMp3',function(){send('download','song',key);});
+    // a tap inside the YouTube player moves focus into the iframe
+    window.addEventListener('blur',function(){
+      setTimeout(function(){
+        var a=document.activeElement;
+        if(a&&a.tagName==='IFRAME'&&!a._wz){a._wz=1;send('yt','song',key);}
+      },50);
+    });
+  }
+  // clicks on outbound links (YouTube, streaming, social)
+  document.addEventListener('click',function(e){
+    var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+    if(!a)return;
+    var h=a.getAttribute('href')||'';
+    if(!/^https?:\/\//i.test(h)||h.indexOf(host)>-1)return;
+    send(/youtube\.com|youtu\.be/i.test(h)?'yt':'click',kind,key);
+  },true);
+  if(kind==='artist'){
+    document.addEventListener('click',function(e){
+      var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+      if(a&&/\/songs\//.test(a.getAttribute('href')||''))send('click','artist',key);
+    },true);
+  }
+})();
+</script>
+<script>
+/* PROMO-BANNER */
+(function(){
+  var WA_NUMBER='2348124992371';
+  if(!WA_NUMBER||WA_NUMBER.indexOf('REPLACE')===0)return;
+  var owner=false;try{owner=!!localStorage.getItem('wz_key');}catch(e){}
+  if(owner)return;
+  var HIDE_KEY='wz_promo_hidden_until';
+  try{
+    var until=+(localStorage.getItem(HIDE_KEY)||0);
+    if(until&&Date.now()<until)return;
+  }catch(e){}
+
+  var css=document.createElement('style');
+  css.textContent=
+    '#wzPromo{position:fixed;left:50%;bottom:-100px;transform:translateX(-50%);z-index:400;'+
+    'background:#0a0a0a;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);'+
+    'display:flex;align-items:center;gap:10px;max-width:92vw;transition:bottom .5s ease;font-family:inherit}'+
+    '#wzPromo.show{bottom:16px}'+
+    '#wzPromo a{color:#fff;text-decoration:none;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}'+
+    '#wzPromo .x{cursor:pointer;color:#888;font-size:16px;line-height:1;padding:2px 4px;flex-shrink:0}'+
+    '@media(max-width:420px){#wzPromo a{font-size:12px}}';
+  document.head.appendChild(css);
+
+  var el=document.createElement('div');
+  el.id='wzPromo';
+  var text=encodeURIComponent("Hi WAVZO, I'd like to upload my song.");
+  el.innerHTML='<a href="https://wa.me/'+WA_NUMBER+'?text='+text+'" target="_blank" rel="noopener">🎵 Upload your song on WAVZO — chat us on WhatsApp</a>'+
+    '<span class="x" id="wzPromoClose">×</span>';
+  document.body.appendChild(el);
+
+  setTimeout(function(){el.classList.add('show');},2500);
+  document.getElementById('wzPromoClose').addEventListener('click',function(e){
+    e.preventDefault();e.stopPropagation();
+    el.classList.remove('show');
+    try{localStorage.setItem(HIDE_KEY,String(Date.now()+24*3600000));}catch(err){}
+    setTimeout(function(){el.remove();},600);
+  });
+})();
+</script>
+</body>
+</html>

@@ -35,13 +35,13 @@
 
   function heroSlide(p, i) {
     return '<article class="slide' + (i === 0 ? ' on' : '') + '"><a class="slide-link" href="' + href(p) + '" aria-label="' + esc(p.title) + '"></a>' + pic(p, 1000, 640, 'slide-img', i === 0) +
-      '<div class="slide-shade"></div><div class="slide-body"><span class="pill">' + esc(cname(p.category)) + '</span><h2>' + esc(p.title) + '</h2><p>' + esc(ex(p)) + '</p><span class="meta">' + esc(p.date || '') + '</span></div></article>';
+      '<div class="slide-shade"></div><div class="slide-body"><span class="pill">' + (p.pinned ? '\uD83D\uDCCC ' : '') + esc(cname(p.category)) + '</span><h2>' + esc(p.title) + '</h2><p>' + esc(ex(p)) + '</p><span class="meta">' + esc(p.date || '') + '</span></div></article>';
   }
   function trendRow(p, i) {
-    return '<a class="rank" href="' + href(p) + '"><b>' + (i + 1) + '</b><span class="rt">' + esc(p.title) + '<small>' + esc(cname(p.category)) + (p.views ? ' \u00B7 \uD83D\uDC41 ' + kviews(p.views) : '') + '</small></span>' + pic(p, 120, 80, 'rank-img') + '</a>';
+    return '<a class="rank" href="' + href(p) + '"><b>' + (i + 1) + '</b><span class="rt">' + esc(p.title) + '<small>' + esc(cname(p.category)) + '' + '</small></span>' + pic(p, 120, 80, 'rank-img') + '</a>';
   }
   function gridCard(p) {
-    return '<a class="card" href="' + href(p) + '">' + pic(p, 640, 360, 'card-img') + '<div class="card-b"><span class="cat c-' + cslug(p.category) + '">' + esc(cname(p.category)) + '</span><h3>' + esc(p.title) + '</h3><p>' + esc(ex(p)) + '</p><span class="meta">' + esc(p.date || '') + '</span></div></a>';
+    return '<a class="card" href="' + href(p) + '">' + pic(p, 640, 360, 'card-img') + '<div class="card-b"><span class="cat c-' + cslug(p.category) + '">' + (p.pinned ? '\uD83D\uDCCC ' : '') + esc(cname(p.category)) + '</span><h3>' + esc(p.title) + '</h3><p>' + esc(ex(p)) + '</p><span class="meta">' + esc(p.date || '') + '</span></div></a>';
   }
   function secBlock(cat, list) {
     var big = list[0], rest = list.slice(1, 4);
@@ -63,13 +63,18 @@
     var list = artists.filter(function (a) { return a && a.slug; });
     if (!list.length) return '';
     var n = {}; songs.forEach(function (s) { n[s.artistId] = (n[s.artistId] || 0) + 1; });
-    list = list.slice().sort(function (a, b) { return (n[b.id] || 0) - (n[a.id] || 0); }).slice(0, 24);
+    list = list.slice().sort(function (a, b) { return (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || (n[b.id] || 0) - (n[a.id] || 0); }).slice(0, 24);
     return '<section class="blk"><div class="blk-hd"><h2><i>\uD83C\uDFA4</i> Artists &amp; stars</h2><a href="/artists.html">View all \u2192</a></div><div class="rail av">' + list.map(function (a) {
       var im = IMG(a.photo, 200, 200);
       return '<a class="artist" href="/artists/' + safe(a.slug) + '.html"><span class="ring">' + (im ? '<img src="' + esc(im) + '" data-o="' + esc(a.photo) + '" onerror="WZH.fb(this)" width="200" height="200" loading="lazy" alt="' + esc(a.name) + '">' : '<em>\uD83C\uDFA4</em>') + '</span><b>' + esc(a.name) + '</b></a>';
     }).join('') + '</div></section>';
   }
-  function good(posts) { return posts.filter(function (p) { return p && p.slug && p.title && p.q !== 0; }); }
+  // pinned posts first (newest pin first); a pinned post always shows, even if it would normally be hidden
+  function good(posts) {
+    var g = posts.filter(function (p) { return p && p.slug && p.title && (p.q !== 0 || p.pinned); });
+    var pin = g.filter(function (p) { return p.pinned; }).sort(function (a, b) { return (+b.pinned || 0) - (+a.pinned || 0); });
+    return pin.concat(g.filter(function (p) { return !p.pinned; }));
+  }
   function sig(posts) { var g = good(posts); return g.length + ':' + (g[0] ? g[0].slug : ''); }
   function latest(posts, cat, from, n) {
     var g = good(posts).filter(function (p) { return cat === 'ALL' || p.category === cat; });
@@ -79,7 +84,7 @@
   function build(data) {
     var posts = (data.posts || []).filter(function (p) { return p && p.slug && p.title; }), songs = data.songs || [], artists = data.artists || [];
     var g = good(posts), img = g.filter(function (p) { return p.coverImage; });
-    var hero = img.slice(0, 6);
+    var hero = img.filter(function (p) { return p.pinned; }).slice(0, 3).concat(img.filter(function (p) { return !p.pinned; })).slice(0, 6);
     var anyViews = img.some(function (p) { return +p.views > 0; });
     var trend = anyViews ? img.slice().sort(function (a, b) { return (+b.views || 0) - (+a.views || 0); }).slice(0, 6) : img.slice(6, 12);
     if (trend.length < 3) trend = img.slice(0, 6);

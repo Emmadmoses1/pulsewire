@@ -56,6 +56,7 @@ footer{text-align:center;padding:30px;color:#999;font-size:12px}
 .artist-grid-card:hover .artist-grid-img{box-shadow:0 0 0 3px #e11}
 .artist-grid-name{font-size:15px;font-weight:800}
 footer a{color:#e11;margin:0 6px}
+.vf{color:#1d9bf0;font-size:12px}
 </style>
 </head>
 <body>
@@ -109,7 +110,7 @@ async function init(){
   }
   const songs=db.songs||[],cnt={};
   songs.forEach(s=>{cnt[s.artistId]=(cnt[s.artistId]||0)+1;});
-  const list=(db.artists||[]).filter(a=>a&&a.slug).sort((a,b)=>(cnt[b.id]||0)-(cnt[a.id]||0)||String(a.name).localeCompare(String(b.name)));
+  const list=(db.artists||[]).filter(a=>a&&a.slug).sort((a,b)=>(b.featured?1:0)-(a.featured?1:0)||(cnt[b.id]||0)-(cnt[a.id]||0)||String(a.name).localeCompare(String(b.name)));
   const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   const grid=document.getElementById('artistGrid'),input=document.getElementById('arSearch'),chips=document.getElementById('arChips');
   let genre='';
@@ -121,7 +122,7 @@ async function init(){
       const n=cnt[a.id]||0;
       return '<a class="artist-grid-card" href="/artists/'+esc(a.slug)+'.html"><div class="artist-grid-img">'+
         (a.photo?'<img src="'+esc(IMG(a.photo,480))+'" data-o="'+esc(a.photo)+'" onerror="IMGFB(this)" alt="'+esc(a.name)+'" loading="lazy">':'<div class="artist-grid-img-placeholder">\uD83C\uDFA4</div>')+
-        '</div><div class="artist-grid-name">'+esc(a.name)+'</div><div class="artist-grid-genre">'+esc(a.genre||'')+(n?' \u00B7 '+n+' song'+(n===1?'':'s'):'')+'</div></a>';
+        '</div><div class="artist-grid-name">'+esc(a.name)+(a.verified?' <span class="vf">\u2714</span>':'')+'</div><div class="artist-grid-genre">'+esc(a.genre||'')+(n?' \u00B7 '+n+' song'+(n===1?'':'s'):'')+'</div></a>';
     }).join('');
     document.getElementById('emptyMsg').style.display=rows.length?'none':'block';
     const sub=document.getElementById('arSub');
