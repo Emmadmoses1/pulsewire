@@ -3,3 +3,4 @@ Allow: /
 Disallow: /admin.html
 
 Sitemap: https://wavzo.com.ng/sitemap.xml
+Sitemap: https://wavzo.com.ng/news-sitemap.xml

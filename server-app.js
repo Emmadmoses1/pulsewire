@@ -95,6 +95,8 @@ app.get('/artists.html', instant.artistsRoute());
 app.get('/', instant.homeRoute());
 app.get('/feed.xml', instant.feedRoute());
 app.get('/rss.xml', instant.feedRoute());
+require('./livescores-service').register(app);
+app.get('/news-sitemap.xml', instant.newsSitemapRoute());
 app.get('/posts/:slug', instant.handler('post'));
 app.get('/songs/:slug', instant.handler('song'));
 app.get('/artists/:slug', instant.handler('artist'));

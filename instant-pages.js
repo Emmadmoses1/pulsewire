@@ -66,7 +66,7 @@ function postLd(post, url) {
     '@context': 'https://schema.org', '@type': 'NewsArticle', mainEntityOfPage: { '@type': 'WebPage', '@id': url },
     headline: String(post.title || 'WAVZO').slice(0, 110), description: String(post.excerpt || plain(post.content)).slice(0, 200),
     image: [ogImage(post.coverImage)], datePublished: iso, dateModified: iso,
-    author: { '@type': 'Organization', name: 'WAVZO', url: SITE },
+    author: post.authorName ? { '@type': 'Person', name: post.authorName } : { '@type': 'Organization', name: 'WAVZO', url: SITE },
     publisher: { '@type': 'Organization', name: 'WAVZO', logo: { '@type': 'ImageObject', url: SITE + '/images/wavzo-icon-512.png' } }
   };
 }
@@ -97,15 +97,39 @@ function seoState(doc, post) {
   const thin = !hasMedia(post) && textLen(post) < SEO_MIN_TEXT;
   return { dupOf, thin, index: !dupOf && !thin };
 }
+// ---- Author line + author box (same look on the server page and in the browser) ----
+const authorName = (p) => String(p.authorName || 'WAVZO Newsroom');
+function authorAvatar(p, cls) {
+  const nm = authorName(p);
+  return p.authorPhoto && /^https?:\/\//i.test(p.authorPhoto) ? '<img class="' + cls + '" src="' + esc(sqImg(p.authorPhoto, 96)) + '" width="44" height="44" alt="' + esc(nm) + '">' : '<span class="' + cls + ' ini">' + esc(nm.trim().charAt(0).toUpperCase()) + '</span>';
+}
+const readMins = (p) => Math.max(1, Math.round(plain(p.content).split(/\s+/).length / 200));
+function bylineHtml(p) { return authorAvatar(p, 'by-ph') + '<span class="by-t"><b>By ' + esc(authorName(p)) + '</b><small>' + esc(p.date || '') + ' &middot; ' + readMins(p) + ' min read</small></span>'; }
+function authorBox(p) {
+  return '<div class="author-box">' + authorAvatar(p, 'ab-ph') + '<div><small>Written by</small><b>' + esc(authorName(p)) + '</b><p>' + esc(p.authorBio || 'WAVZO brings you Nigerian music, news and culture.') + '</p></div></div>';
+}
+// ---- Google News sitemap: stories from the last 2 days ----
+function renderNewsSitemap(doc) {
+  const since = Date.now() - 2 * 864e5;
+  const items = (doc.posts || []).filter((p) => p && p.slug && p.title && (Number(p.createdAt) || 0) > since && (p.pinned || typeof seoState !== 'function' || seoState(doc, p).index))
+    .sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0)).slice(0, 1000);
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n' +
+    items.map((p) => '<url><loc>' + SITE + '/posts/' + safeId(p.slug) + '.html</loc><news:news><news:publication><news:name>WAVZO</news:name><news:language>en</news:language></news:publication><news:publication_date>' +
+      new Date(Number(p.createdAt)).toISOString() + '</news:publication_date><news:title>' + esc(p.title) + '</news:title></news:news></url>').join('\n') + '\n</urlset>\n';
+}
+function newsSitemapRoute() {
+  return async (req, res, next) => { try { res.set('Cache-Control', 'public, max-age=120').type('application/xml; charset=utf-8').send(renderNewsSitemap(await getDoc(20000))); } catch (e) { next(); } };
+}
+
 function ssrArticle(post, doc) {
   const cat = esc(post.category || ''), title = esc(post.title || '');
   const catLink = '<a href="/category/' + catSlug(post.category) + '">' + cat + '</a>';
   const rel = (doc.posts || []).filter((p) => p.slug !== post.slug && p.category === post.category).slice(-3).reverse();
   return '<div class="article-breadcrumb"><a href="/">Home</a> <span>/</span> ' + catLink + '</div>' +
     '<div class="article-cat-tag">' + cat + '</div><h1 class="article-title">' + title + '</h1>' +
-    '<div class="views-bar"><span>📅 ' + esc(post.date || '') + '</span></div>' +
+    '<div class="views-bar byline">' + bylineHtml(post) + '</div>' +
     (/^https?:\/\//i.test(post.coverImage || '') ? '<img src="' + esc(ogImage(post.coverImage)) + '" class="article-cover" alt="' + title + '">' : '') +
-    '<div class="article-body">' + (post.content || '') + '</div>' +
+    '<div class="article-body">' + (post.content || '') + '</div>' + authorBox(post) +
     (rel.length ? '<div class="related-section"><h3 class="related-title">More from ' + cat + '</h3>' +
       rel.map((r) => '<p><a href="/posts/' + safeId(r.slug) + '.html">' + esc(r.title || '') + '</a></p>').join('') + '</div>' : '');
 }
@@ -397,7 +421,7 @@ function renderHome(doc) {
 function homeRoute() {
   return async (req, res, next) => {
     try {
-      res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300').type('html').send(renderHome(await getDoc(30000)));
+      res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=120').type('html').send(renderHome(await getDoc(30000)));
     } catch (e) { next(); }
   };
 }
@@ -446,4 +470,4 @@ function startIndexNowWatcher() {
   if (watching) return;
   watching = true; refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
 
-module.exports = { feedRoute, homeRoute, artistsRoute, categoryRoute, homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
+module.exports = { newsSitemapRoute, feedRoute, homeRoute, artistsRoute, categoryRoute, homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };

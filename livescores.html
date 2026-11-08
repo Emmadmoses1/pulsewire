@@ -96,8 +96,9 @@ footer{text-align:center;padding:30px;color:#999;font-size:12px}
 
 <footer>&copy; WAVZO</footer>
 
+<!--SSR:LS-->
 <script>
-const FB='https://wavzo-db.dakudinamoses.workers.dev/football';
+const FB='/api/football';
 let mode='live', selDate=new Date().toISOString().slice(0,10), timer=null;
 
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -180,11 +181,12 @@ document.getElementById('dPrev').addEventListener('click',()=>{const d=new Date(
 document.getElementById('dNext').addEventListener('click',()=>{const d=new Date(selDate+'T00:00:00');d.setDate(d.getDate()+1);selDate=d.toISOString().slice(0,10);loadDate();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(timer)clearInterval(timer);}else{startTimer();if(mode==='live')loadLive();}});
 
-fetch('/data/db.json').then(r=>r.json()).then(db=>{
+fetch('/data/home.json').then(r=>r.ok?r:fetch('/data/db.json')).then(r=>r.json()).then(db=>{
   const track=document.getElementById('tickerTrack');
-  [...(db.posts||[]).slice(0,6),...(db.posts||[]).slice(0,6)].forEach(p=>{const t=document.createElement('span');t.textContent=p.title;track.appendChild(t);});
+  (()=>{const l=(db.posts||[]).slice().reverse().slice(0,6);return [...l,...l];})().forEach(p=>{const t=document.createElement('span');t.textContent=p.title;track.appendChild(t);});
 }).catch(()=>{});
 
+if(window.__LS&&window.__LS.ok){render(window.__LS.events||[],'No matches are being played right now. Check back soon, or look at Fixtures.');}
 loadLive();startTimer();
 </script>
 <script>
