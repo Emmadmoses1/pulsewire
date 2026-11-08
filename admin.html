@@ -340,6 +340,13 @@ button:focus-visible,a:focus-visible{outline:2px solid rgba(239,68,82,.75);outli
 .ar-row img,.ar-ph{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#222;display:flex;align-items:center;justify-content:center}
 .wz-search{width:100%;margin-bottom:12px;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-size:13px;font-family:inherit}
 </style>
+<style id="wz-v5">
+.au-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}.au-row:last-child{border-bottom:0}
+.au-row img,.au-ph{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;background:linear-gradient(135deg,#ef4452,#ff7a45);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.au-row .au-i{flex:1;min-width:0}.au-i b{display:block;font-size:14px}.au-i small{color:var(--muted);font-size:12px}
+.au-prev{width:64px;height:64px;border-radius:50%;object-fit:cover;margin-top:8px;display:none}
+#wzAsWrap{margin-bottom:6px}
+</style>
 </head>
 <body>
 <div id="toast" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;border:1px solid #333;color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap" ></div>
@@ -1345,6 +1352,7 @@ async function publishPost(){
     } else {
       const _np={title,slug,category,excerpt,content,coverImage,musicFile,videoFile,date,createdAt:Date.now()};
       if(window._rssSourceLink)_np.sourceUrl=window._rssSourceLink;
+      Object.assign(_np,window.wzAuthorFields?window.wzAuthorFields():{});
       db.posts.push(_np);
     }
     await saveDB(db);
@@ -3962,8 +3970,8 @@ async function uploadOwnMp3(){
         '<div class="field"><label>Year</label><input type="text" id="albYear" inputmode="numeric" maxlength="4" placeholder="'+new Date().getFullYear()+'"></div>'+
         '<div class="field"><label>Genre</label><input type="text" id="albGenre" placeholder="Afrobeats"></div>'+
         '<div class="field"><label>Cover art</label><div style="display:flex;gap:10px;align-items:center"><img id="albCoverPrev" style="width:56px;height:56px;object-fit:cover;border-radius:8px;background:#222"><input type="file" id="albCoverIn" accept="image/*"></div></div>'+
-        '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;text-transform:none;letter-spacing:0"><input type="checkbox" id="albVoice" checked style="width:auto;margin-top:2px"><span>Add the WAVZO voice tag to every track</span></label>'+
-        '<div id="albTracks" style="margin-top:10px"></div>'+
+        '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;text-transform:none;letter-spacing:0"><input type="checkbox" id="albVoice" style="width:auto;margin-top:2px"><span>Add the WAVZO voice tag to every track (much slower)</span></label>'+
+        '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;text-transform:none;letter-spacing:0;margin-top:8px"><input type="checkbox" id="albTurbo" checked style="width:auto;margin-top:2px"><span>Turbo mode (fastest): each song goes straight to storage, without tags or cover inside the MP3</span></label><div id="albTracks" style="margin-top:10px"></div>'+
         '<button type="button" class="btn" id="albSaveBtn" style="margin-top:10px">🎵 Convert &amp; Save All</button>'+
         '<div id="albProgWrap" class="prog-wrap" style="display:none;margin-top:8px"><div class="prog-fill" id="albProgBar" style="width:0%"></div></div>'+
         '<p id="albResult" style="font-size:12px;margin-top:8px;line-height:1.6"></p>'+
@@ -4026,47 +4034,65 @@ async function uploadOwnMp3(){
     if(!artistOpt){alert('Pick an artist first.');return;}
     var meta={artist:artistOpt.text,album:'wavzo.com.ng',year:(el('albYear').value||'').trim(),genre:(el('albGenre').value||'').trim(),comment:'Downloaded from wavzo.com.ng'};
     var albumName=(el('albName').value||'').trim()||meta.artist+' Album';
-    var voice=el('albVoice').checked;
+    var voice=el('albVoice').checked,turbo=!!(el('albTurbo')&&el('albTurbo').checked);
     var btn=el('albSaveBtn'),res=el('albResult'),prog=el('albProgWrap'),bar=el('albProgBar');
-    btn.disabled=true;res.textContent='';prog.style.display='block';
-    var coverFile=(el('albCoverIn').files[0])||null;
-    var albumId=uid();
-    res.textContent='Preparing album cover...';
-    var albumCoverUrl=TRACKS[0]?TRACKS[0].thumbnail:'';
-    if(coverFile){
-      try{albumCoverUrl=await uploadCloud(coverFile,'albProgWrap','albProgBar');}
-      catch(e){res.style.color='#f59e0b';res.textContent='Could not upload your cover, using the playlist thumbnail instead.';}
+    btn.disabled=true;res.textContent='';prog.style.display='block';bar.style.width='2%';
+    var t0=Date.now(),coverFile=(el('albCoverIn').files[0])||null,albumId=uid();
+    var W2='https://pulsewire-ai.dakudinamoses.workers.dev';
+    var coverJob=coverFile?uploadCloud(coverFile,null,null).catch(function(){return '';}):Promise.resolve('');
+    var done=0,ok=0,fail=[],queue=[],slugs=[],lastSave=Promise.resolve();
+    function paint(msg){bar.style.width=Math.max(2,Math.round(100*done/chosen.length))+'%';res.style.color='#888';res.textContent=msg||('Finished '+done+' of '+chosen.length+' tracks...');}
+    function flush(){
+      lastSave=lastSave.then(async function(){
+        if(!queue.length)return;
+        var batch=queue.splice(0,queue.length);
+        var db=await loadDB();db.songs=db.songs||[];batch.forEach(function(x){db.songs.push(x);});await saveDB(db);
+      }).catch(function(e){fail.push('saving ('+e.message+')');});
+      return lastSave;
     }
-    var ok=0,fail=[];
-    for(var i=0;i<chosen.length;i++){
-      var t=chosen[i];
-      bar.style.width=Math.round(100*i/chosen.length)+'%';
-      res.style.color='#888';res.textContent='Track '+(i+1)+' of '+chosen.length+': converting "'+esc(t.title)+'"...';
-      try{
-        var W2='https://pulsewire-ai.dakudinamoses.workers.dev';
-        var init=await fetch(W2+'/mp3-convert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:t.videoId})}).then(function(r){return r.json();});
-        var dl=init.downloadUrl||'';
-        if(!dl&&init.progressId){
-          for(var w=0;w<30&&!dl;w++){
-            await new Promise(function(r){setTimeout(r,3000);});
-            var pd=await fetch(W2+'/mp3-progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:init.progressId})}).then(function(r){return r.json();});
-            if(pd.finished&&pd.downloadUrl)dl=pd.downloadUrl;
-          }
+    async function convert(t){
+      var init=await fetch(W2+'/mp3-convert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:t.videoId})}).then(function(r){return r.json();});
+      var dl=init.downloadUrl||'';
+      if(!dl&&init.progressId){
+        for(var w=0;w<70&&!dl;w++){
+          await new Promise(function(r){setTimeout(r,1200);});
+          var pd=await fetch(W2+'/mp3-progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:init.progressId})}).then(function(r){return r.json();});
+          if(pd.finished&&pd.downloadUrl)dl=pd.downloadUrl;
         }
-        if(!dl)throw new Error('conversion timed out');
-        var built=await window._wzBuild({url:dl,meta:Object.assign({title:t.title},meta),coverFile:coverFile,voice:voice,prog:'albProgWrap',bar:'albProgBar',say:function(msg){res.textContent='Track '+(i+1)+' of '+chosen.length+': '+msg;}});
-        var song={id:uid(),title:t.title,artistId:artistOpt.value,slug:slugify(t.title)+'-'+Date.now()+i,type:'Album',cover:albumCoverUrl,downloadUrl:built.url,youtubeUrl:'https://www.youtube.com/watch?v='+t.videoId,album:albumName,albumId:albumId,albumCover:albumCoverUrl,year:meta.year,genre:meta.genre,trackNumber:i+1,createdAt:Date.now(),downloads:0};
-        var db=await loadDB();db.songs=db.songs||[];db.songs.push(song);await saveDB(db);
-        fetch(WORKER+'/indexnow',{method:'POST',headers:{'X-Master-Key':key()},body:JSON.stringify({urls:['https://wavzo.com.ng/songs/'+song.slug+'.html']})}).catch(function(){});
-        ok++;
-      }catch(e){fail.push(t.title+' ('+e.message+')');}
+      }
+      if(!dl)throw new Error('conversion timed out');
+      return dl;
     }
+    var next=0;
+    async function worker(){
+      while(next<chosen.length){
+        var i=next++,t=chosen[i];
+        try{
+          paint('Working on "'+t.title+'"... ('+done+' of '+chosen.length+' done)');
+          var dl=await convert(t),url='';
+          if(turbo){
+            try{var pid=await uploadFromUrl(dl,'wavzo-'+slugify(t.title)+'-'+Date.now()+'-'+i);url='https://res.cloudinary.com/'+CLOUD+'/video/upload/'+pid+'.mp3';}catch(e){url='';}
+          }
+          if(!url){
+            var built=await window._wzBuild({url:dl,meta:Object.assign({title:t.title},meta),coverFile:coverFile,voice:voice,prog:voice?'albProgWrap':null,bar:voice?'albProgBar':null,say:function(){}});
+            url=built.url;
+          }
+          var cover=(await coverJob)||(TRACKS[0]?TRACKS[0].thumbnail:'');
+          var song={id:uid(),title:t.title,artistId:artistOpt.value,slug:slugify(t.title)+'-'+Date.now()+i,type:'Album',cover:cover,downloadUrl:url,youtubeUrl:'https://www.youtube.com/watch?v='+t.videoId,album:albumName,albumId:albumId,albumCover:cover,year:meta.year,genre:meta.genre,trackNumber:i+1,createdAt:Date.now()+i,downloads:0};
+          queue.push(song);slugs.push(song.slug);ok++;done++;paint();
+          if(queue.length>=4)flush();
+        }catch(e){fail.push(t.title+' ('+e.message+')');done++;paint();}
+      }
+    }
+    await Promise.all([worker(),worker(),worker()]);
+    await flush();
     bar.style.width='100%';
+    var secs=Math.round((Date.now()-t0)/1000);
     res.style.color=fail.length?'#f59e0b':'#22c55e';
-    res.textContent='Saved '+ok+' of '+chosen.length+' tracks.'+(fail.length?' Failed: '+fail.join(', '):'');
-    toast('Album save finished: '+ok+' of '+chosen.length+' tracks saved.',6000);
+    res.textContent='Saved '+ok+' of '+chosen.length+' tracks in '+secs+'s.'+(fail.length?' Problems: '+fail.join(', '):'');
+    toast('Album done: '+ok+' of '+chosen.length+' tracks saved in '+secs+'s.',6000);
+    if(slugs.length)fetch(WORKER+'/indexnow',{method:'POST',headers:{'X-Master-Key':key()},body:JSON.stringify({urls:slugs.map(function(x){return 'https://wavzo.com.ng/songs/'+x+'.html';})})}).catch(function(){});
     if(typeof loadDash==='function')loadDash();
-    if(typeof triggerPreviewGeneration==='function')triggerPreviewGeneration();
     btn.disabled=false;
   }
 
@@ -4149,6 +4175,7 @@ async function uploadOwnMp3(){
         var post={title:it.title,slug:base+'-'+dateTag+'-'+Math.random().toString(36).slice(2,6),category:cat,excerpt:excerpt,
           content:formatArticleContent((it.fullContent||excerpt)+'\n\nSource: '+it.link),coverImage:it.image||null,musicFile:null,videoFile:null,
           date:date,createdAt:Date.now()+k,sourceUrl:it.link};
+        Object.assign(post,window.wzAuthorFields?window.wzAuthorFields():{});
         db.posts.push(post);added.push(post);
       });
       if(added.length){
@@ -4947,6 +4974,97 @@ try{new MutationObserver(addPostAll).observe($('sec-create')||document.body,{chi
 var oldDash=window.loadDash;
 if(typeof oldDash==='function'){window.loadDash=async function(){var r=await oldDash.apply(this,arguments);try{await pinRefresh();}catch(e){}return r;};}
 ensurePinCard();addPostAll();
+})();
+</script>
+<script id="wz-v5-js">
+/* WAVZO Admin v5: author profiles (name, photo, bio) shown on every post, "Posting as" picker, faster publishing. */
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var E=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+function toast(m,ms){if(typeof showToast==='function')showToast(m,ms||3500);}
+/* previews are built live now, so the old "rebuild" call only slowed publishing down */
+window.triggerPreviewGeneration=function(){};
+
+var A={list:[],edit:'',photo:''};
+function ensureUI(){
+  var st=$('sec-settings');
+  if(st&&!$('wzAuthors')){
+    st.insertAdjacentHTML('beforeend',
+    '<div class="card" id="wzAuthors"><div class="card-title">Authors (shown on every post)</div>'+
+    '<div id="auList"><p class="wz-note">Loading...</p></div>'+
+    '<div class="field" style="margin-top:14px"><label id="auHead">Add an author</label><input type="text" id="auName" placeholder="Full name"></div>'+
+    '<div class="field"><input type="text" id="auTitle" placeholder="Role, e.g. Entertainment Editor (optional)"></div>'+
+    '<div class="field"><textarea id="auBio" rows="2" placeholder="Short bio (optional)"></textarea></div>'+
+    '<div class="field"><label>Photo</label><div class="upload-box"><input type="file" accept="image/*" id="auPhotoIn" onchange="authPrev(this)"><div class="upload-icon">\uD83D\uDDBC\uFE0F</div><div class="upload-text">Tap to choose a photo</div></div><img class="au-prev" id="auPrev" alt=""></div>'+
+    '<div style="display:flex;gap:8px"><button type="button" class="btn btn-sm" id="auSaveBtn" onclick="authSave()">Save author</button><button type="button" class="btn btn-grey btn-sm" onclick="authReset()">Clear</button></div></div>');
+  }
+  var cr=$('sec-create');
+  if(cr&&!$('wzAsWrap'))cr.insertAdjacentHTML('afterbegin','<div class="field" id="wzAsWrap" style="display:none"><label>Posting as</label><select id="wzAs" onchange="try{localStorage.setItem(\'wz_author\',this.value)}catch(e){}"></select></div>');
+}
+function renderList(){
+  var box=$('auList');if(!box)return;
+  box.innerHTML=A.list.length?A.list.map(function(a){
+    return '<div class="au-row">'+(a.photo?'<img src="'+E(a.photo)+'" alt="">':'<span class="au-ph">'+E((a.name||'?').charAt(0).toUpperCase())+'</span>')+
+      '<div class="au-i"><b>'+E(a.name)+'</b><small>'+E(a.title||'')+'</small></div>'+
+      '<button class="del-btn" style="background:#3b5bef" onclick="authEdit(\''+E(a.id)+'\')">EDIT</button><button class="del-btn" onclick="authDel(\''+E(a.id)+'\')">DEL</button></div>';
+  }).join(''):'<p class="wz-note">No authors yet. Posts show "WAVZO Newsroom" until you add one.</p>';
+}
+function fillAs(){
+  var s=$('wzAs'),w=$('wzAsWrap');if(!s||!w)return;
+  if(!A.list.length){w.style.display='none';return;}
+  w.style.display='';
+  var cur='';try{cur=localStorage.getItem('wz_author')||'';}catch(e){}
+  s.innerHTML='<option value="">WAVZO Newsroom</option>'+A.list.map(function(a){return '<option value="'+E(a.id)+'"'+(a.id===cur?' selected':'')+'>'+E(a.name)+'</option>';}).join('');
+}
+async function refresh(){
+  ensureUI();
+  var db;try{db=await loadDB();}catch(e){return;}
+  A.list=db.authors||[];renderList();fillAs();
+}
+window.wzAuthorFields=function(){
+  var s=$('wzAs'),id=s?s.value:'',a=A.list.filter(function(x){return x.id===id;})[0];
+  if(!a)return {};
+  var o={authorId:a.id,authorName:a.name};
+  if(a.photo)o.authorPhoto=a.photo;
+  if(a.bio||a.title)o.authorBio=(a.title?a.title+'. ':'')+(a.bio||'');
+  return o;
+};
+window.authPrev=function(inp){var f=inp.files&&inp.files[0],p=$('auPrev');if(!f||!p)return;p.src=URL.createObjectURL(f);p.style.display='block';};
+window.authReset=function(){A.edit='';A.photo='';['auName','auTitle','auBio'].forEach(function(i){if($(i))$(i).value='';});if($('auPhotoIn'))$('auPhotoIn').value='';if($('auPrev'))$('auPrev').style.display='none';if($('auHead'))$('auHead').textContent='Add an author';};
+window.authEdit=function(id){
+  var a=A.list.filter(function(x){return x.id===id;})[0];if(!a)return;
+  A.edit=id;A.photo=a.photo||'';
+  $('auName').value=a.name||'';$('auTitle').value=a.title||'';$('auBio').value=a.bio||'';
+  var p=$('auPrev');if(a.photo){p.src=a.photo;p.style.display='block';}else p.style.display='none';
+  $('auHead').textContent='Editing '+a.name;$('auName').scrollIntoView({behavior:'smooth',block:'center'});
+};
+window.authSave=async function(){
+  var name=($('auName').value||'').trim();
+  if(!name){toast('Enter the author name.');return;}
+  var btn=$('auSaveBtn');btn.disabled=true;
+  try{
+    var photo=A.photo,f=$('auPhotoIn').files&&$('auPhotoIn').files[0];
+    if(f){toast('Uploading photo...',2500);photo=await uploadCloud(f,null,null);}
+    var db=await loadDB();db.authors=db.authors||[];
+    var rec={id:A.edit||('au-'+Date.now().toString(36)),name:name,title:($('auTitle').value||'').trim(),bio:($('auBio').value||'').trim().slice(0,240),photo:photo||''};
+    var i=db.authors.findIndex(function(x){return x.id===rec.id;});
+    if(i>-1)db.authors[i]=Object.assign({},db.authors[i],rec);else db.authors.push(rec);
+    await saveDB(db);
+    toast('Author saved');authReset();refresh();
+  }catch(e){toast('Could not save: '+e.message,5000);}
+  finally{btn.disabled=false;}
+};
+window.authDel=async function(id){
+  if(!confirm('Delete this author? Posts already published keep their author name.'))return;
+  try{var db=await loadDB();db.authors=(db.authors||[]).filter(function(x){return x.id!==id;});await saveDB(db);toast('Author deleted');refresh();}
+  catch(e){toast('Could not delete: '+e.message,5000);}
+};
+var oldDash=window.loadDash,first=false;
+if(typeof oldDash==='function'){window.loadDash=async function(){var r=await oldDash.apply(this,arguments);try{if(!first){first=true;await refresh();}}catch(e){}return r;};}
+var oldSec=window.showSec;
+if(typeof oldSec==='function'){window.showSec=function(n,el){var r=oldSec.apply(this,arguments);try{if(n==='create'||n==='settings')refresh();}catch(e){}return r;};}
+ensureUI();
 })();
 </script>
 </body>
