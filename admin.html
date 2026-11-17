@@ -347,6 +347,13 @@ button:focus-visible,a:focus-visible{outline:2px solid rgba(239,68,82,.75);outli
 .au-prev{width:64px;height:64px;border-radius:50%;object-fit:cover;margin-top:8px;display:none}
 #wzAsWrap{margin-bottom:6px}
 </style>
+<style id="wz-v6">
+.tm-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}.tm-row:last-child{border-bottom:0}
+.tm-row img,.tm-ph{width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0;background:linear-gradient(135deg,#ef4452,#ff7a45);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.tm-i{flex:1;min-width:140px}.tm-i b{display:block;font-size:14px}.tm-i small{color:var(--muted);font-size:12px}
+.tm-off{opacity:.5}
+#tmToggle{display:block;text-align:center;margin-top:14px;font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer}
+</style>
 </head>
 <body>
 <div id="toast" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;border:1px solid #333;color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap" ></div>
@@ -768,12 +775,12 @@ async function changeAdminPassword(){
   }catch(e){alert('Could not change password: '+e.message);}
   finally{btn.disabled=false;btn.textContent='CHANGE PASSWORD';}
 }
-function doLogout(){localStorage.removeItem('pw');localStorage.removeItem('wz_key');location.reload();}
+function doLogout(){localStorage.removeItem('pw');localStorage.removeItem('wz_key');localStorage.removeItem('wz_team');location.reload();}
 function showToast(msg,ms){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),ms||2500);}
-if(localStorage.getItem('pw')&&BIN_KEY){
+if(localStorage.getItem('pw')&&(BIN_KEY||localStorage.getItem('wz_team'))){
   document.getElementById('loginPage').style.display='none';
   document.getElementById('adminPage').style.display='block';
-  /* FIXES-4 */ setTimeout(()=>{loadDash();renderPoster();},0);
+  /* FIXES-4 */ setTimeout(()=>{loadDash();renderPoster();},120);
 }
 
 // ── Nav ───────────────────────────────────────────
@@ -4540,7 +4547,7 @@ async function pmRender(){
       '<div class="post-row-info" style="flex:1;min-width:0"><h4>'+E(p.title)+'</h4><small>'+E(p.category)+' \u00B7 '+E(p.date)+' \u00B7 \uD83D\uDC41 '+(p.views||0)+'</small>'+
       '<div class="badges">'+(p.coverImage?'<span class="badge img">IMG</span>':'')+(p.musicFile?'<span class="badge audio">AUDIO</span>':'')+(p.videoFile?'<span class="badge video">VIDEO</span>':'')+(dupSet.has(p)?'<span class="badge">DUPLICATE</span>':'')+(p.pinned?'<span class="badge" style="color:#fbbf24;border-color:#fbbf24">\uD83D\uDCCC PINNED</span>':'')+'</div></div>'+
       '<div class="pm-act"><button class="del-btn" id="fb-btn-'+sl+'" style="background:#1877f2" onclick="postToFacebook(\''+sl+'\')">\uD83D\uDCD8 Facebook</button>'+
-      '<button class="del-btn" style="background:#b45309" onclick="pmPin(\''+sl+'\')">'+(p.pinned?'\uD83D\uDCCC Unpin':'\uD83D\uDCCC Pin')+'</button>'+'<button class="del-btn" style="background:#3b5bef" onclick="editPost(\''+sl+'\')">EDIT</button>'+
+      '<button class="del-btn" style="background:#0e7490" onclick="pshNotify(\''+sl+'\')">\uD83D\uDD14 Notify</button>'+'<button class="del-btn" style="background:#b45309" onclick="pmPin(\''+sl+'\')">'+(p.pinned?'\uD83D\uDCCC Unpin':'\uD83D\uDCCC Pin')+'</button>'+'<button class="del-btn" style="background:#3b5bef" onclick="editPost(\''+sl+'\')">EDIT</button>'+
       '<button class="del-btn" onclick="deletePost(\''+sl+'\')">DEL</button></div></div>';
   }).join('')+
   '<div class="wz-pager"><button type="button" class="btn btn-grey btn-sm" '+(PM.page<=1?'disabled ':'')+'onclick="pmGo('+(PM.page-1)+',1)">\u2190 Newer</button><span>Page '+PM.page+' of '+pages+'</span>'+
@@ -5065,6 +5072,174 @@ if(typeof oldDash==='function'){window.loadDash=async function(){var r=await old
 var oldSec=window.showSec;
 if(typeof oldSec==='function'){window.showSec=function(n,el){var r=oldSec.apply(this,arguments);try{if(n==='create'||n==='settings')refresh();}catch(e){}return r;};}
 ensureUI();
+})();
+</script>
+<script id="wz-v6-js">
+/* WAVZO Admin v6: team sign-in (email + password), team management, picture notifications. */
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var E=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+function toast(m,ms){if(typeof showToast==='function')showToast(m,ms||3500);}
+var TEAM=null;try{TEAM=JSON.parse(localStorage.getItem('wz_team')||'null');}catch(e){}
+var isTeam=!!(TEAM&&TEAM.token);
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(function(){});
+
+/* ---------- sign-in screen: email option ---------- */
+(function(){
+  var card=document.querySelector('.login-card');if(!card||$('tmEmailWrap'))return;
+  var first=card.querySelector('.field');
+  first.insertAdjacentHTML('beforebegin','<div class="field" id="tmEmailWrap" style="display:none"><label>Email</label><input type="email" id="tmEmail" placeholder="you@email.com" autocomplete="username" onkeydown="if(event.key===\'Enter\')doLogin()"></div>');
+  card.insertAdjacentHTML('beforeend','<a id="tmToggle">Team member? Sign in with your email</a>');
+  $('tmToggle').onclick=function(){
+    var w=$('tmEmailWrap'),on=w.style.display==='none';
+    w.style.display=on?'':'none';this.textContent=on?'Owner? Sign in with the admin password':'Team member? Sign in with your email';
+  };
+  var orig=window.doLogin;
+  window.doLogin=async function(){
+    if($('tmEmailWrap').style.display==='none')return orig.apply(this,arguments);
+    var err=$('loginErr');
+    try{
+      var r=await fetch('/admin/team/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('tmEmail').value,password:$('loginPass').value})});
+      var j=await r.json();
+      if(!j.ok){err.textContent=j.msg||'Could not sign in.';err.style.display='block';return;}
+      localStorage.setItem('wz_team',JSON.stringify({token:j.token,user:j.user}));localStorage.setItem('pw','1');localStorage.removeItem('wz_key');
+      location.reload();
+    }catch(e){err.textContent='Could not reach the server.';err.style.display='block';}
+  };
+})();
+
+/* ---------- team member mode: everything goes through the server, which keeps owner-only things safe ---------- */
+if(isTeam){
+  var base='';
+  var out=function(){localStorage.removeItem('pw');localStorage.removeItem('wz_team');location.reload();};
+  window.loadDB=async function(){
+    var r=await fetch('/admin/team/db',{headers:{Authorization:'Bearer '+TEAM.token},cache:'no-store'});
+    if(r.status===401){toast('Please sign in again.');setTimeout(out,1200);throw new Error('Signed out');}
+    var j=await r.json();if(!j.ok)throw new Error(j.msg||'Could not load');
+    base=j.base;return j.doc;
+  };
+  window.saveDB=async function(d){
+    var r=await fetch('/admin/team/db',{method:'PUT',headers:{Authorization:'Bearer '+TEAM.token,'Content-Type':'application/json'},body:JSON.stringify({base:base,doc:{posts:d.posts,songs:d.songs,artists:d.artists}})});
+    var j=await r.json().catch(function(){return {};});
+    if(r.status===401){toast('Please sign in again.');setTimeout(out,1200);throw new Error('Signed out');}
+    if(r.status===409){try{await window.loadDB();}catch(e){}throw new Error(j.msg||'Out of date. Please repeat your last step.');}
+    if(!j.ok)throw new Error(j.msg||'Could not save');
+    base=j.base;return j;
+  };
+  window.wzAuthorFields=function(){return {};};
+  document.head.insertAdjacentHTML('beforeend','<style>#wzAuto,#wzAuthors,#wzBackupCard,#wzTeam,#wzPush,#wzPinned,#wzAsWrap,.bnav-item[onclick*="settings"]{display:none!important}</style>');
+  var nr=document.querySelector('.nav-right');
+  if(nr&&TEAM.user)nr.insertAdjacentHTML('afterbegin','<span style="font-size:12px;color:#aaa;margin-right:8px">'+E(TEAM.user.name)+'</span>');
+}
+
+/* ---------- owner: team management ---------- */
+var OH=function(){return {'X-Master-Key':BIN_KEY,'Content-Type':'application/json'};};
+function ensureOwnerUI(){
+  var st=$('sec-settings');if(!st||isTeam)return;
+  if(!$('wzTeam'))st.insertAdjacentHTML('beforeend',
+  '<div class="card" id="wzTeam"><div class="card-title">Team (extra admins)</div>'+
+  '<div class="wz-note" id="tmMsg"></div><div id="tmList"><p class="wz-note">Loading...</p></div>'+
+  '<div class="field" style="margin-top:14px"><label>Add a team member</label><input type="text" id="tmName" placeholder="Full name"></div>'+
+  '<div class="field"><input type="email" id="tmMail" placeholder="Email address (they sign in with it)" autocomplete="off"></div>'+
+  '<div class="field"><div style="display:flex;gap:8px"><input type="text" id="tmPass" placeholder="Password (8+ characters)" autocomplete="off"><button type="button" class="btn btn-grey btn-sm" style="width:auto" onclick="tmGen()">\uD83C\uDFB2 Generate</button></div></div>'+
+  '<div class="field"><input type="text" id="tmTitle" placeholder="Role, e.g. Sports Editor (optional)"></div>'+
+  '<div class="field"><textarea id="tmBio" rows="2" placeholder="Short bio (optional)"></textarea></div>'+
+  '<div class="field"><label>Photo</label><div class="upload-box"><input type="file" accept="image/*" id="tmPhoto"><div class="upload-icon">\uD83D\uDDBC\uFE0F</div><div class="upload-text">Tap to choose a photo</div></div></div>'+
+  '<button type="button" class="btn" id="tmSave" onclick="tmCreate()">CREATE ACCOUNT</button>'+
+  '<div class="wz-note">Share the email and password with them privately. They sign in from the same admin page using <b>Team member? Sign in with your email</b>. They can write and edit posts, but cannot change settings, auto-posting, backups or other team members.</div></div>');
+  if(!$('wzPush'))st.insertAdjacentHTML('beforeend',
+  '<div class="card" id="wzPush"><div class="card-title">Picture notifications</div>'+
+  '<div class="wz-note" id="pshMsg"></div>'+
+  '<div class="wz-kv"><span>Send alerts for new posts</span><label class="wz-sw"><input type="checkbox" id="pshOn" onchange="pshSave()"><i></i></label></div>'+
+  '<div class="wz-kv"><span>Also alert for auto-posted stories</span><label class="wz-sw"><input type="checkbox" id="pshAuto" onchange="pshSave()"><i></i></label></div>'+
+  '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn btn-sm" onclick="pshEnable()">\uD83D\uDD14 Turn on for this phone</button><button type="button" class="btn btn-green btn-sm" onclick="pshTest()">Send a test</button><button type="button" class="btn btn-grey btn-sm" onclick="pshStatus()">\u21BB</button></div>'+
+  '<div class="wz-log" id="pshLog"></div></div>');
+}
+async function tmRefresh(){
+  ensureOwnerUI();if(isTeam)return;
+  var msg=$('tmMsg'),list=$('tmList');if(!list)return;
+  try{
+    var st=await (await fetch('/admin/team/status')).json();
+    if(!st.secretSet){msg.innerHTML='\u26A0 One-time setup: in Render open your service > Environment, add <b>WZ_TEAM_SECRET</b> with any long random text (30+ characters), then redeploy.';list.innerHTML='';return;}
+    if(!st.keySet){msg.innerHTML='\u26A0 The server needs <b>WZ_DB_KEY</b> (your admin password) in Render > Environment.';return;}
+    var r=await fetch('/admin/team/list',{headers:OH()}),j=await r.json();
+    if(!j.ok){msg.textContent=j.msg||'Could not load the team.';return;}
+    msg.textContent='';
+    list.innerHTML=j.team.length?j.team.map(function(u){
+      return '<div class="tm-row'+(u.active?'':' tm-off')+'">'+(u.photo?'<img src="'+E(u.photo)+'" alt="">':'<span class="tm-ph">'+E((u.name||'?').charAt(0).toUpperCase())+'</span>')+
+        '<div class="tm-i"><b>'+E(u.name)+(u.active?'':' (disabled)')+'</b><small>'+E(u.title||'Editor')+' \u00B7 '+E(u.emailMask)+'</small></div>'+
+        '<button class="del-btn" style="background:#3b5bef" onclick="tmReset(\''+E(u.id)+'\')">PASSWORD</button>'+
+        '<button class="del-btn" style="background:#b45309" onclick="tmToggleActive(\''+E(u.id)+'\','+(u.active?'false':'true')+')">'+(u.active?'DISABLE':'ENABLE')+'</button>'+
+        '<button class="del-btn" onclick="tmDelete(\''+E(u.id)+'\')">DEL</button></div>';
+    }).join(''):'<p class="wz-note">No team members yet.</p>';
+  }catch(e){msg.textContent='Could not reach the server.';}
+}
+window.tmGen=function(){var c='ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789',a=new Uint8Array(12);crypto.getRandomValues(a);$('tmPass').value=[].map.call(a,function(x){return c[x%c.length];}).join('');};
+async function tmCall(path,body){var r=await fetch('/admin/team/'+path,{method:'POST',headers:OH(),body:JSON.stringify(body)});var j=await r.json().catch(function(){return {};});if(!j.ok)throw new Error(j.msg||'Failed');window.__wzRead=null;return j;}
+window.tmCreate=async function(){
+  var btn=$('tmSave');btn.disabled=true;
+  try{
+    var photo='',f=$('tmPhoto').files&&$('tmPhoto').files[0];
+    if(f){toast('Uploading photo...',2500);photo=await uploadCloud(f,null,null);}
+    var pw=$('tmPass').value;
+    await tmCall('create',{name:$('tmName').value,email:$('tmMail').value,password:pw,title:$('tmTitle').value,bio:$('tmBio').value,photo:photo});
+    toast('Account created. Password: '+pw,9000);
+    ['tmName','tmMail','tmPass','tmTitle','tmBio'].forEach(function(i){$(i).value='';});$('tmPhoto').value='';
+    tmRefresh();
+  }catch(e){toast(e.message,6000);}finally{btn.disabled=false;}
+};
+window.tmReset=async function(id){var p=prompt('New password for this person (8+ characters):');if(!p)return;try{await tmCall('update',{id:id,password:p});toast('Password changed. Tell them privately.',6000);}catch(e){toast(e.message,6000);}};
+window.tmToggleActive=async function(id,on){try{await tmCall('update',{id:id,active:on});toast(on?'Account enabled':'Account disabled');tmRefresh();}catch(e){toast(e.message,6000);}};
+window.tmDelete=async function(id){if(!confirm('Delete this account? They can no longer sign in. Their published posts stay.'))return;try{await tmCall('delete',{id:id});toast('Account deleted');tmRefresh();}catch(e){toast(e.message,6000);}};
+
+/* ---------- owner: picture notifications ---------- */
+function u8(b64){var p='='.repeat((4-b64.length%4)%4),s=(b64+p).replace(/-/g,'+').replace(/_/g,'/'),r=atob(s),a=new Uint8Array(r.length);for(var i=0;i<r.length;i++)a[i]=r.charCodeAt(i);return a;}
+function ago(t){if(!t)return 'never';var m=Math.round((Date.now()-t)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago';}
+window.pshStatus=async function(){
+  var msg=$('pshMsg'),log=$('pshLog');if(!msg||isTeam)return;
+  try{
+    var db=await loadDB(),c=db.push||{enabled:true,auto:false};
+    $('pshOn').checked=c.enabled!==false;$('pshAuto').checked=!!c.auto;
+    var r=await fetch('/admin/push/status',{headers:OH()}),j=await r.json();
+    if(!j.ok){msg.innerHTML=j.keySet===false?'\u26A0 Add <b>WZ_DB_KEY</b> in Render first.':'\u26A0 WZ_DB_KEY does not match your admin password.';return;}
+    if(!j.library){msg.innerHTML='\u26A0 The server needs the notification package. In Termux run <b>npm install web-push</b>, then commit and push.';return;}
+    if(!j.keys){msg.innerHTML='\u26A0 Notification keys are missing. In Termux run <b>node -e "console.log(require(\'web-push\').generateVAPIDKeys())"</b> and add the two values in Render as <b>WZ_VAPID_PUBLIC</b> and <b>WZ_VAPID_PRIVATE</b>, then redeploy.';return;}
+    msg.textContent='\u2705 Ready \u00B7 '+j.subs+' device'+(j.subs===1?'':'s')+' subscribed \u00B7 last alert: '+ago(j.lastSent);
+    log.innerHTML=(j.log||[]).map(function(e){return '<div><b>'+ago(e.t)+'</b> \u2014 '+E(e.m)+'</div>';}).join('');
+  }catch(e){msg.textContent='Could not reach the server.';}
+};
+window.pshSave=async function(){
+  try{var db=await loadDB();db.push={enabled:$('pshOn').checked,auto:$('pshAuto').checked};await saveDB(db);toast('Saved');}catch(e){toast('Could not save: '+e.message,5000);}
+};
+async function pshSub(){
+  var k=(await (await fetch('/api/push/key')).json()).key;
+  if(!k)throw new Error('Notifications are not set up on the server yet.');
+  if(!('serviceWorker' in navigator)||!('PushManager' in window))throw new Error('This browser does not support notifications.');
+  var perm=Notification.permission==='granted'?'granted':await Notification.requestPermission();
+  if(perm!=='granted')throw new Error('Notifications are blocked. Allow them in the browser settings.');
+  var reg=await navigator.serviceWorker.ready;
+  return (await reg.pushManager.getSubscription())||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(k)});
+}
+window.pshEnable=async function(){try{var sub=await pshSub();await fetch('/api/push/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});toast('Notifications are on for this phone \uD83D\uDD14',4000);pshStatus();}catch(e){toast(e.message,6000);}};
+window.pshTest=async function(){
+  try{var sub=await pshSub(),r=await fetch('/admin/push/test',{method:'POST',headers:OH(),body:JSON.stringify(sub.toJSON())}),j=await r.json();toast(j.ok?'Test sent. Look at your notifications.':(j.msg||'Could not send.'),6000);}catch(e){toast(e.message,6000);}
+};
+window.pshNotify=async function(slug){
+  if(!confirm('Send a picture notification for this post to everyone who subscribed?'))return;
+  try{
+    var h=isTeam?{Authorization:'Bearer '+TEAM.token,'Content-Type':'application/json'}:OH();
+    var r=await fetch('/admin/push/notify',{method:'POST',headers:h,body:JSON.stringify({slug:slug})}),j=await r.json();
+    toast(j.ok?('Sent to '+(j.sent||0)+' device'+(j.sent===1?'':'s')):(j.msg||'Could not send.'),5000);
+  }catch(e){toast('Could not send: '+e.message,5000);}
+};
+
+/* ---------- wiring ---------- */
+var oldSec=window.showSec,loaded=false;
+if(typeof oldSec==='function'){window.showSec=function(n,el){var r=oldSec.apply(this,arguments);try{if(n==='settings'&&!isTeam){tmRefresh();pshStatus();}}catch(e){}return r;};}
+var oldDash=window.loadDash;
+if(typeof oldDash==='function'){window.loadDash=async function(){var r=await oldDash.apply(this,arguments);try{if(!loaded){loaded=true;ensureOwnerUI();}}catch(e){}return r;};}
+ensureOwnerUI();
 })();
 </script>
 </body>
