@@ -23,6 +23,7 @@
     "lowdb": "^7.0.1",
     "multer": "^2.3.0",
     "rss-parser": "^3.13.0",
-    "slugify": "^1.6.9"
+    "slugify": "^1.6.9",
+    "web-push": "^4.0.0"
   }
 }

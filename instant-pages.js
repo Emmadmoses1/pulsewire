@@ -450,6 +450,14 @@ async function submitIndexNow(urls) {
     console.log('IndexNow: sent ' + Math.min(urls.length, 100) + ' url(s), status ' + r.status);
   } catch (e) { console.log('IndexNow failed: ' + e.message); }
 }
+// new stories also go out as picture notifications (one notification, at most 6 an hour)
+function pushNew(doc, rows) {
+  try {
+    const slugs = new Set(rows.filter((r) => r.url.indexOf('/posts/') > -1).map((r) => r.url.split('/posts/')[1].replace(/\.html$/, '')));
+    const posts = (doc.posts || []).filter((p) => slugs.has(p.slug));
+    if (posts.length) require('./push-service').notifyNew(posts, doc).catch(() => {});
+  } catch (e) { /* notifications are optional */ }
+}
 async function checkNew() {
   try {
     const doc = await getDoc(0);
@@ -458,11 +466,12 @@ async function checkNew() {
     if (known === null) {
       known = new Set(rows.map((r) => r.url));
       await submitIndexNow(rows.filter((r) => r.t > Date.now() - 6 * 3600 * 1000).map((r) => r.url)); // published while the server slept
+      pushNew(doc, rows.filter((r) => r.t > Date.now() - 10 * 60 * 1000));
       return;
     }
     const fresh = rows.filter((r) => !known.has(r.url));
     fresh.forEach((r) => known.add(r.url));
-    if (fresh.length) await submitIndexNow(fresh.map((r) => r.url).concat(SITE + '/'));
+    if (fresh.length) { await submitIndexNow(fresh.map((r) => r.url).concat(SITE + '/')); pushNew(doc, fresh); }
   } catch (e) { console.log('IndexNow check failed: ' + e.message); }
 }
 let watching = false;

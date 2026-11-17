@@ -97,6 +97,8 @@ app.get('/feed.xml', instant.feedRoute());
 app.get('/rss.xml', instant.feedRoute());
 require('./livescores-service').register(app);
 app.get('/news-sitemap.xml', instant.newsSitemapRoute());
+require('./team-service').register(app);
+require('./push-service').register(app);
 app.get('/posts/:slug', instant.handler('post'));
 app.get('/songs/:slug', instant.handler('song'));
 app.get('/artists/:slug', instant.handler('artist'));
@@ -584,4 +586,5 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   try { require('./instant-pages').startIndexNowWatcher(); } catch (e) { console.log('IndexNow watcher not started: ' + e.message); }
   try { require('./autopost').start(); } catch (e) { console.log('Auto-post not started: ' + e.message); }
+  try { require('./push-service').start(); } catch (e) { console.log('Notifications not started: ' + e.message); }
 });
