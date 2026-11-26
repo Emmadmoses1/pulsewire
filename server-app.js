@@ -1,4 +1,5 @@
 const { JsonBinDB } = require('./jsonbin-db');
+const { SupabaseDB } = require('./supabase-db');
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
@@ -49,7 +50,9 @@ const postFields = postUpload.fields([
 ]);
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
-const db = new JsonBinDB(process.env.JSONBIN_KEY, { posts: [], articles: [], admin: { username: 'admin', password: 'changeme123' } });
+const USE_SB = process.env.DATA_BACKEND === 'supabase'; // default stays JSONBin until every route is migrated
+const DB_DEFAULT = { posts: [], articles: [], admin: { username: 'admin', password: 'changeme123' } };
+const db = USE_SB ? new SupabaseDB(DB_DEFAULT) : new JsonBinDB(process.env.JSONBIN_KEY, DB_DEFAULT);
 
 async function safeRead(res, fallbackMsg = 'Something went wrong. Please try again shortly.') {
   try {
@@ -75,6 +78,7 @@ async function initDB() {
   if (db.data.admin.password && !db.data.admin.password.startsWith('$2')) {
     db.data.admin.password = await bcrypt.hash(db.data.admin.password, 10);
   }
+  if (USE_SB) return;
   try {
     await db.write();
   } catch (err) {
@@ -236,7 +240,7 @@ app.get('/post/:slug', async (req, res) => {
   const post = db.data.posts.find(p => p.slug === req.params.slug);
   if (!post) return res.status(404).send('Post not found');
   post.views = (post.views || 0) + 1;
-  await db.write();
+  if (USE_SB) await db.bumpPost(post.slug, 'views'); else await db.write();
   const related = db.data.posts
     .filter(p => p.slug !== post.slug && p.category === post.category)
     .slice(-3).reverse();
@@ -250,6 +254,7 @@ app.post('/post/:slug/comment', async (req, res) => {
   const name = (req.body.name || 'Anonymous').trim().slice(0, 60);
   const text = (req.body.text || '').trim().slice(0, 1000);
   if (!text) return res.status(400).json({ error: 'Comment text required' });
+  if (USE_SB) return res.json({ comments: await db.addComment(post.slug, name, text) });
   post.comments = post.comments || [];
   const comment = { id: 'c' + Date.now() + Math.random().toString(36).slice(2, 6), name, text, ts: Date.now(), likes: 0, replies: [] };
   post.comments.push(comment);
@@ -266,6 +271,7 @@ app.post('/post/:slug/comment/:commentId/reply', async (req, res) => {
   const name = (req.body.name || 'Anonymous').trim().slice(0, 60);
   const text = (req.body.text || '').trim().slice(0, 1000);
   if (!text) return res.status(400).json({ error: 'Reply text required' });
+  if (USE_SB) return res.json({ comments: await db.addReply(post.slug, comment.id, name, text) });
   comment.replies = comment.replies || [];
   comment.replies.push({ id: 'r' + Date.now() + Math.random().toString(36).slice(2, 6), name, text, ts: Date.now(), likes: 0 });
   await db.write();
@@ -278,6 +284,7 @@ app.post('/post/:slug/comment/:commentId/like', async (req, res) => {
   if (!post) return res.status(404).json({ error: 'Post not found' });
   const comment = (post.comments || []).find(c => c.id === req.params.commentId);
   if (!comment) return res.status(404).json({ error: 'Comment not found' });
+  if (USE_SB) return res.json({ comments: await db.likeComment(post.slug, comment.id) });
   comment.likes = (comment.likes || 0) + 1;
   await db.write();
   res.json({ comments: post.comments });
@@ -291,6 +298,7 @@ app.post('/post/:slug/comment/:commentId/reply/:replyId/like', async (req, res) 
   if (!comment) return res.status(404).json({ error: 'Comment not found' });
   const reply = (comment.replies || []).find(r => r.id === req.params.replyId);
   if (!reply) return res.status(404).json({ error: 'Reply not found' });
+  if (USE_SB) return res.json({ comments: await db.likeComment(post.slug, reply.id) });
   reply.likes = (reply.likes || 0) + 1;
   await db.write();
   res.json({ comments: post.comments });
@@ -303,6 +311,7 @@ app.post('/post/:slug/reaction', async (req, res) => {
   const { key, previous } = req.body;
   const valid = ['like', 'love', 'laugh', 'wow', 'sad'];
   if (!valid.includes(key)) return res.status(400).json({ error: 'Invalid reaction' });
+  if (USE_SB) return res.json({ reactions: await db.react(post.slug, key, previous) });
   post.reactions = post.reactions || {};
   if (previous === key) {
     post.reactions[key] = Math.max(0, (post.reactions[key] || 0) - 1);
