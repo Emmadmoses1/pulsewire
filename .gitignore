@@ -31,3 +31,5 @@ apply-diag.js
 apply-retry.js
 *.bak-cat
 apply-category-theme.js
+*.bak-pages
+apply-pages-theme.js
