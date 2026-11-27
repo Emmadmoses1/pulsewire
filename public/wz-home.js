@@ -72,8 +72,29 @@
     return '<a class="rel" href="' + link + '"><span class="rc">' + (im ? '<img src="' + esc(im) + '" data-o="' + esc(cover) + '" onerror="this.onerror=null;this.src=this.dataset.o" width="320" height="320" loading="lazy" alt="">' : '<span class="mph">\uD83C\uDFB5</span>') +
       (al ? '<em class="rtag">ALBUM \u00B7 ' + r.tracks.length + ' tracks</em>' : '') + (fresh ? '<em class="rnew">NEW</em>' : '') + '</span><b>' + esc(dec(title)) + '</b><small>' + esc(am[aid] ? am[aid].name : '') + '</small></a>';
   }
-  function spot(rel, am) {
-    var r = rel[0];
+  // MUSIC / GOSPEL stories that carry a downloadable audio file can headline the "New song" card too
+  function audioPost(p) {
+    var f = p && p.musicFile;
+    return !!(p && p.slug && p.title && p.coverImage && (p.category === 'MUSIC' || p.category === 'GOSPEL') && (p.q !== 0 || p.pinned) &&
+      typeof f === 'string' && f.length > 4 && !/^(none|null|undefined)$/i.test(f.trim()));
+  }
+  function postTime(p) { return +p.createdAt || Date.parse(p.date) || 0; }
+  function songFromPost(p) {
+    var t = dec(p.title).replace(/\[[^\]]*\]/g, ' ').replace(/[\s|\-\u2013\u2014:]*\(?\s*mp3\s*(?:download|audio)?\s*\)?/ig, ' ').replace(/\s+/g, ' ').replace(/^[\s|\-\u2013\u2014:]+|[\s|\-\u2013\u2014:]+$/g, '');
+    var who = '', m = t.match(/^(.+?)\s+by\s+(.+)$/i) || t.match(/^([^|]+?)\s*\|\s*([^|]+)$/);
+    if (m) { t = m[1].trim(); who = m[2].trim(); }
+    return { title: t || dec(p.title), artist: who || cname(p.category) };
+  }
+  function spotPost(p) {
+    var s = songFromPost(p), im = IMG(p.coverImage, 480, 480);
+    if (!im) return '';
+    return '<a class="spot" href="' + href(p) + '"><span class="spot-bg" style="background-image:url(' + esc(im) + ')"></span><span class="spot-in"><img src="' + esc(im) + '" width="112" height="112" alt="" loading="lazy"><span class="spot-t"><em>NEW SONG</em><b>' +
+      esc(s.title) + '</b><small>' + esc(s.artist) + '</small><i>Download \u2192</i></span></span></a>';
+  }
+  function spot(rel, am, posts) {
+    var r = rel[0], pp = null;
+    (posts || []).forEach(function (p) { if (audioPost(p) && (!pp || postTime(p) > postTime(pp))) pp = p; });
+    if (pp && (!r || postTime(pp) > r.t)) { var sp = spotPost(pp); if (sp) return sp; }
     if (!r) return '';
     var al = r.kind === 'album', s = r.song, cover = al ? r.cover : s.cover, title = dec(al ? r.name : s.title), aid = al ? r.artistId : s.artistId;
     var link = al ? '/albums/' + albumSlug(r.name, r.id) + '.html' : '/songs/' + safe(s.slug) + '.html';
@@ -82,10 +103,11 @@
     return '<a class="spot" href="' + link + '"><span class="spot-bg" style="background-image:url(' + esc(im) + ')"></span><span class="spot-in"><img src="' + esc(im) + '" width="112" height="112" alt="" loading="lazy"><span class="spot-t"><em>' +
       (al ? 'NEW ALBUM \u00B7 ' + r.tracks.length + ' TRACKS' : 'NEW SONG') + '</em><b>' + esc(title) + '</b><small>' + esc(am[aid] ? am[aid].name : '') + '</small><i>' + (al ? 'Open album \u2192' : 'Download \u2192') + '</i></span></span></a>';
   }
-  function musicSection(songs, artists) {
-    if (!songs.length) return '';
+  function musicSection(songs, artists, posts) {
+    if (!songs.length && !(posts || []).some(audioPost)) return '';
     var am = {}; artists.forEach(function (a) { am[a.id] = a; });
     var rel = releases(songs), now = Date.now();
+    if (!songs.length) return spot(rel, am, posts);
     var singles = rel.filter(function (r) { return r.kind === 'single'; }).slice(0, 8);
     var top = songs.filter(function (s) { return s && s.slug && (+s.downloads || 0) > 0; }).sort(function (a, b) { return (+b.downloads || 0) - (+a.downloads || 0); }).slice(0, 5);
     function row(s, n) {
@@ -94,7 +116,7 @@
         (im ? '<img src="' + esc(im) + '" data-o="' + esc(s.cover) + '" onerror="WZH.fb(this)" width="160" height="160" loading="lazy" alt="">' : '<span class="mph">\uD83C\uDFB5</span>') +
         '<span class="mt"><b>' + esc(dec(s.title)) + '</b><small>' + esc(am[s.artistId] ? am[s.artistId].name : '') + '</small></span><span class="mdl">Download</span></a>';
     }
-    return spot(rel, am) + '<section class="blk"><div class="blk-hd"><h2><i>\uD83C\uDD95</i> New releases</h2><a href="/music">See all \u2192</a></div><div class="rail2">' + rel.slice(0, 12).map(function (r) { return relCard(r, am, now); }).join('') + '</div></section>' +
+    return spot(rel, am, posts) + '<section class="blk"><div class="blk-hd"><h2><i>\uD83C\uDD95</i> New releases</h2><a href="/music">See all \u2192</a></div><div class="rail2">' + rel.slice(0, 12).map(function (r) { return relCard(r, am, now); }).join('') + '</div></section>' +
       (singles.length ? '<section class="blk"><div class="blk-hd"><h2><i>\uD83C\uDFA7</i> Latest singles</h2><a href="/music">See all \u2192</a></div><div class="mlist">' + singles.map(function (r) { return row(r.song, 0); }).join('') + '</div></section>' : '') +
       (top.length ? '<section class="blk"><div class="blk-hd"><h2><i>\uD83D\uDD25</i> Most downloaded</h2></div><div class="mlist">' + top.map(function (s, i) { return row(s, i + 1); }).join('') + '</div></section>' : '');
   }
@@ -141,7 +163,7 @@
       bars: hero.map(function () { return '<i><b></b></i>'; }).join(''),
       hero: hero.map(heroSlide).join(''),
       trending: trend.map(trendRow).join(''),
-      music: musicSection(songs, artists),
+      music: musicSection(songs, artists, posts),
       artists: artistSection(songs, artists),
       sections: secs.join(''),
       chips: '<a class="chip on" data-cat="ALL" href="/">All</a>' + cats.map(function (c) { return '<a class="chip" data-cat="' + esc(c) + '" href="/category/' + cslug(c) + '">' + esc(cname(c)) + '</a>'; }).join(''),

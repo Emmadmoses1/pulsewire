@@ -460,7 +460,7 @@ const homeQ = (doc, p) => (p.pinned ? 1 : (typeof seoState === 'function' ? (seo
 function renderHome(doc) {
   const WZH = require('./public/wz-home.js');
   const posts = (doc.posts || []).slice().reverse().filter((p) => p && p.slug && p.title).map((p) => ({
-    slug: p.slug, title: p.title, category: p.category, excerpt: p.excerpt || plain(p.content).slice(0, 200), coverImage: p.coverImage, date: p.date, views: p.views, pinned: p.pinned || 0, q: homeQ(doc, p)
+    slug: p.slug, title: p.title, category: p.category, excerpt: p.excerpt || plain(p.content).slice(0, 200), coverImage: p.coverImage, date: p.date, createdAt: p.createdAt, musicFile: p.musicFile, views: p.views, pinned: p.pinned || 0, q: homeQ(doc, p)
   }));
   const o = WZH.build({ posts, songs: doc.songs || [], artists: doc.artists || [] });
   let html = read('index.html');
