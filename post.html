@@ -153,6 +153,37 @@ html[data-fs="2"] .article-body{font-size:clamp(20px,3vw,24px)!important}
 .wz-lb img{max-width:100%;max-height:100%;border-radius:10px}
 .related-card-title{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 @media print{.ticker-bar,.navbar,.share-row,.wz-tools,.reactions-bar,.ad-slot,.comments-section,.newsletter,#wzPromo,.wz-sticky,#backToTop,.related-section,.media-block,.download-gate{display:none!important}body{background:#fff!important;color:#000!important}}
+/* --- posts page upgrade v2 --- */
+.article-body blockquote{font-size:1.12em;font-style:normal;font-weight:700;color:var(--text);background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:0 16px 16px 0;padding:14px 18px}
+.wz-fs button.ls{width:auto;padding:0 12px;font-size:12px}
+.wz-fs button.ls.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.wz-pn{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:26px 0 8px}
+.wz-pn a{display:flex;flex-direction:column;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;text-decoration:none;color:var(--text);transition:.15s;min-width:0}
+.wz-pn a:hover{border-color:var(--brand);transform:translateY(-2px)}
+.wz-pn small{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--brand)}
+.wz-pn b{font-size:14px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.wz-pn .nx{text-align:right}
+.wz-pn .none{visibility:hidden}
+@media(max-width:520px){.wz-pn{grid-template-columns:1fr}.wz-pn .nx{text-align:left}}
+.wz-trend{margin-top:30px}.wz-trend ol{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.wz-trend a{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px;text-decoration:none;color:var(--text);transition:.15s}
+.wz-trend a:hover{border-color:var(--brand)}
+.wz-trend .n{flex:0 0 30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center}
+.wz-trend img{width:64px;height:48px;object-fit:cover;border-radius:10px;flex:0 0 64px;background:var(--line)}
+.wz-trend .t{font-size:14px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wz-trend small{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
+.comment-item{display:flex;gap:12px;background:transparent!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;padding:16px 0!important;margin:0!important}
+.comment-item:last-child{border-bottom:0!important}
+.cm-av{flex:0 0 38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px}
+.cm-body{flex:1;min-width:0}
+.comment-header{justify-content:flex-start!important;gap:8px}
+.comment-text{overflow-wrap:anywhere;white-space:pre-wrap}
+.comment-actions button{border-radius:999px!important;border-color:var(--line)!important;color:var(--muted)!important}
+.replies-list{border-left:2px solid var(--line)!important}
+.reply-item .cm-av{flex-basis:30px;height:30px;font-size:12px}
+.cm-empty{text-align:center;padding:22px 10px;color:var(--muted);font-size:14px}
+.comment-header strong{color:var(--text)!important}
+.cm-count{font-size:11px;color:var(--muted);text-align:right;margin:-4px 0 8px}
 </style>
 </head>
 <body>
@@ -349,10 +380,48 @@ function wzEnhance(){
       var o=document.createElement('div');o.className='wz-lb';o.innerHTML='<img alt="">';o.firstChild.src=im.currentSrc||im.src;o.onclick=function(){o.remove();};document.body.appendChild(o);
     });
   }
+  if(!window.speechSynthesis){var lb=document.getElementById('wzListen');if(lb)lb.remove();}
   document.querySelectorAll('.article-body img').forEach(function(i){i.loading='lazy';i.decoding='async';});
   document.querySelectorAll('.article-body a[href^="http"]').forEach(function(a){a.target='_blank';a.rel='noopener nofollow';});
 }
 var wzSig='';
+var wzSpeaking=false;
+function wzListen(){
+  var ss=window.speechSynthesis,b=document.getElementById('wzListen');
+  if(!ss)return;
+  if(wzSpeaking){wzSpeaking=false;ss.cancel();if(b){b.classList.remove('on');b.innerHTML='🔊 Listen';}return;}
+  var el=document.querySelector('.article-body');if(!el)return;
+  var c=el.cloneNode(true);c.querySelectorAll('.article-source,script,style,.ad-slot').forEach(function(x){x.remove();});
+  var t=(document.querySelector('.article-title')||{}).textContent+'. '+c.textContent.replace(/\s+/g,' ').trim();
+  var parts=t.match(/[^.!?]+[.!?]*\s*/g)||[t],q=[],cur='';
+  parts.forEach(function(s){if((cur+s).length>170){if(cur)q.push(cur);cur=s;}else cur+=s;});if(cur)q.push(cur);
+  wzSpeaking=true;if(b){b.classList.add('on');b.innerHTML='⏹ Stop';}
+  var i=0;(function next(){
+    if(!wzSpeaking||i>=q.length){wzSpeaking=false;if(b){b.classList.remove('on');b.innerHTML='🔊 Listen';}return;}
+    var u=new SpeechSynthesisUtterance(q[i++]);u.lang='en-NG';u.rate=1;u.onend=next;u.onerror=function(){wzSpeaking=false;};ss.speak(u);
+  })();
+}
+addEventListener('pagehide',function(){try{speechSynthesis.cancel();}catch(e){}});
+function wzNavCalc(post,posts){
+  var t=+post.createdAt||0,prev=null,next=null,slim=function(p){return {slug:p.slug,title:p.title,category:p.category,coverImage:p.coverImage,views:+p.views||0};};
+  posts.forEach(function(p){if(!p||p.slug===post.slug||p.category!==post.category)return;var c=+p.createdAt||0;
+    if(c<t&&(!prev||c>(+prev.createdAt||0)))prev=p;if(c>t&&(!next||c<(+next.createdAt||0)))next=p;});
+  var hot=posts.filter(function(p){return p&&p.slug!==post.slug&&(+p.views||0)>0&&(+p.createdAt||0)>Date.now()-30*864e5;}).sort(function(a,b){return (+b.views||0)-(+a.views||0);}).slice(0,5).map(slim);
+  return {prev:prev&&slim(prev),next:next&&slim(next),trending:hot};
+}
+function wzNavHTML(nav){
+  var h='';
+  if(nav&&(nav.prev||nav.next)){
+    h+='<div class="wz-pn">'+(nav.prev?'<a href="/posts/'+nav.prev.slug+'.html"><small>&larr; Previous</small><b>'+wzEsc(nav.prev.title)+'</b></a>':'<a class="none"></a>')+
+      (nav.next?'<a class="nx" href="/posts/'+nav.next.slug+'.html"><small>Next &rarr;</small><b>'+wzEsc(nav.next.title)+'</b></a>':'<a class="none"></a>')+'</div>';
+  }
+  if(nav&&nav.trending&&nav.trending.length){
+    h+='<div class="wz-trend"><h3 class="related-title">🔥 Trending now</h3><ol>'+nav.trending.map(function(p,i){
+      return '<li><a href="/posts/'+p.slug+'.html"><span class="n">'+(i+1)+'</span>'+(p.coverImage?'<img src="'+wzEsc(IMG(p.coverImage,160))+'" data-o="'+wzEsc(p.coverImage)+'" onerror="IMGFB(this)" loading="lazy" alt="">':'')+
+        '<span><span class="t">'+wzEsc(p.title)+'</span>'+((+p.views||0)>=50?'<small>'+wzK(p.views)+' views</small>':'')+'</span></a></li>';}).join('')+'</ol></div>';
+  }
+  return h;
+}
 function wzSoftRefresh(post){ /* same story already on screen: update the live parts only, keep audio, typing and scroll */
   var slug=post.slug,rb=document.getElementById('reactionsBar'),cl=document.getElementById('commentsList'),cc=document.getElementById('commentCount'),by=document.querySelector('.views-bar.byline');
   if(rb)rb.innerHTML=renderReactionsHTML(post.reactions||{},slug);
@@ -367,15 +436,29 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
+function wzAgo(ts){
+  var s=Math.max(0,(Date.now()-(+ts||0))/1000);
+  if(!ts||isNaN(s))return '';
+  if(s<60)return 'just now';
+  if(s<3600)return Math.floor(s/60)+' min ago';
+  if(s<86400)return Math.floor(s/3600)+' h ago';
+  if(s<86400*7)return Math.floor(s/86400)+' d ago';
+  return new Date(+ts).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+}
+function wzCmAv(name){
+  var n=String(name||'Anonymous').trim()||'A',h=0;for(var i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))%360;
+  return '<span class="cm-av" style="background:hsl('+h+',55%,45%)">'+escapeHtml(n.charAt(0).toUpperCase())+'</span>';
+}
 function renderCommentsHTML(comments,slug){
-  if(!comments||!comments.length)return '<p style="color:#666;font-size:13px;padding:10px 0">No comments yet. Be the first!</p>';
+  if(!comments||!comments.length)return '<div class="cm-empty">💬 No comments yet.<br>Be the first to share your thoughts.</div>';
   return comments.map(c=>`
     <div class="comment-item">
-      <div class="comment-header"><strong>${escapeHtml(c.name||'Anonymous')}</strong><span class="comment-date">${new Date(c.ts).toLocaleDateString()}</span></div>
+      ${wzCmAv(c.name)}<div class="cm-body">
+      <div class="comment-header"><strong>${escapeHtml(c.name||'Anonymous')}</strong><span class="comment-date" title="${new Date(c.ts).toLocaleString()}">${wzAgo(c.ts)}</span></div>
       <p class="comment-text">${escapeHtml(c.text)}</p>
       <div class="comment-actions">
         <button onclick="likeComment('${slug}','${c.id}')">👍 ${c.likes||0}</button>
-        <button onclick="toggleReplyForm('${c.id}')">Reply</button>
+        <button onclick="toggleReplyForm('${c.id}')">Reply${(c.replies&&c.replies.length)?' ('+c.replies.length+')':''}</button>
       </div>
       <div class="reply-form hidden" id="replyForm-${c.id}">
         <input type="text" id="replyName-${c.id}" placeholder="Your name">
@@ -383,13 +466,14 @@ function renderCommentsHTML(comments,slug){
         <button class="dw-btn" style="padding:6px 14px;font-size:12px" onclick="postReply('${slug}','${c.id}')">Reply</button>
       </div>
       ${(c.replies&&c.replies.length)?`<div class="replies-list">${c.replies.map(r=>`
-        <div class="reply-item">
-          <div class="comment-header"><strong>${escapeHtml(r.name||'Anonymous')}</strong><span class="comment-date">${new Date(r.ts).toLocaleDateString()}</span></div>
+        <div class="reply-item" style="display:flex;gap:10px">
+          ${wzCmAv(r.name)}<div class="cm-body">
+          <div class="comment-header"><strong>${escapeHtml(r.name||'Anonymous')}</strong><span class="comment-date" title="${new Date(r.ts).toLocaleString()}">${wzAgo(r.ts)}</span></div>
           <p class="comment-text">${escapeHtml(r.text)}</p>
-          <div class="comment-actions"><button onclick="likeReply('${slug}','${c.id}','${r.id}')">👍 ${r.likes||0}</button></div>
+          <div class="comment-actions"><button onclick="likeReply('${slug}','${c.id}','${r.id}')">👍 ${r.likes||0}</button></div></div>
         </div>
       `).join('')}</div>`:''}
-    </div>
+    </div></div>
   `).join('');
 }
 
@@ -538,7 +622,7 @@ function renderPost(post,posts){
       <button class="share-btn-x" onclick="sharePost('copy')">🔗 Copy</button>
     </div>
     <div class="wz-tools"><div class="reactions-bar" id="reactionsBar" style="margin:0">${renderReactionsHTML(post.reactions||{},slug)}</div>
-      <div class="wz-fs" aria-label="Text size"><button onclick="wzFS(-1)" aria-label="Smaller text">A&minus;</button><button onclick="wzFS(1)" aria-label="Larger text">A+</button></div></div>
+      <div class="wz-fs" aria-label="Text size"><button class="ls" id="wzListen" onclick="wzListen()" aria-label="Listen to this story">🔊 Listen</button><button onclick="wzFS(-1)" aria-label="Smaller text">A&minus;</button><button onclick="wzFS(1)" aria-label="Larger text">A+</button></div></div>
     <div class="ad-slot">Advertisement</div>
     ${post.coverImage?`<img src="${IMG(post.coverImage,900)}" data-o="${post.coverImage}" onerror="IMGFB(this)" class="article-cover" alt="${post.title}">`:''}
     ${post.videoFile?`
@@ -589,13 +673,15 @@ function renderPost(post,posts){
           `).join('')}
         </div>
       </div>`:''}
+    ${wzNavHTML((typeof PREPOST!=='undefined'&&PREPOST&&PREPOST.more&&PREPOST.post&&PREPOST.post.slug===slug)?PREPOST.more:wzNavCalc(post,posts))}
     <div class="article-back"><a href="/" class="back-link">&larr; Back to all stories</a></div>
 
     <div class="comments-section">
       <h3 class="comments-title">💬 Comments (<span id="commentCount">${(post.comments||[]).length}</span>)</h3>
       <div class="comment-form">
-        <input type="text" id="commentName" placeholder="Your name">
-        <textarea id="commentText" placeholder="Write a comment..."></textarea>
+        <input type="text" id="commentName" placeholder="Your name" maxlength="60">
+        <textarea id="commentText" placeholder="Write a comment..." maxlength="1000" oninput="document.getElementById('cmLeft').textContent=1000-this.value.length+' left'"></textarea>
+        <div class="cm-count" id="cmLeft">1000 left</div>
         <button class="dw-btn" style="padding:10px 20px;font-size:13px" onclick="postComment('${slug}')">Post Comment</button>
       </div>
       <div id="commentsList">${renderCommentsHTML(post.comments||[],slug)}</div>

@@ -149,17 +149,35 @@ function newsSitemapRoute() {
   return async (req, res, next) => { try { res.set('Cache-Control', 'public, max-age=120').type('application/xml; charset=utf-8').send(renderNewsSitemap(await getDoc(20000))); } catch (e) { next(); } };
 }
 
+// Previous / next story in the same category, and what is trending (most viewed lately)
+function postNav(doc, post) {
+  const posts = (doc.posts || []).filter((p) => p && p.slug && p.title);
+  const t = Number(post.createdAt) || 0, slim = (p) => ({ slug: p.slug, title: String(p.title).slice(0, 140), category: p.category || '', coverImage: p.coverImage || '', views: Number(p.views) || 0 });
+  let prev = null, next = null;
+  for (const p of posts) {
+    if (p.slug === post.slug || p.category !== post.category) continue;
+    const c = Number(p.createdAt) || 0;
+    if (c < t && (!prev || c > (Number(prev.createdAt) || 0))) prev = p;
+    if (c > t && (!next || c < (Number(next.createdAt) || 0))) next = p;
+  }
+  const pool = (days) => posts.filter((p) => p.slug !== post.slug && (Number(p.createdAt) || 0) > Date.now() - days * 864e5 && (Number(p.views) || 0) > 0);
+  let hot = pool(7); if (hot.length < 5) hot = pool(30);
+  hot.sort((a, b) => (Number(b.views) || 0) - (Number(a.views) || 0));
+  return { prev: prev && slim(prev), next: next && slim(next), trending: hot.slice(0, 5).map(slim) };
+}
 function ssrArticle(post, doc) {
   const cat = esc(post.category || ''), title = esc(post.title || '');
   const catLink = '<a href="/category/' + catSlug(post.category) + '">' + cat + '</a>';
   const rel = (doc.posts || []).filter((p) => p.slug !== post.slug && p.category === post.category).slice(-3).reverse();
+  const nav = postNav(doc, post);
   return '<div class="article-breadcrumb"><a href="/">Home</a> <span>/</span> ' + catLink + '</div>' +
     '<div class="article-cat-tag">' + cat + '</div><h1 class="article-title">' + title + '</h1>' +
     '<div class="views-bar byline">' + bylineHtml(post) + '</div>' +
     (/^https?:\/\//i.test(post.coverImage || '') ? '<img src="' + esc(ogImage(post.coverImage)) + '" class="article-cover" alt="' + title + '">' : '') +
     '<div class="article-body">' + (post.content || '') + '</div>' + authorBox(post) +
     (rel.length ? '<div class="related-section"><h3 class="related-title">More from ' + cat + '</h3>' +
-      rel.map((r) => '<p><a href="/posts/' + safeId(r.slug) + '.html">' + esc(r.title || '') + '</a></p>').join('') + '</div>' : '');
+      rel.map((r) => '<p><a href="/posts/' + safeId(r.slug) + '.html">' + esc(r.title || '') + '</a></p>').join('') + '</div>' : '') +
+    (nav.trending.length ? '<div class="related-section"><h3 class="related-title">Trending now</h3>' + nav.trending.map((r) => '<p><a href="/posts/' + safeId(r.slug) + '.html">' + esc(r.title) + '</a></p>').join('') + '</div>' : '');
 }
 function renderPost(doc, post) {
   const slug = safeId(post.slug);
@@ -173,7 +191,7 @@ function renderPost(doc, post) {
   page = put(page, '<div class="article-inner" id="articleInner"></div>', '<div class="article-inner" id="articleInner">' + ssrArticle(post, doc) + '</div>');
   const same = (doc.posts || []).filter((p) => p.slug !== post.slug && p.category === post.category).slice(-3)
     .map((p) => ({ slug: p.slug, title: p.title, category: p.category, coverImage: p.coverImage, date: p.date }));
-  return put(page, "const CACHE_KEY='pw_posts';", "const CACHE_KEY='pw_posts';\nconst PREPOST=" + js({ post, related: same }) + ';');
+  return put(page, "const CACHE_KEY='pw_posts';", "const CACHE_KEY='pw_posts';\nconst PREPOST=" + js({ post, related: same, more: postNav(doc, post) }) + ';');
 }
 function renderSong(doc, song) {
   const artist = (doc.artists || []).find((a) => a.id === song.artistId) || {};
