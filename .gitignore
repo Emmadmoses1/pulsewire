@@ -23,3 +23,5 @@ backups/
 supabase/*.local
 *.bak-lyrics
 apply-lyrics.js
+*.bak-doc
+apply-doc-fix.js

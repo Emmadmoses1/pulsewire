@@ -10,11 +10,22 @@ let inflight = null;
 function refreshDoc() {
   if (inflight) return inflight;
   inflight = (async () => {
-    const r = await fetch(DB_URL, { headers: { 'X-Master-Key': 'public' } });
-    if (!r.ok) throw new Error('database returned ' + r.status);
-    const j = await r.json();
-    cache = { t: Date.now(), doc: j.record || {} };
-    return cache.doc;
+    let lastErr;
+    for (let i = 0; i < 3; i++) {
+      try {
+        const r = await fetch(DB_URL, { headers: { 'X-Master-Key': 'public', 'User-Agent': 'wavzo-server/1.0', Accept: 'application/json' }, signal: AbortSignal.timeout(30000) });
+        if (!r.ok) { const t = (await r.text()).slice(0, 120).replace(/\s+/g, ' '); throw new Error('database returned ' + r.status + ' ' + t); }
+        const j = await r.json();
+        if (!j.record || !Array.isArray(j.record.posts)) throw new Error('database reply has no posts array');
+        cache = { t: Date.now(), doc: j.record };
+        return cache.doc;
+      } catch (e) {
+        lastErr = e;
+        console.error('[doc] fetch ' + (i + 1) + '/3 failed:', e && e.message);
+        await new Promise((ok) => setTimeout(ok, 1500 * (i + 1)));
+      }
+    }
+    throw lastErr;
   })().finally(() => { inflight = null; });
   return inflight;
 }
