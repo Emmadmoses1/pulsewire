@@ -92,6 +92,12 @@ function postLd(post, url) {
     publisher: { '@type': 'Organization', name: 'WAVZO', logo: { '@type': 'ImageObject', url: SITE + '/images/wavzo-icon-512.png' } }
   };
 }
+function breadcrumbLd(post) {
+  const items = [{ '@type': 'ListItem', position: 1, name: 'Home', item: SITE + '/' }];
+  if (post.category) items.push({ '@type': 'ListItem', position: 2, name: String(post.category), item: SITE + '/category/' + catSlug(post.category) });
+  items.push({ '@type': 'ListItem', position: items.length + 1, name: String(post.title || 'WAVZO').slice(0, 110) });
+  return { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items };
+}
 // ---- Search quality rules: only strong, unique posts are offered to Google ----
 const SEO_MIN_TEXT = 300; // posts with less text (and no audio/video) are kept for readers but hidden from Google
 const normTitle = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -126,7 +132,7 @@ function authorAvatar(p, cls) {
   return p.authorPhoto && /^https?:\/\//i.test(p.authorPhoto) ? '<img class="' + cls + '" src="' + esc(sqImg(p.authorPhoto, 96)) + '" width="44" height="44" alt="' + esc(nm) + '">' : '<span class="' + cls + ' ini">' + esc(nm.trim().charAt(0).toUpperCase()) + '</span>';
 }
 const readMins = (p) => Math.max(1, Math.round(plain(p.content).split(/\s+/).length / 200));
-function bylineHtml(p) { return authorAvatar(p, 'by-ph') + '<span class="by-t"><b>By ' + esc(authorName(p)) + '</b><small>' + esc(p.date || '') + ' &middot; ' + readMins(p) + ' min read</small></span>'; }
+function bylineHtml(p) { return authorAvatar(p, 'by-ph') + '<span class="by-t"><b>By ' + esc(authorName(p)) + '</b><small>' + esc(p.date || '') + ' &middot; ' + readMins(p) + ' min read' + ((+p.views || 0) >= 50 ? ' &middot; ' + (+p.views >= 1e3 ? (+p.views / 1e3).toFixed(1).replace('.0', '') + 'K' : +p.views) + ' views' : '') + '</small></span>'; }
 function authorBox(p) {
   return '<div class="author-box">' + authorAvatar(p, 'ab-ph') + '<div><small>Written by</small><b>' + esc(authorName(p)) + '</b><p>' + esc(p.authorBio || 'WAVZO brings you Nigerian music, news and culture.') + '</p></div></div>';
 }
@@ -161,7 +167,7 @@ function renderPost(doc, post) {
   const url = SITE + '/posts/' + (st.dupOf ? safeId(st.dupOf) : slug) + '.html';
   let page = put(read('post.html'), '<title>WAVZO</title>', head({
     title: esc(post.title || 'WAVZO') + ' — WAVZO', desc: attr(post.excerpt || plain(post.content), 200), url, type: 'article',
-    ogTitle: esc(post.title || 'WAVZO'), image: esc(ogImage(post.coverImage)), ld: postLd(post, url), robots: st.thin && !st.dupOf ? 'noindex,follow' : ''
+    ogTitle: esc(post.title || 'WAVZO'), image: esc(ogImage(post.coverImage)), ld: [postLd(post, url), breadcrumbLd(post)], robots: st.thin && !st.dupOf ? 'noindex,follow' : ''
   }));
   page = put(page, "let slug=new URLSearchParams(window.location.search).get('slug');", "const slug='" + slug + "';");
   page = put(page, '<div class="article-inner" id="articleInner"></div>', '<div class="article-inner" id="articleInner">' + ssrArticle(post, doc) + '</div>');
