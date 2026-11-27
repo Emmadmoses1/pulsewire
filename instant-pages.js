@@ -27,6 +27,23 @@ function saveDoc(doc) {
 cache.doc = loadSavedDoc();
 
 let inflight = null;
+async function fetchDocJson() {
+  let last;
+  for (let i = 0; i < 4; i++) {
+    try {
+      const r = await fetch(DB_URL, { headers: { 'X-Master-Key': 'public', 'User-Agent': 'wavzo-server/1.0' }, signal: AbortSignal.timeout(45000) });
+      if (!r.ok) throw new Error('database returned ' + r.status);
+      const j = await r.json();
+      if (!j || !j.record || !Array.isArray(j.record.posts)) throw new Error('database reply has no posts');
+      return j;
+    } catch (e) {
+      last = e;
+      console.error('[doc] try ' + (i + 1) + '/4 failed: ' + (e && e.message));
+      if (i < 3) await new Promise((ok) => setTimeout(ok, 2500 * (i + 1)));
+    }
+  }
+  throw last;
+}
 const docDiag = { okAt: 0, errAt: 0, err: '', ms: 0 };
 const newestOf = (d) => { const p = d && d.posts && d.posts[d.posts.length - 1]; return p ? String(p.date || '') + ' | ' + String(p.title || '').slice(0, 50) : ''; };
 function refreshDoc() {
@@ -34,9 +51,7 @@ function refreshDoc() {
   inflight = (async () => {
     const t0 = Date.now();
     try {
-      const r = await fetch(DB_URL, { headers: { 'X-Master-Key': 'public', 'User-Agent': 'wavzo-server/1.0' }, signal: AbortSignal.timeout(45000) });
-      if (!r.ok) throw new Error('database returned ' + r.status);
-      const j = await r.json();
+      const j = await fetchDocJson();
       cache = { t: Date.now(), doc: j.record || {} }; lastFail = 0; saveDoc(cache.doc);
       docDiag.okAt = Date.now(); docDiag.ms = Date.now() - t0;
       return cache.doc;
@@ -685,4 +700,4 @@ function startIndexNowWatcher() {
   if (watching) return;
   watching = true; refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
 
-module.exports = { docStatus, probeDoc, newsSitemapRoute, feedRoute, homeRoute, artistsRoute, categoryRoute, albumRoute, musicRoute, homePayload, dbDoc: () => getDoc(8000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
+module.exports = { docStatus, probeDoc, newsSitemapRoute, feedRoute, homeRoute, artistsRoute, categoryRoute, albumRoute, musicRoute, homePayload, dbDoc: () => getDoc(45000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };

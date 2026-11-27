@@ -27,3 +27,5 @@ apply-lyrics.js
 apply-doc-fix.js
 *.bak-diag
 apply-diag.js
+*.bak-retry
+apply-retry.js
