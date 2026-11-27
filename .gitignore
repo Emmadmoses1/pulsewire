@@ -29,3 +29,5 @@ apply-doc-fix.js
 apply-diag.js
 *.bak-retry
 apply-retry.js
+*.bak-cat
+apply-category-theme.js

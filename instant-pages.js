@@ -465,6 +465,36 @@ function categoryList(doc) {
   }
   return [...map.values()].sort((a, b) => b.all.length - a.all.length);
 }
+function pagerHtml(cur, pages, urlOf) {
+  if (pages <= 1) return '';
+  const set = new Set([1, pages]);
+  for (let i = cur - 2; i <= cur + 2; i++) if (i >= 1 && i <= pages) set.add(i);
+  const nums = [...set].sort((a, b) => a - b);
+  let out = '', prev = 0;
+  if (cur > 1) out += '<a class="pgn" href="' + urlOf(cur - 1) + '" rel="prev" aria-label="Newer page">&laquo;</a>';
+  for (const n of nums) {
+    if (prev && n - prev > 1) out += '<span class="pgd">&hellip;</span>';
+    out += n === cur ? '<b class="pgn on" aria-current="page">' + n + '</b>' : '<a class="pgn" href="' + urlOf(n) + '">' + n + '</a>';
+    prev = n;
+  }
+  if (cur < pages) out += '<a class="pgn" href="' + urlOf(cur + 1) + '" rel="next" aria-label="Older page">&raquo;</a>';
+  return '<nav class="pager" aria-label="Pages">' + out + '</nav>';
+}
+const CAT_THEME_CSS = '<style>html body{background:#fff;color:#111;font-family:Montserrat,Inter,"Segoe UI",system-ui,sans-serif}' +
+  '.hdr{background:#0d0d0d;border-bottom:3px solid #e5202f}.hdr-in{max-width:1000px;margin:0 auto;padding:0 14px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px}' +
+  '.hdr .logo{font-weight:900;font-size:22px;letter-spacing:2px;color:#fff;text-decoration:none;flex:0 0 auto}.hdr .logo span{color:#e5202f}' +
+  '.hdr nav{display:flex;overflow-x:auto;white-space:nowrap;scrollbar-width:none}.hdr nav::-webkit-scrollbar{display:none}' +
+  '.hdr nav a{color:#ddd;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:8px 10px;text-decoration:none}.hdr nav a:hover{color:#fff;box-shadow:inset 0 -3px #e5202f}' +
+  '.top{display:none}h1{font-size:clamp(20px,5vw,28px);font-weight:900;letter-spacing:.5px;text-transform:uppercase}' +
+  '.chip{border-radius:0;border:0;border-bottom:2px solid #e5202f;background:none;padding:4px 0;margin-right:10px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase}.chip.on{background:none;color:#e5202f}' +
+  '.grid{display:block}.card{display:flex;gap:14px;align-items:flex-start;background:none;border:0;border-bottom:1px solid #e4e4e4;border-radius:0;padding:12px 0}' +
+  '.card img{width:120px;height:120px;flex:0 0 120px;aspect-ratio:1/1;object-fit:cover}.ct{padding:0}.ct h2{font-size:15px;line-height:1.3}.ct p{display:none}' +
+  '@media(min-width:900px){.grid{display:grid;grid-template-columns:1fr 1fr;column-gap:32px}.ct p{display:block}}' +
+  '.pager{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:26px 0}' +
+  '.pgn{min-width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;padding:0 10px;border:1px solid #e4e4e4;color:#111;font-weight:800;font-size:14px;text-decoration:none;background:#fff}' +
+  '.pgn.on{background:#0d0d0d;border-color:#0d0d0d;color:#fff}.pgd{align-self:center;color:#6b6b6b}</style>\n';
+const CAT_HEADER = '<header class="hdr"><div class="hdr-in"><a class="logo" href="/" aria-label="WAVZO home">WAV<span>ZO</span></a><nav aria-label="Main">' +
+  '<a href="/category/news">News</a><a href="/category/music">Music</a><a href="/category/entertainment">Entertainment</a><a href="/category/trending">Trending</a><a href="/category/sports">Sports</a><a href="/artists.html">Artists</a><a href="/charts.html">Charts</a><a href="/livescores.html">Live scores</a></nav></div></header>\n';
 function renderCategory(doc, slug, pageNo) {
   const list = categoryList(doc);
   const c = list.find((x) => x.slug === slug);
@@ -508,9 +538,9 @@ function renderCategory(doc, slug, pageNo) {
     '.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}.card{display:block;background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;color:inherit;text-decoration:none}' +
     '.card img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#ddd}.ct{padding:10px 12px 12px}.ct h2{font-size:15px;margin:0 0 6px;line-height:1.3}.ct p{font-size:13px;color:#555;margin:0 0 6px}.ct span{font-size:11px;color:#888}' +
     '.nav{display:flex;align-items:center;justify-content:space-between;margin:22px 0}.pg{background:#e11;color:#fff;font-weight:700;text-decoration:none;padding:10px 16px;border-radius:8px;font-size:14px}.pn{font-size:13px;color:#555}' +
-    '.links{margin-top:30px;font-size:12px;color:#777}.links a{color:#e11;margin-right:12px}' + (c.slug === 'music' ? REL_CSS : '') + '</style>\n</head>\n<body>\n<div class="wrap">\n' +
+    '.links{margin-top:30px;font-size:12px;color:#777}.links a{color:#e11;margin-right:12px}' + (c.slug === 'music' ? REL_CSS : '') + '</style>\n' + CAT_THEME_CSS + '</head>\n<body>\n' + CAT_HEADER + '<div class="wrap">\n' +
     '<div class="top"><a class="brand" href="/">WAV<span>ZO</span></a><a href="/" style="font-size:13px;font-weight:700;color:#e11;text-decoration:none">Home</a></div>\n' +
-    '<h1>' + esc(name) + '</h1>\n<p class="sub">' + esc(desc) + '</p>\n<div class="chips">' + chips + '</div>\n' + musicBlock + '<div class="grid">\n' + cards + '\n</div>\n<div class="nav">' + nav + '</div>\n' +
+    '<h1>' + esc(name) + '</h1>\n<p class="sub">' + esc(desc) + '</p>\n<div class="chips">' + chips + '</div>\n' + musicBlock + '<div class="grid">\n' + cards + '\n</div>\n' + pagerHtml(pageNo, pages, urlOf) + '\n' +
     '<div class="links"><a href="/">Home</a><a href="/about.html">About</a><a href="/contact.html">Contact</a><a href="/dmca.html">DMCA</a><a href="/privacy-policy.html">Privacy</a><a href="/terms.html">Terms</a></div>\n</div>\n</body>\n</html>\n';
 }
 function categoryRoute() {
