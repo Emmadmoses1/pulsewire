@@ -27,16 +27,45 @@ function saveDoc(doc) {
 cache.doc = loadSavedDoc();
 
 let inflight = null;
+const docDiag = { okAt: 0, errAt: 0, err: '', ms: 0 };
+const newestOf = (d) => { const p = d && d.posts && d.posts[d.posts.length - 1]; return p ? String(p.date || '') + ' | ' + String(p.title || '').slice(0, 50) : ''; };
 function refreshDoc() {
   if (inflight) return inflight;
   inflight = (async () => {
-    const r = await fetch(DB_URL, { headers: { 'X-Master-Key': 'public' } });
-    if (!r.ok) throw new Error('database returned ' + r.status);
-    const j = await r.json();
-    cache = { t: Date.now(), doc: j.record || {} }; lastFail = 0; saveDoc(cache.doc);
-    return cache.doc;
+    const t0 = Date.now();
+    try {
+      const r = await fetch(DB_URL, { headers: { 'X-Master-Key': 'public', 'User-Agent': 'wavzo-server/1.0' }, signal: AbortSignal.timeout(45000) });
+      if (!r.ok) throw new Error('database returned ' + r.status);
+      const j = await r.json();
+      cache = { t: Date.now(), doc: j.record || {} }; lastFail = 0; saveDoc(cache.doc);
+      docDiag.okAt = Date.now(); docDiag.ms = Date.now() - t0;
+      return cache.doc;
+    } catch (e) {
+      docDiag.errAt = Date.now(); docDiag.err = String(e && e.message || e).slice(0, 160); docDiag.ms = Date.now() - t0;
+      console.error('[doc] refresh failed after ' + docDiag.ms + 'ms: ' + docDiag.err);
+      throw e;
+    }
   })().finally(() => { inflight = null; });
   return inflight;
+}
+function docStatus() {
+  const d = cache.doc;
+  return { now: new Date().toISOString(), serverUptimeMin: Math.round(process.uptime() / 60), haveDoc: !!d, docAgeSec: cache.t ? Math.round((Date.now() - cache.t) / 1000) : null,
+    posts: d && d.posts ? d.posts.length : 0, newest: newestOf(d), lastOkSecAgo: docDiag.okAt ? Math.round((Date.now() - docDiag.okAt) / 1000) : null,
+    lastError: docDiag.err || null, lastErrorSecAgo: docDiag.errAt ? Math.round((Date.now() - docDiag.errAt) / 1000) : null, lastRefreshMs: docDiag.ms };
+}
+let lastProbe = 0;
+async function probeDoc() {
+  if (Date.now() - lastProbe < 15000) return { skipped: 'probe ran less than 15s ago' };
+  lastProbe = Date.now();
+  const t0 = Date.now();
+  try {
+    const r = await fetch(DB_URL, { headers: { 'X-Master-Key': 'public', 'User-Agent': 'wavzo-server/1.0' }, signal: AbortSignal.timeout(45000) });
+    const txt = await r.text();
+    let n = 0, newest = '';
+    try { const j = JSON.parse(txt); const d = j.record || j; n = (d.posts || []).length; newest = newestOf(d); } catch (e) { newest = 'not JSON: ' + txt.slice(0, 80).replace(/\s+/g, ' '); }
+    return { status: r.status, ms: Date.now() - t0, bytes: txt.length, posts: n, newest };
+  } catch (e) { return { error: String(e && e.message || e).slice(0, 160), ms: Date.now() - t0 }; }
 }
 // Old data is served instantly while fresh data loads in the background
 async function getDoc(maxAgeMs) {
@@ -656,4 +685,4 @@ function startIndexNowWatcher() {
   if (watching) return;
   watching = true; refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
 
-module.exports = { newsSitemapRoute, feedRoute, homeRoute, artistsRoute, categoryRoute, albumRoute, musicRoute, homePayload, dbDoc: () => getDoc(8000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
+module.exports = { docStatus, probeDoc, newsSitemapRoute, feedRoute, homeRoute, artistsRoute, categoryRoute, albumRoute, musicRoute, homePayload, dbDoc: () => getDoc(8000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };

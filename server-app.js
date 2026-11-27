@@ -96,6 +96,7 @@ app.use(express.static(path.join(__dirname, 'public'), { index: false, maxAge: '
 app.get('/category/:slug', instant.categoryRoute());
 app.get('/category/:slug/page/:n', instant.categoryRoute());
 app.get('/artists.html', instant.artistsRoute());
+app.get('/__doc-status', async (req, res) => { res.set('Cache-Control', 'no-store'); res.json({ cache: instant.docStatus(), liveProbe: await instant.probeDoc() }); });
 app.get('/', instant.homeRoute());
 app.get('/feed.xml', instant.feedRoute());
 app.get('/rss.xml', instant.feedRoute());

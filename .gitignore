@@ -25,3 +25,5 @@ supabase/*.local
 apply-lyrics.js
 *.bak-doc
 apply-doc-fix.js
+*.bak-diag
+apply-diag.js
