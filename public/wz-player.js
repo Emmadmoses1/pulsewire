@@ -34,7 +34,7 @@
   }
 
   /* ---------- UI ---------- */
-  var CSS = '#wzp{position:fixed;left:0;right:0;bottom:0;z-index:85;background:var(--card,#101018);color:var(--text,#f3f3f7);border-top:1px solid var(--line,#22222d);box-shadow:0 -14px 34px -18px rgba(0,0,0,.55);font-family:Inter,system-ui,sans-serif;transform:translateY(110%);transition:transform .28s ease}' +
+  var CSS = '#wzp{position:fixed;left:0;right:0;bottom:var(--wzp-b,0px);z-index:85;background:var(--card,#101018);color:var(--text,#f3f3f7);border-top:1px solid var(--line,#22222d);box-shadow:0 -14px 34px -18px rgba(0,0,0,.55);font-family:Inter,system-ui,sans-serif;transform:translateY(110%);transition:transform .28s ease}' +
     '#wzp.on{transform:none}' +
     '#wzp .sk{position:relative;height:18px;margin-top:-9px;cursor:pointer;touch-action:none}' +
     '#wzp .sk i{position:absolute;left:0;right:0;top:8px;height:3px;background:var(--line,#2a2a36)}' +
@@ -50,13 +50,13 @@
     '#wzp .pp{width:44px;height:44px;background:var(--brand,#e5202f);color:#fff}#wzp .pp:hover{background:var(--brand2,#ff7a45)}' +
     '#wzp .tm{font-size:11px;color:var(--muted,#9696a6);font-variant-numeric:tabular-nums;min-width:74px;text-align:right}' +
     '#wzp .hint{display:none;font-size:11px;color:var(--brand2,#ff7a45);font-weight:700}#wzp.wait .hint{display:block}' +
-    '#wzq{position:fixed;left:0;right:0;bottom:0;z-index:84;max-height:58vh;overflow:auto;background:var(--card,#101018);color:var(--text,#f3f3f7);border-radius:16px 16px 0 0;padding:14px 12px 96px;box-shadow:0 -20px 50px -20px rgba(0,0,0,.7);display:none;font-family:Inter,system-ui,sans-serif}' +
+    '#wzq{position:fixed;left:0;right:0;bottom:var(--wzp-b,0px);z-index:84;max-height:58vh;overflow:auto;background:var(--card,#101018);color:var(--text,#f3f3f7);border-radius:16px 16px 0 0;padding:14px 12px 90px;box-shadow:0 -20px 50px -20px rgba(0,0,0,.7);display:none;font-family:Inter,system-ui,sans-serif}' +
     '#wzq.on{display:block}#wzq h4{font-size:13px;margin:0 6px 8px}' +
     '#wzq .it{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;color:inherit;padding:8px 6px;border-radius:10px;cursor:pointer;font:inherit}' +
     '#wzq .it:hover,#wzq .it.cur{background:rgba(127,127,140,.14)}#wzq .it img{width:38px;height:38px;border-radius:6px;object-fit:cover}' +
     '#wzq .it span{min-width:0;flex:1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#wzq .it small{display:block;color:var(--muted,#9696a6);font-size:11px}' +
     '[data-wz-play]{cursor:pointer}' +
-    '@media (min-width:700px){#wzq{left:auto;right:16px;width:380px;bottom:84px;border-radius:14px;padding-bottom:14px}}' +
+    '@media (min-width:700px){#wzq{left:auto;right:16px;width:380px;bottom:calc(84px + var(--wzp-b,0px));border-radius:14px;padding-bottom:14px}}' +
     '@media (prefers-reduced-motion:reduce){#wzp{transition:none}}';
   var IC = {
     play: '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>', pause: '<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>',
@@ -90,9 +90,16 @@
     }).join('');
     Array.prototype.forEach.call(ui.q.querySelectorAll('.it'), function (b) { b.onclick = function () { go(+b.dataset.n); }; });
   }
+  function layout() { /* keep the player above the phone's bottom tab bar and keep page content clear of it */
+    var bt = document.querySelector('.btab'), off = 0;
+    try { if (bt && getComputedStyle(bt).display !== 'none') off = bt.offsetHeight || 0; } catch (e) {}
+    var r = document.documentElement.style;
+    r.setProperty('--wzp-b', off + 'px'); r.setProperty('--wzp-h', (bar && bar.classList.contains('on')) ? '76px' : '0px');
+  }
+  window.addEventListener('resize', layout);
   function draw() {
-    var t = cur(); if (!t) { if (bar) bar.classList.remove('on'); document.body.style.paddingBottom = ''; return; }
-    build(); bar.classList.add('on'); document.body.style.paddingBottom = '76px';
+    var t = cur(); if (!t) { if (bar) bar.classList.remove('on'); layout(); return; }
+    build(); bar.classList.add('on'); layout();
     ui.img.src = img(t.cover); ui.t.textContent = t.title; ui.s.textContent = t.artist || '';
     ui.link.href = t.url || '#'; ui.pp.innerHTML = a.paused ? IC.play : IC.pause; drawQ();
     if ('mediaSession' in navigator) {

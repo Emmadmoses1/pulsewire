@@ -1,0 +1,71 @@
+/* WAVZO professional layout v1: responsive on phone, tablet and desktop. Loaded after wz-theme.css and wz-type.css. */
+:root{--wz-gap:clamp(14px,4vw,28px);--wz-max:1200px;--wzp-b:0px;--wzp-h:0px}
+
+/* ---------- safety net: nothing may push the page sideways ---------- */
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+html body{overflow-x:clip;min-width:0}
+img,video,iframe,svg,canvas{max-width:100%}
+html body h1,html body h2,html body h3,html body h4,html body .article-body,html body .rt,html body .mt{overflow-wrap:break-word;word-break:normal}
+html body .article-body table{display:block;max-width:100%;overflow-x:auto}
+html body .article-body pre,html body .article-body code{white-space:pre-wrap;word-break:break-word}
+html body .article-body img{height:auto}
+html body .article-body iframe,html body .article-body video{width:100%;height:auto;aspect-ratio:16/9;border:0}
+html body .wrap,html body .article-inner{padding-left:var(--wz-gap);padding-right:var(--wz-gap)}
+html body .wrap{max-width:var(--wz-max)}
+html body a,html body button{-webkit-tap-highlight-color:transparent}
+html body :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+/* ---------- header: sticky, never wraps, nav scrolls on small desktops ---------- */
+html body .hdr{position:sticky;top:0;z-index:50}
+html body .hdr-in{gap:12px}
+html body .nav{overflow-x:auto;scrollbar-width:none;min-width:0;flex:1 1 auto}
+html body .nav::-webkit-scrollbar{display:none}
+html body .nav a{white-space:nowrap;flex:0 0 auto}
+html body .ibtn{min-height:44px;min-width:44px}
+@media (max-width:860px){html body .hdr-in{height:54px!important}}
+
+/* ---------- hero: slider + trending side by side on desktop, stacked on phones ---------- */
+html body .hero{align-items:stretch}
+html body .slider{min-height:240px}
+@media (max-width:700px){html body .slider{aspect-ratio:4/3}}
+@media (min-width:1000px){html body .panel{max-height:100%;overflow:auto}}
+
+/* ---------- Latest stories: list rows with a square thumbnail, like a news site ---------- */
+html body #grid.grid{display:grid;grid-template-columns:1fr;column-gap:38px;row-gap:0}
+@media (min-width:900px){html body #grid.grid{grid-template-columns:1fr 1fr}}
+html body #grid .card{flex-direction:row!important;align-items:flex-start;gap:14px;padding:14px 0!important}
+html body #grid .card-img{width:120px!important;height:120px!important;flex:0 0 120px;aspect-ratio:1/1!important;object-fit:cover}
+html body #grid .card-b{padding:0!important;min-width:0;flex:1}
+html body #grid .card p{display:none}
+@media (min-width:900px){html body #grid .card p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:4px;color:var(--muted)}}
+html body #grid .card h3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:4px 0}
+@media (max-width:380px){html body #grid .card-img{width:96px!important;height:96px!important;flex-basis:96px}}
+
+/* ---------- more from WAVZO, quick links, music rows ---------- */
+html body .wz-svc .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+html body .quick{gap:12px}
+html body .blk{margin-top:clamp(26px,5vw,40px)}
+html body .mlist{gap:0 32px}
+
+/* ---------- article pages: comfortable reading width, buttons that fit ---------- */
+html body .article-inner{max-width:780px;margin-left:auto;margin-right:auto}
+html body .article-cover,html body .article-cover img{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}
+html body .download-btn,html body #dlFinalBtn{width:100%}
+@media (min-width:700px){html body .download-btn,html body #dlFinalBtn{max-width:420px}}
+html body .related-card-body{min-width:0}
+
+/* ---------- footer: 1 column on phones, 2 on tablets, 4 on desktop ---------- */
+@media (max-width:559px){html body .fg{grid-template-columns:1fr 1fr;gap:24px}html body .fg>div:first-child{grid-column:1/-1}}
+@media (min-width:560px) and (max-width:759px){html body .fg{grid-template-columns:1fr 1fr}html body .fg>div:first-child{grid-column:1/-1}}
+html body .fb{flex-wrap:wrap;gap:6px 18px}
+
+/* ---------- phones: the fixed bottom tab bar must never cover content or the music player ---------- */
+@media (max-width:759px){
+  html body{padding-bottom:calc(62px + var(--wzp-h) + env(safe-area-inset-bottom))}
+  html body #top{bottom:calc(76px + var(--wzp-h))}
+}
+@media (min-width:760px){html body{padding-bottom:var(--wzp-h)}}
+
+/* ---------- touch comfort ---------- */
+@media (pointer:coarse){html body .chip,html body .pgn{min-height:40px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}

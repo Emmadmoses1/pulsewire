@@ -493,7 +493,7 @@ const CAT_THEME_CSS = '<style>html body{background:#fff;color:#111;font-family:M
   '.pager{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:26px 0}' +
   '.pgn{min-width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;padding:0 10px;border:1px solid #e4e4e4;color:#111;font-weight:800;font-size:14px;text-decoration:none;background:#fff}' +
   '.pgn.on{background:#0d0d0d;border-color:#0d0d0d;color:#fff}.pgd{align-self:center;color:#6b6b6b}</style>\n' +
-  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap">\n<link rel="stylesheet" href="/css/wz-type.css?v=1">\n';
+  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap">\n<link rel="stylesheet" href="/css/wz-type.css?v=1">\n<link rel=\"stylesheet\" href=\"/css/wz-pro.css?v=1\">\n';
 const CAT_HEADER = '<header class="hdr"><div class="hdr-in"><a class="logo" href="/" aria-label="WAVZO home">WAV<span>ZO</span></a><nav aria-label="Main">' +
   '<a href="/category/news">News</a><a href="/category/music">Music</a><a href="/category/entertainment">Entertainment</a><a href="/category/trending">Trending</a><a href="/category/sports">Sports</a><a href="/artists.html">Artists</a><a href="/charts.html">Charts</a><a href="/livescores.html">Live scores</a></nav></div></header>\n';
 function renderCategory(doc, slug, pageNo) {
