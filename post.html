@@ -90,6 +90,8 @@ a{color:inherit}
 .article-cover{width:100%!important;height:auto!important;max-height:75vh;aspect-ratio:auto;object-fit:contain;border-radius:20px!important;margin:18px 0!important;box-shadow:var(--shadow);background:#222}
 .article-body{font-size:clamp(16px,2.2vw,19px)!important;line-height:1.85!important;color:var(--text)!important}
 .article-body p{margin:0 0 1.25em}
+.article-body .song-details{margin:1.3em 0;line-height:1.9;font-weight:400}
+.article-body .song-details strong{font-weight:800}
 .article-body h2,.article-body h3{margin:1.6em 0 .6em;font-weight:900;letter-spacing:-.4px;line-height:1.25}
 .article-body a{color:var(--brand);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .article-body img,.article-body video,.article-body iframe{max-width:100%;border-radius:14px;margin:14px 0}
@@ -190,6 +192,20 @@ async function saveDB(db){
   try{localStorage.setItem(CACHE_KEY,JSON.stringify({posts:[...(db.posts||[])].reverse(),ts:Date.now()}));}catch(e){}
 }
 
+function wzFixDetails(c){
+  c=String(c==null?'':c);
+  if(c.indexOf('class="song-details"')>-1)return c;
+  var m=/Song Details/i.exec(c);if(!m)return c;
+  var head=c.slice(0,m.index),tail=c.slice(m.index);
+  var cl=(tail.match(/(?:\s*<\/[a-z0-9]+>)+\s*$/i)||[''])[0];
+  var body=tail.slice(0,tail.length-cl.length);
+  var lines=body.split(/\r?\n|<br\s*\/?>/i).map(function(s){return s.replace(/<[^>]*>/g,'').trim();}).filter(Boolean);
+  if(lines.length<2||!/^song details$/i.test(lines[0]))return c;
+  var items=lines.slice(1);
+  for(var i=0;i<items.length;i++){if(!/^[A-Za-z][A-Za-z ]{1,24}:\s*\S/.test(items[i]))return c;}
+  head=head.replace(/\s+$/,'').replace(/([^>\s])[ \t]*\r?\n[ \t]*(?=[^<\s])/g,'$1<br><br>');
+  return head+cl.replace(/\s+/g,'')+'<div class="song-details"><strong>Song Details</strong><br>'+items.join('<br>')+'</div>';
+}
 async function trackView(slug){
   try{
     const db=await getDB();
@@ -472,7 +488,7 @@ function renderPost(post,posts){
         <button class="dw-btn" id="dlFinalBtn" disabled>Please wait...</button>
         <div class="ad-notice">Free download supported by ads</div>
       </div>`:''}
-    <div class="article-body">${post.content}</div>
+    <div class="article-body">${wzFixDetails(post.content)}</div>
     <div class="ad-slot">Advertisement</div>
     ${wzAuthorBox(post)}<div class="article-footer-meta">
       <span class="article-tag">${post.category}</span>
