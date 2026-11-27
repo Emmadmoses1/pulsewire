@@ -5,6 +5,26 @@ const path = require('path');
 const DB_URL = 'https://wavzo-db.dakudinamoses.workers.dev/v3/b/main/latest';
 const SITE = 'https://wavzo.com.ng';
 let cache = { t: 0, doc: null };
+const os = require('os');
+const DOC_TMP = path.join(os.tmpdir(), 'wavzo-doc-cache.json');
+const DOC_SEED = path.join(__dirname, 'data', 'doc-seed.json');
+let lastFail = 0, lastSave = 0;
+function loadSavedDoc() {
+  for (const f of [DOC_TMP, DOC_SEED]) {
+    try {
+      const d = JSON.parse(fs.readFileSync(f, 'utf8'));
+      if (d && Array.isArray(d.posts) && d.posts.length) { console.log("[doc] using saved copy " + path.basename(f) + " (" + d.posts.length + " posts)"); return d; }
+    } catch (e) {}
+  }
+  return null;
+}
+function saveDoc(doc) {
+  if (!doc || !Array.isArray(doc.posts) || !doc.posts.length || Date.now() - lastSave < 60000) return;
+  lastSave = Date.now();
+  const tmp = DOC_TMP + '.part';
+  fs.writeFile(tmp, JSON.stringify(doc), (e) => { if (!e) fs.rename(tmp, DOC_TMP, () => {}); });
+}
+cache.doc = loadSavedDoc();
 
 let inflight = null;
 function refreshDoc() {
@@ -13,7 +33,7 @@ function refreshDoc() {
     const r = await fetch(DB_URL, { headers: { 'X-Master-Key': 'public' } });
     if (!r.ok) throw new Error('database returned ' + r.status);
     const j = await r.json();
-    cache = { t: Date.now(), doc: j.record || {} };
+    cache = { t: Date.now(), doc: j.record || {} }; lastFail = 0; saveDoc(cache.doc);
     return cache.doc;
   })().finally(() => { inflight = null; });
   return inflight;
@@ -21,8 +41,9 @@ function refreshDoc() {
 // Old data is served instantly while fresh data loads in the background
 async function getDoc(maxAgeMs) {
   if (cache.doc && Date.now() - cache.t < maxAgeMs) return cache.doc;
-  if (cache.doc && maxAgeMs > 0) { refreshDoc().catch(() => {}); return cache.doc; }
-  return refreshDoc();
+  if (cache.doc && Date.now() - lastFail < 30000) return cache.doc;
+  if (cache.doc && maxAgeMs > 0) { refreshDoc().catch(() => { lastFail = Date.now(); }); return cache.doc; }
+  try { return await refreshDoc(); } catch (e) { lastFail = Date.now(); if (cache.doc) return cache.doc; throw e; }
 }
 const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const js = (o) => JSON.stringify(o).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
