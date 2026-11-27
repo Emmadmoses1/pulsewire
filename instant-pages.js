@@ -177,6 +177,19 @@ function renderSong(doc, song) {
     ogTitle: esc(title) + ' — ' + esc(aname), image: esc(ogImage(song.cover))
   }));
   page = put(page, "const songId='__SONG_ID__';", "const songId='" + safeId(song.id) + "';");
+  let albumBox = '';
+  if (song.albumId) {
+    const W = require('./public/wz-home.js');
+    const al = W.releases(doc.songs || []).find((r) => r.kind === 'album' && String(r.id) === String(song.albumId));
+    if (al && al.tracks.length > 1) {
+      const link = '/albums/' + W.albumSlug(al.name, al.id) + '.html', pos = al.tracks.findIndex((t) => t.id === song.id) + 1;
+      const chip = 'display:inline-block;padding:6px 12px;border:1px solid rgba(225,17,17,.3);border-radius:999px;font-size:13px;font-weight:600;color:inherit;text-decoration:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+      albumBox = '<div style="background:rgba(225,17,17,.07);border:1px solid rgba(225,17,17,.25);border-radius:14px;padding:12px 14px;margin:0 0 18px"><div style="font-size:13px">\uD83D\uDCBF From the album <a href="' + link + '" style="color:#e11;font-weight:800;text-decoration:none">' + esc(W.dec(al.name)) + '</a>' + (pos ? ' \u00B7 track ' + pos + ' of ' + al.tracks.length : '') + '</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">' +
+        al.tracks.filter((t) => t.id !== song.id).slice(0, 6).map((t) => '<a href="/songs/' + safeId(t.slug) + '.html" style="' + chip + '">' + esc(W.dec(t.title)) + '</a>').join('') +
+        '<a href="' + link + '" style="' + chip + ';background:#e11;border-color:#e11;color:#fff">See full album \u2192</a></div></div>';
+    }
+  }
+  page = put(page, "<p style=\"margin-top:-10px;margin-bottom:20px\"><a id=\"artistLink\" style=\"font-weight:700;color:#e11\"></a></p>", "<p style=\"margin-top:-10px;margin-bottom:20px\"><a id=\"artistLink\" style=\"font-weight:700;color:#e11\"></a></p>" + albumBox);
   const pre = js({ song: Object.assign({}, song, { title: title }), artist: artist.id ? artist : null, titles: (doc.posts || []).slice(0, 6).map((p) => p.title || '') });
   return put(page, "const songId='" + safeId(song.id) + "';", "const songId='" + safeId(song.id) + "';\nconst PRE=" + pre + ';');
 }
@@ -311,6 +324,7 @@ async function sitemap() {
   for (const p of doc.posts || []) if (p.slug && seoState(doc, p).index) rows.push([SITE + '/posts/' + p.slug + '.html', day(p.createdAt)]);
   for (const c of categoryList(doc)) if ((typeof seoState !== 'function' ? c.all.length : c.good.length) >= CAT_MIN_INDEX) rows.push([SITE + '/category/' + c.slug, day(c.latest)]);
   for (const s of doc.songs || []) if (s.slug) rows.push([SITE + '/songs/' + s.slug + '.html', day(s.createdAt)]);
+  rows.push([SITE + '/music', '']);
   { const W = require('./public/wz-home.js'); for (const r of W.releases(doc.songs || [])) if (r.kind === 'album') rows.push([SITE + '/albums/' + W.albumSlug(r.name, r.id) + '.html', day(r.t)]); }
   for (const a of doc.artists || []) if (a.slug) rows.push([SITE + '/artists/' + a.slug + '.html', day(a.createdAt)]);
   return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
@@ -479,8 +493,8 @@ function renderAlbum(doc, id) {
     '.tl{list-style:none;margin:0 0 26px;padding:0;display:grid;gap:8px}.tl a{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:10px 12px;color:inherit;text-decoration:none;min-width:0}' +
     '.tn{flex:0 0 26px;text-align:center;font-weight:900;color:#e11}.tt{flex:1;min-width:0}.tt b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tt small{color:#777;font-size:12px}' +
     '.dl{flex:0 0 auto;background:#e11;color:#fff;font-weight:800;font-size:12px;padding:9px 14px;border-radius:999px;white-space:nowrap}' + REL_CSS + '</style>\n</head>\n<body>\n<div class="wrap">\n' +
-    '<div class="top"><a class="brand" href="/">WAV<span>ZO</span></a><a href="/category/music" style="font-size:13px;font-weight:700;color:#e11;text-decoration:none">All music</a></div>\n' +
-    '<div class="crumb"><a href="/">Home</a> / <a href="/category/music">Music</a> / ' + esc(name) + '</div>\n' +
+    '<div class="top"><a class="brand" href="/">WAV<span>ZO</span></a><a href="/music" style="font-size:13px;font-weight:700;color:#e11;text-decoration:none">All music</a></div>\n' +
+    '<div class="crumb"><a href="/">Home</a> / <a href="/music">Music</a> / ' + esc(name) + '</div>\n' +
     '<div class="hero">' + (cov ? '<img src="' + esc(cov) + '" width="140" height="140" alt="' + esc(name) + '">' : '') + '<div><span class="badge">ALBUM \u00B7 ' + n + ' TRACK' + (n === 1 ? '' : 'S') + '</span><h1>' + esc(name) + '</h1><p>' +
     (artist.slug ? '<a href="/artists/' + safeId(artist.slug) + '.html">' + esc(aname) + '</a>' : esc(aname)) + (year ? ' \u00B7 ' + esc(year) : '') + '</p></div></div>\n' +
     '<p class="note">Tap a track to open it, then download the one you want.</p>\n<ol class="tl">' + rows + '</ol>\n' +
@@ -496,6 +510,46 @@ function albumRoute() {
       if (!out) return next();
       if (out.slug !== raw) return res.redirect(301, '/albums/' + out.slug + '.html');
       res.set('Cache-Control', 'public, max-age=60').type('html').send(out.html);
+    } catch (e) { next(); }
+  };
+}
+function renderMusic(doc, mode, pageNo) {
+  const WZH = require('./public/wz-home.js'), am = {};
+  (doc.artists || []).forEach((a) => { am[a.id] = a; });
+  let rel = WZH.releases(doc.songs || []);
+  if (mode === 'albums') rel = rel.filter((r) => r.kind === 'album');
+  else if (mode === 'singles') rel = rel.filter((r) => r.kind === 'single');
+  const PER = 24, pages = Math.max(1, Math.ceil(rel.length / PER));
+  if (!(pageNo >= 1 && pageNo <= pages)) return null;
+  const base = SITE + '/music' + (mode ? '/' + mode : ''), urlOf = (n) => (n === 1 ? base : base + '/page/' + n);
+  const label = mode === 'albums' ? 'Albums' : mode === 'singles' ? 'Singles' : 'New Music';
+  const h1 = mode === 'albums' ? 'Latest albums' : mode === 'singles' ? 'Latest singles' : 'New music & albums';
+  const title = label + ' \u2014 Download Nigerian Music' + (pageNo > 1 ? ' (Page ' + pageNo + ')' : '') + ' | WAVZO';
+  const desc = 'Download the latest Afrobeats songs and full albums on WAVZO. Open an album to see every track and pick the song you want.';
+  const ld = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: label + ' \u2014 WAVZO', url: urlOf(pageNo), description: desc, isPartOf: { '@type': 'WebSite', name: 'WAVZO', url: SITE } };
+  const hd = head({ title: esc(title), desc: attr(desc, 200), url: urlOf(pageNo), type: 'website', ogTitle: esc(title), image: DEFAULT_IMG, ld });
+  const chip = (m, t) => '<a class="chip' + (m === mode ? ' on' : '') + '" href="/music' + (m ? '/' + m : '') + '">' + t + '</a>';
+  const cards = rel.slice((pageNo - 1) * PER, pageNo * PER).map((r) => WZH.relCard(r, am, Date.now())).join('');
+  const nav = (pageNo > 1 ? '<a class="pg" href="' + urlOf(pageNo - 1).replace(SITE, '') + '">&larr; Newer</a>' : '<span></span>') + '<span class="pn">Page ' + pageNo + ' of ' + pages + '</span>' +
+    (pageNo < pages ? '<a class="pg" href="' + urlOf(pageNo + 1).replace(SITE, '') + '">Older &rarr;</a>' : '<span></span>');
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' + hd +
+    '\n<link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">\n<style>body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#111;margin:0;line-height:1.5}.wrap{max-width:1000px;margin:0 auto;padding:18px 14px 70px}' +
+    '.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.brand{font-weight:800;font-size:22px;letter-spacing:1px;color:#111;text-decoration:none}.brand span{color:#e11}' +
+    'h1{font-size:26px;margin:14px 0 4px}.sub{font-size:14px;color:#555;margin:0 0 14px}.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}' +
+    '.chip{background:#fff;border:1px solid #ddd;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:#111;text-decoration:none}.chip.on{background:#e11;border-color:#e11;color:#fff}' +
+    '.nav{display:flex;align-items:center;justify-content:space-between;margin:22px 0}.pg{background:#e11;color:#fff;font-weight:700;text-decoration:none;padding:10px 16px;border-radius:8px;font-size:14px}.pn{font-size:13px;color:#555}' +
+    REL_CSS + '</style>\n</head>\n<body>\n<div class="wrap">\n<div class="top"><a class="brand" href="/">WAV<span>ZO</span></a><a href="/" style="font-size:13px;font-weight:700;color:#e11;text-decoration:none">Home</a></div>\n' +
+    '<h1>' + esc(h1) + '</h1>\n<p class="sub">' + esc(desc) + '</p>\n<div class="chips">' + chip('', 'All') + chip('albums', 'Albums') + chip('singles', 'Singles') + '</div>\n' +
+    (cards ? '<div class="relgrid">' + cards + '</div>' : '<p class="sub">Nothing here yet.</p>') + '\n<div class="nav">' + nav + '</div>\n</div>\n</body>\n</html>\n';
+}
+function musicRoute() {
+  return async (req, res, next) => {
+    try {
+      const mode = String(req.params.mode || '');
+      if (mode && mode !== 'albums' && mode !== 'singles') return next();
+      const html = renderMusic(await getDoc(8000), mode, req.params.n ? parseInt(req.params.n, 10) : 1);
+      if (!html) return next();
+      res.set('Cache-Control', 'public, max-age=60').type('html').send(html);
     } catch (e) { next(); }
   };
 }
@@ -552,4 +606,4 @@ function startIndexNowWatcher() {
   if (watching) return;
   watching = true; refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
 
-module.exports = { newsSitemapRoute, feedRoute, homeRoute, artistsRoute, categoryRoute, albumRoute, homePayload, dbDoc: () => getDoc(8000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
+module.exports = { newsSitemapRoute, feedRoute, homeRoute, artistsRoute, categoryRoute, albumRoute, musicRoute, homePayload, dbDoc: () => getDoc(8000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
