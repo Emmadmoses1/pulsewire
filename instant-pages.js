@@ -58,7 +58,8 @@ function head(o) {
     '  <meta property="og:url" content="' + o.url + '">\n  <meta name="twitter:card" content="summary_large_image">\n' +
     '  <meta name="twitter:title" content="' + o.ogTitle + '">\n  <meta name="twitter:description" content="' + o.desc + '">\n  <meta name="twitter:image" content="' + o.image + '">\n  <meta name="twitter:image:alt" content="' + o.ogTitle + '">' +
     (o.robots ? '\n  <meta name="robots" content="' + o.robots + '">' : '') +
-    (o.ld ? '\n  <script type="application/ld+json">' + js(o.ld) + '</script>' : '');
+    (o.ld ? '\n  <script type="application/ld+json">' + js(o.ld) + '</script>' : '') +
+    '\n  <script src="/wz-share.js" defer></script>';
 }
 const DEFAULT_IMG = SITE + '/images/wavzo-og-image.png';
 // Share-ready image: always https, 1200x630, small enough for WhatsApp (< 300 KB)
