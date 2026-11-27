@@ -354,6 +354,27 @@ button:focus-visible,a:focus-visible{outline:2px solid rgba(239,68,82,.75);outli
 .tm-off{opacity:.5}
 #tmToggle{display:block;text-align:center;margin-top:14px;font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer}
 </style>
+<style>
+/*WZ-ADMIN-V2*/
+:root{--red:#e5202f;--surface:#101014;--surface2:#18181e;--border:#26262e;--muted:#8d8d99}
+body{-webkit-tap-highlight-color:transparent}
+.field label{text-transform:none;letter-spacing:.2px;font-size:12px;color:#b9b9c4}
+.field input,.field textarea,.field select{font-size:16px;min-height:46px;border-radius:12px}
+.field input:focus,.field textarea:focus,.field select:focus{box-shadow:0 0 0 3px rgba(229,32,47,.22)}
+.btn{min-height:46px;border-radius:12px;letter-spacing:.3px}
+.btn-sm{min-height:36px}
+.card{border-radius:16px}
+.stat-card{border-radius:14px}
+.stat-lbl{text-transform:none;letter-spacing:.2px;font-size:12px}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+@media(max-width:959px){
+.bottom-nav{padding-bottom:env(safe-area-inset-bottom)}
+.bnav-item{position:relative;min-height:56px;font-size:10.5px;letter-spacing:0}
+.bnav-item.active::before{content:'';position:absolute;top:0;left:24%;right:24%;height:3px;border-radius:0 0 3px 3px;background:var(--red)}
+.main{padding-bottom:100px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
 </head>
 <body>
 <div id="toast" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;border:1px solid #333;color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap" ></div>

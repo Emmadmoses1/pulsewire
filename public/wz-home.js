@@ -52,12 +52,17 @@
   function musicSection(songs, artists) {
     if (!songs.length) return '';
     var am = {}; artists.forEach(function (a) { am[a.id] = a; });
-    var list = songs.slice().sort(function (a, b) { return (+b.createdAt || 0) - (+a.createdAt || 0); }).slice(0, 14).filter(function (s) { return s.slug; });
-    return '<section class="blk"><div class="blk-hd"><h2><i>\uD83C\uDFA7</i> New music</h2><a href="/artists.html">All artists \u2192</a></div><div class="rail">' + list.map(function (s) {
-      var im = IMG(s.cover, 360, 360);
-      return '<a class="song" href="/songs/' + safe(s.slug) + '.html">' + (im ? '<img src="' + esc(im) + '" data-o="' + esc(s.cover) + '" onerror="WZH.fb(this)" width="360" height="360" loading="lazy" alt="' + esc(s.title) + '">' : '<div class="song-ph">\uD83C\uDFB5</div>') +
-        '<b>' + esc(s.title) + '</b><small>' + esc(am[s.artistId] ? am[s.artistId].name : '') + '</small></a>';
-    }).join('') + '</div></section>';
+    var ok = songs.filter(function (s) { return s && s.slug; });
+    var latest = ok.slice().sort(function (a, b) { return (+b.createdAt || 0) - (+a.createdAt || 0); }).slice(0, 10);
+    var top = ok.filter(function (s) { return (+s.downloads || 0) > 0; }).sort(function (a, b) { return (+b.downloads || 0) - (+a.downloads || 0); }).slice(0, 5);
+    function row(s, n) {
+      var im = IMG(s.cover, 160, 160);
+      return '<a class="mrow" href="/songs/' + safe(s.slug) + '.html">' + (n ? '<span class="mn">' + n + '</span>' : '') +
+        (im ? '<img src="' + esc(im) + '" data-o="' + esc(s.cover) + '" onerror="WZH.fb(this)" width="160" height="160" loading="lazy" alt="">' : '<span class="mph">\uD83C\uDFB5</span>') +
+        '<span class="mt"><b>' + esc(s.title) + '</b><small>' + esc(am[s.artistId] ? am[s.artistId].name : '') + '</small></span><span class="mdl">Download</span></a>';
+    }
+    return '<section class="blk"><div class="blk-hd"><h2><i>\uD83C\uDFA7</i> Latest music</h2><a href="/category/music">See all \u2192</a></div><div class="mlist">' + latest.map(function (s) { return row(s, 0); }).join('') + '</div></section>' +
+      (top.length ? '<section class="blk"><div class="blk-hd"><h2><i>\uD83D\uDD25</i> Most downloaded</h2></div><div class="mlist">' + top.map(function (s, i) { return row(s, i + 1); }).join('') + '</div></section>' : '');
   }
   function artistSection(songs, artists) {
     var list = artists.filter(function (a) { return a && a.slug; });
