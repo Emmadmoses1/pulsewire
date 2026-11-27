@@ -1,0 +1,59 @@
+/* WAVZO type scale v1: loaded after wz-theme.css on every page.
+   Rule: the same kind of text is the same size everywhere. Change a value here and the whole site follows. */
+:root{
+  --t-label:10px;   /* category pills */
+  --t-meta:12px;    /* dates, bylines, small grey lines, nav, chips, footer links */
+  --t-small:13px;   /* short descriptions, buttons */
+  --t-head:15px;    /* EVERY headline in a list or card (home, category, related, trending, music rows) */
+  --t-section:14px; /* section titles like LATEST, TRENDING, RELATED */
+  --t-feature:22px; /* the big featured headline (slider, lead story) */
+  --t-body:17px;    /* article text */
+  --t-h1:26px;      /* page and article titles */
+  --lh-head:1.3;
+}
+@media (min-width:700px){:root{--t-h1:32px}}
+
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html body{font-size:16px!important;font-family:'Montserrat',Inter,system-ui,-apple-system,'Segoe UI',sans-serif!important;font-synthesis:none}
+button,input,select,textarea{font-family:inherit}
+input,select,textarea{font-size:16px!important} /* 16px stops phones zooming in when you tap a box */
+
+/* ---- headlines in lists and cards: one size ---- */
+html body .card h3,html body .rt,html body .row .rt,html body .rank .rt,html body .mt b,html body .mt a,html body .ct h2,html body .related-card-title,html body .wz-trend .t,html body .card-t,html body .post-t{
+  font-size:var(--t-head)!important;line-height:var(--lh-head)!important;font-weight:800!important;letter-spacing:.1px!important}
+
+/* ---- featured headline: one size ---- */
+html body .slide-body h2,html body .big-b h3,html body .news h2,html body .newsletter h2{font-size:var(--t-feature)!important;line-height:1.22!important}
+
+/* ---- small grey lines ---- */
+html body .meta,html body .rt small,html body .mt small,html body .ct span,html body .article-footer-meta,html body .comment-date,html body .byline-date,html body .article-date,html body .article-meta{
+  font-size:var(--t-meta)!important;line-height:1.4!important;font-weight:600!important}
+
+/* ---- short descriptions ---- */
+html body .card p,html body .ct p,html body .slide-body p,html body .row p,html body .sub{font-size:var(--t-small)!important;line-height:1.5!important}
+
+/* ---- section titles ---- */
+html body .panel-hd,html body .blk-hd h2,html body .related-section h2,html body .related-title,html body .comments-title,html body .download-gate h3{
+  font-size:var(--t-section)!important;line-height:1.3!important;font-weight:900!important;letter-spacing:1.5px!important;text-transform:uppercase}
+
+/* ---- page and article titles: one size ---- */
+html body h1,html body .article-title,html body .page-title,html body .hero h1{font-size:var(--t-h1)!important;line-height:1.25!important}
+
+/* ---- article text (the reader's A- / A+ buttons still work) ---- */
+html body .article-body{font-size:var(--t-body)!important;line-height:1.75!important}
+html[data-fs="-1"] body .article-body{font-size:16px!important}
+html[data-fs="1"] body .article-body{font-size:19px!important}
+html[data-fs="2"] body .article-body{font-size:21px!important}
+html body .article-body .article-source{font-size:var(--t-small)!important}
+
+/* ---- navigation, chips, footer ---- */
+html body .nav a,html body .navbar nav a,html body .hdr nav a,html body .drawer a,html body .chip,html body .foot a,html body footer a,html body .blk-hd a,html body .fg a{font-size:var(--t-meta)!important}
+html body .fg h4{font-size:var(--t-meta)!important;letter-spacing:1.2px;text-transform:uppercase}
+html body .logo,html body .logo a,html body .hdr .logo{font-size:22px!important}
+
+/* ---- pills and labels ---- */
+html body .pill,html body .cat,html body .article-cat-tag,html body .article-tag,html body .media-label,html body .back-link,html body .article-back{font-size:var(--t-label)!important}
+
+/* ---- buttons ---- */
+html body .btn,html body .dw-btn,html body .download-btn,html body #dlFinalBtn,html body .newsletter button,html body #subForm button,html body .all,html body .ibtn.pri{font-size:var(--t-small)!important}
+html body .pgn{font-size:var(--t-small)!important}
