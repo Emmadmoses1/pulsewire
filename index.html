@@ -320,7 +320,7 @@ document.addEventListener('visibilitychange',function(){if(document.hidden)clear
 
 /* data */
 function norm(j){return {posts:(j.posts||[]).slice().reverse(),songs:j.songs||[],artists:j.artists||[]};}
-function cget(){try{var c=JSON.parse(localStorage.getItem('wz_v5')||'null');if(c&&Date.now()-c.ts<300000)return c;}catch(e){}return null;}
+function cget(){try{var c=JSON.parse(localStorage.getItem('wz_v5')||'null');if(c&&Date.now()-c.ts<60000)return c;}catch(e){}return null;}
 function cset(d){try{localStorage.setItem('wz_v5',JSON.stringify({posts:d.posts,songs:d.songs,artists:d.artists,ts:Date.now()}));}catch(e){}}
 async function load(){
   var urls=['/data/home.json','/data/db.json'];

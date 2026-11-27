@@ -123,14 +123,14 @@ app.get('/sitemap.xml', async (req, res) => {
 app.get('/data/home.json', async (req, res, next) => {
   try {
     const out = instant.homePayload(await instant.dbDoc());
-    res.set({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=30, stale-while-revalidate=300', 'ETag': out.etag, 'Vary': 'Accept-Encoding' });
+    res.set({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=10, stale-while-revalidate=20', 'ETag': out.etag, 'Vary': 'Accept-Encoding' });
     if (req.headers['if-none-match'] === out.etag) return res.status(304).end();
     if (/\bgzip\b/.test(req.headers['accept-encoding'] || '')) { res.set('Content-Encoding', 'gzip'); return res.end(out.gz); }
     res.end(out.body);
   } catch (e) { next(); }
 });
 app.get('/data/db.json', async (req, res, next) => {
-  try { res.set('Cache-Control', 'public, max-age=20').json(await instant.dbJson()); } catch (e) { next(); }
+  try { res.set('Cache-Control', 'public, max-age=10').json(await instant.dbJson()); } catch (e) { next(); }
 });
 app.use('/data', require('express').static(path.join(__dirname, 'data'), { maxAge: '60s' }));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));

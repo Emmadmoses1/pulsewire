@@ -188,7 +188,7 @@ function renderArtistsIndex(doc) {
 }
 function artistsRoute() {
   return async (req, res, next) => {
-    try { res.set('Cache-Control', 'public, max-age=60').type('html').send(renderArtistsIndex(await getDoc(30000))); } catch (e) { next(); }
+    try { res.set('Cache-Control', 'public, max-age=60').type('html').send(renderArtistsIndex(await getDoc(8000))); } catch (e) { next(); }
   };
 }
 function artistLd(doc, artist, url) {
@@ -275,7 +275,7 @@ function renderArtist(doc, artist) {
 const LISTS = { post: 'posts', song: 'songs', artist: 'artists' };
 const RENDER = { post: renderPost, song: renderSong, artist: renderArtist };
 async function page(kind, slug) {
-  let doc = await getDoc(30000);
+  let doc = await getDoc(8000);
   let item = (doc[LISTS[kind]] || []).find((x) => x && x.slug === slug);
   if (!item && Date.now() - cache.t > 4000) {          // maybe it was just published: look again
     doc = await getDoc(0);
@@ -396,7 +396,7 @@ function renderCategory(doc, slug, pageNo) {
 function categoryRoute() {
   return async (req, res, next) => {
     try {
-      const html = renderCategory(await getDoc(30000), String(req.params.slug || '').toLowerCase(), req.params.n ? parseInt(req.params.n, 10) : 1);
+      const html = renderCategory(await getDoc(8000), String(req.params.slug || '').toLowerCase(), req.params.n ? parseInt(req.params.n, 10) : 1);
       if (!html) return next();
       res.set('Cache-Control', 'public, max-age=60').type('html').send(html);
     } catch (e) { next(); }
@@ -421,7 +421,7 @@ function renderHome(doc) {
 function homeRoute() {
   return async (req, res, next) => {
     try {
-      res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=120').type('html').send(renderHome(await getDoc(30000)));
+      res.set('Cache-Control', 'public, max-age=10, stale-while-revalidate=20').type('html').send(renderHome(await getDoc(8000)));
     } catch (e) { next(); }
   };
 }
@@ -479,4 +479,4 @@ function startIndexNowWatcher() {
   if (watching) return;
   watching = true; refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
 
-module.exports = { newsSitemapRoute, feedRoute, homeRoute, artistsRoute, categoryRoute, homePayload, dbDoc: () => getDoc(30000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
+module.exports = { newsSitemapRoute, feedRoute, homeRoute, artistsRoute, categoryRoute, homePayload, dbDoc: () => getDoc(8000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
