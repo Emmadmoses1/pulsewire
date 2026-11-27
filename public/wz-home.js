@@ -72,6 +72,16 @@
     return '<a class="rel" href="' + link + '"><span class="rc">' + (im ? '<img src="' + esc(im) + '" data-o="' + esc(cover) + '" onerror="this.onerror=null;this.src=this.dataset.o" width="320" height="320" loading="lazy" alt="">' : '<span class="mph">\uD83C\uDFB5</span>') +
       (al ? '<em class="rtag">ALBUM \u00B7 ' + r.tracks.length + ' tracks</em>' : '') + (fresh ? '<em class="rnew">NEW</em>' : '') + '</span><b>' + esc(dec(title)) + '</b><small>' + esc(am[aid] ? am[aid].name : '') + '</small></a>';
   }
+  function spot(rel, am) {
+    var r = rel[0];
+    if (!r) return '';
+    var al = r.kind === 'album', s = r.song, cover = al ? r.cover : s.cover, title = dec(al ? r.name : s.title), aid = al ? r.artistId : s.artistId;
+    var link = al ? '/albums/' + albumSlug(r.name, r.id) + '.html' : '/songs/' + safe(s.slug) + '.html';
+    var im = IMG(cover, 480, 480);
+    if (!im) return '';
+    return '<a class="spot" href="' + link + '"><span class="spot-bg" style="background-image:url(' + esc(im) + ')"></span><span class="spot-in"><img src="' + esc(im) + '" width="112" height="112" alt="" loading="lazy"><span class="spot-t"><em>' +
+      (al ? 'NEW ALBUM \u00B7 ' + r.tracks.length + ' TRACKS' : 'NEW SONG') + '</em><b>' + esc(title) + '</b><small>' + esc(am[aid] ? am[aid].name : '') + '</small><i>' + (al ? 'Open album \u2192' : 'Download \u2192') + '</i></span></span></a>';
+  }
   function musicSection(songs, artists) {
     if (!songs.length) return '';
     var am = {}; artists.forEach(function (a) { am[a.id] = a; });
@@ -84,7 +94,7 @@
         (im ? '<img src="' + esc(im) + '" data-o="' + esc(s.cover) + '" onerror="WZH.fb(this)" width="160" height="160" loading="lazy" alt="">' : '<span class="mph">\uD83C\uDFB5</span>') +
         '<span class="mt"><b>' + esc(dec(s.title)) + '</b><small>' + esc(am[s.artistId] ? am[s.artistId].name : '') + '</small></span><span class="mdl">Download</span></a>';
     }
-    return '<section class="blk"><div class="blk-hd"><h2><i>\uD83C\uDD95</i> New releases</h2><a href="/music">See all \u2192</a></div><div class="rail2">' + rel.slice(0, 12).map(function (r) { return relCard(r, am, now); }).join('') + '</div></section>' +
+    return spot(rel, am) + '<section class="blk"><div class="blk-hd"><h2><i>\uD83C\uDD95</i> New releases</h2><a href="/music">See all \u2192</a></div><div class="rail2">' + rel.slice(0, 12).map(function (r) { return relCard(r, am, now); }).join('') + '</div></section>' +
       (singles.length ? '<section class="blk"><div class="blk-hd"><h2><i>\uD83C\uDFA7</i> Latest singles</h2><a href="/music">See all \u2192</a></div><div class="mlist">' + singles.map(function (r) { return row(r.song, 0); }).join('') + '</div></section>' : '') +
       (top.length ? '<section class="blk"><div class="blk-hd"><h2><i>\uD83D\uDD25</i> Most downloaded</h2></div><div class="mlist">' + top.map(function (s, i) { return row(s, i + 1); }).join('') + '</div></section>' : '');
   }
