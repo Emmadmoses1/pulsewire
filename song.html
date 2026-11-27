@@ -35,6 +35,7 @@
     <p style="margin-top:-10px;margin-bottom:20px"><a id="artistLink" style="font-weight:700;color:#e11"></a></p>
     <img id="songCover" class="article-cover" src="" alt="">
     <p class="article-body" id="songExcerpt"></p>
+    <section class="media-block" id="lyricsBlock" style="display:none"><h2 style="font-size:18px;margin:0 0 10px">Lyrics</h2><div id="lyricsText" style="white-space:pre-wrap;line-height:1.8;font-size:15px"></div></section>
 
     <div class="media-block" id="downloadBlock" style="display:none">
       <div class="media-label">Download</div>
@@ -91,6 +92,7 @@ async function init(){
   document.getElementById('songType').textContent=song.type;
   document.getElementById('songTitle').textContent=song.title;
   document.getElementById('songExcerpt').textContent=song.excerpt||'';
+  (function(){var l=String(song.lyrics||'').trim();if(l){document.getElementById('lyricsText').textContent=l;document.getElementById('lyricsBlock').style.display='';}})();
   if(song.cover){const el=document.getElementById('songCover');el.dataset.o=song.cover;el.onerror=function(){IMGFB(el)};el.src=IMG(song.cover,900);}
 
   if(artist){

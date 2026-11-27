@@ -21,3 +21,5 @@ storage/data/facebook.json
 
 backups/
 supabase/*.local
+*.bak-lyrics
+apply-lyrics.js

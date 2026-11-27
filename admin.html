@@ -576,6 +576,7 @@ body{-webkit-tap-highlight-color:transparent}
         <select id="songType"><option>Single</option><option>Album</option><option>EP</option></select>
       </div>
       <div class="field"><label>About / Excerpt</label><textarea id="songExcerpt" rows="3"></textarea></div>
+      <div class="field"><label>Lyrics (optional)</label><textarea id="songLyrics" rows="8" placeholder="Paste the full lyrics here"></textarea></div>
       <div class="field">
         <label>Cover Image</label>
         <div class="upload-area" id="songCoverArea">
@@ -1617,7 +1618,7 @@ async function loadSongsAdmin(){
 }
 
 function resetSongForm(){
-  ['songTitle','songExcerpt','songDownloadUrl','songYoutubeUrl'].forEach(id=>document.getElementById(id).value='');
+  ['songTitle','songExcerpt','songLyrics','songDownloadUrl','songYoutubeUrl'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('songEditId').value='';
   document.getElementById('songCoverIn').value='';
   document.getElementById('songCoverPrev').classList.add('hidden');
@@ -1633,6 +1634,7 @@ async function saveSong(){
   if(!title||!artistId){alert('Title and artist required. If the artist list is empty, add the artist first.');return;}
   const type=document.getElementById('songType').value;
   const excerpt=document.getElementById('songExcerpt').value.trim();
+  const lyrics=(document.getElementById('songLyrics')||{value:''}).value.trim()||null;
   const downloadUrl=document.getElementById('songDownloadUrl').value.trim()||null;
   const youtubeUrl=document.getElementById('songYoutubeUrl').value.trim()||null;
   const editId=document.getElementById('songEditId').value;
@@ -1652,9 +1654,9 @@ async function saveSong(){
     if(editId){
       const idx=db.songs.findIndex(x=>x.id===editId);
       if(idx<0)throw new Error('That song no longer exists - refresh and try again.');
-      db.songs[idx]={...db.songs[idx],title,artistId,type,excerpt,downloadUrl,youtubeUrl,cover:cover||db.songs[idx].cover};
+      db.songs[idx]={...db.songs[idx],title,artistId,type,excerpt,lyrics,downloadUrl,youtubeUrl,cover:cover||db.songs[idx].cover};
     } else {
-      db.songs.push({id:'song-'+Date.now(),title,artistId,type,excerpt,downloadUrl,youtubeUrl,cover,slug,createdAt:Date.now()});
+      db.songs.push({id:'song-'+Date.now(),title,artistId,type,excerpt,lyrics,downloadUrl,youtubeUrl,cover,slug,createdAt:Date.now()});
     }
     await saveDB(db);
     resetSongForm();
@@ -1681,6 +1683,7 @@ async function editSong(id){
   document.getElementById('songArtist').value=x.artistId;
   document.getElementById('songType').value=x.type;
   document.getElementById('songExcerpt').value=x.excerpt||'';
+  document.getElementById('songLyrics').value=x.lyrics||'';
   document.getElementById('songDownloadUrl').value=x.downloadUrl||'';
   document.getElementById('songYoutubeUrl').value=x.youtubeUrl||'';
   const prev=document.getElementById('songCoverPrev');
