@@ -49,19 +49,43 @@
       '<div class="slide-shade"></div><div class="big-b"><span class="pill">' + esc(cname(cat)) + '</span><h3>' + esc(big.title) + '</h3></div></a><div class="stack">' +
       rest.map(function (p) { return '<a class="row" href="' + href(p) + '">' + pic(p, 220, 150, 'row-img') + '<span class="rt">' + esc(p.title) + '<small>' + esc(p.date || '') + '</small></span></a>'; }).join('') + '</div></div></section>';
   }
+  function dec(s) { return String(s == null ? '' : s).replace(/&(amp|lt|gt|quot|#0?39|apos);/g, function (m, k) { return { amp: '&', lt: '<', gt: '>', quot: '"' }[k] || "'"; }); }
+  function albumSlug(name, id) { return (cslug(dec(name)) || 'album') + '-' + safe(id); }
+  // songs that share an albumId become ONE album; everything else is a single
+  function releases(songs) {
+    var by = {}, out = [];
+    (songs || []).forEach(function (s) {
+      if (!s || !s.slug) return;
+      if (s.albumId) {
+        var a = by[s.albumId];
+        if (!a) { a = by[s.albumId] = { kind: 'album', id: String(s.albumId), name: s.album || 'Album', cover: s.albumCover || s.cover, artistId: s.artistId, tracks: [], t: 0 }; out.push(a); }
+        a.tracks.push(s); a.t = Math.max(a.t, +s.createdAt || 0);
+      } else out.push({ kind: 'single', song: s, t: +s.createdAt || 0 });
+    });
+    out.forEach(function (r) { if (r.tracks) r.tracks.sort(function (x, y) { return (+x.trackNumber || 999) - (+y.trackNumber || 999) || (+x.createdAt || 0) - (+y.createdAt || 0); }); });
+    return out.sort(function (a, b) { return b.t - a.t; });
+  }
+  function relCard(r, am, now) {
+    var al = r.kind === 'album', s = r.song, cover = al ? r.cover : s.cover, title = al ? r.name : s.title, aid = al ? r.artistId : s.artistId;
+    var link = al ? '/albums/' + albumSlug(r.name, r.id) + '.html' : '/songs/' + safe(s.slug) + '.html';
+    var im = IMG(cover, 320, 320), fresh = r.t > 0 && (now || Date.now()) - r.t < 7 * 864e5;
+    return '<a class="rel" href="' + link + '"><span class="rc">' + (im ? '<img src="' + esc(im) + '" data-o="' + esc(cover) + '" onerror="this.onerror=null;this.src=this.dataset.o" width="320" height="320" loading="lazy" alt="">' : '<span class="mph">\uD83C\uDFB5</span>') +
+      (al ? '<em class="rtag">ALBUM \u00B7 ' + r.tracks.length + ' tracks</em>' : '') + (fresh ? '<em class="rnew">NEW</em>' : '') + '</span><b>' + esc(dec(title)) + '</b><small>' + esc(am[aid] ? am[aid].name : '') + '</small></a>';
+  }
   function musicSection(songs, artists) {
     if (!songs.length) return '';
     var am = {}; artists.forEach(function (a) { am[a.id] = a; });
-    var ok = songs.filter(function (s) { return s && s.slug; });
-    var latest = ok.slice().sort(function (a, b) { return (+b.createdAt || 0) - (+a.createdAt || 0); }).slice(0, 10);
-    var top = ok.filter(function (s) { return (+s.downloads || 0) > 0; }).sort(function (a, b) { return (+b.downloads || 0) - (+a.downloads || 0); }).slice(0, 5);
+    var rel = releases(songs), now = Date.now();
+    var singles = rel.filter(function (r) { return r.kind === 'single'; }).slice(0, 8);
+    var top = songs.filter(function (s) { return s && s.slug && (+s.downloads || 0) > 0; }).sort(function (a, b) { return (+b.downloads || 0) - (+a.downloads || 0); }).slice(0, 5);
     function row(s, n) {
       var im = IMG(s.cover, 160, 160);
       return '<a class="mrow" href="/songs/' + safe(s.slug) + '.html">' + (n ? '<span class="mn">' + n + '</span>' : '') +
         (im ? '<img src="' + esc(im) + '" data-o="' + esc(s.cover) + '" onerror="WZH.fb(this)" width="160" height="160" loading="lazy" alt="">' : '<span class="mph">\uD83C\uDFB5</span>') +
-        '<span class="mt"><b>' + esc(s.title) + '</b><small>' + esc(am[s.artistId] ? am[s.artistId].name : '') + '</small></span><span class="mdl">Download</span></a>';
+        '<span class="mt"><b>' + esc(dec(s.title)) + '</b><small>' + esc(am[s.artistId] ? am[s.artistId].name : '') + '</small></span><span class="mdl">Download</span></a>';
     }
-    return '<section class="blk"><div class="blk-hd"><h2><i>\uD83C\uDFA7</i> Latest music</h2><a href="/category/music">See all \u2192</a></div><div class="mlist">' + latest.map(function (s) { return row(s, 0); }).join('') + '</div></section>' +
+    return '<section class="blk"><div class="blk-hd"><h2><i>\uD83C\uDD95</i> New releases</h2><a href="/category/music">See all \u2192</a></div><div class="rail2">' + rel.slice(0, 12).map(function (r) { return relCard(r, am, now); }).join('') + '</div></section>' +
+      (singles.length ? '<section class="blk"><div class="blk-hd"><h2><i>\uD83C\uDFA7</i> Latest singles</h2><a href="/category/music">See all \u2192</a></div><div class="mlist">' + singles.map(function (r) { return row(r.song, 0); }).join('') + '</div></section>' : '') +
       (top.length ? '<section class="blk"><div class="blk-hd"><h2><i>\uD83D\uDD25</i> Most downloaded</h2></div><div class="mlist">' + top.map(function (s, i) { return row(s, i + 1); }).join('') + '</div></section>' : '');
   }
   function artistSection(songs, artists) {
@@ -115,5 +139,5 @@
       sig: sig(posts), preload: hero[0] ? IMG(hero[0].coverImage, 1000, 640) : ''
     };
   }
-  return { build: build, latest: latest, sig: sig, esc: esc, IMG: IMG, fb: fb, PER_PAGE: PER_PAGE };
+  return { releases: releases, relCard: relCard, albumSlug: albumSlug, dec: dec, build: build, latest: latest, sig: sig, esc: esc, IMG: IMG, fb: fb, PER_PAGE: PER_PAGE };
 });

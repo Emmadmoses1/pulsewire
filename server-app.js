@@ -105,6 +105,7 @@ require('./team-service').register(app);
 require('./push-service').register(app);
 app.get('/posts/:slug', instant.handler('post'));
 app.get('/songs/:slug', instant.handler('song'));
+app.get('/albums/:slug', instant.albumRoute());
 app.get('/artists/:slug', instant.handler('artist'));
 app.get('/post.html', (req, res, next) => {
   const s = String(req.query.slug || '').trim();

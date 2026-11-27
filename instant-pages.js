@@ -170,14 +170,14 @@ function renderPost(doc, post) {
 }
 function renderSong(doc, song) {
   const artist = (doc.artists || []).find((a) => a.id === song.artistId) || {};
-  const aname = artist.name || 'WAVZO', slug = safeId(song.slug), title = song.title || 'Song';
+  const aname = artist.name || 'WAVZO', slug = safeId(song.slug), title = require('./public/wz-home.js').dec(song.title || 'Song');
   const url = SITE + '/songs/' + slug + '.html';
   let page = put(read('song.html'), '<title>WAVZO</title>', head({
     title: esc(title) + ' — ' + esc(aname) + ' | WAVZO', desc: attr(song.excerpt || (title + ' by ' + aname), 200), url, type: 'music.song',
     ogTitle: esc(title) + ' — ' + esc(aname), image: esc(ogImage(song.cover))
   }));
   page = put(page, "const songId='__SONG_ID__';", "const songId='" + safeId(song.id) + "';");
-  const pre = js({ song, artist: artist.id ? artist : null, titles: (doc.posts || []).slice(0, 6).map((p) => p.title || '') });
+  const pre = js({ song: Object.assign({}, song, { title: title }), artist: artist.id ? artist : null, titles: (doc.posts || []).slice(0, 6).map((p) => p.title || '') });
   return put(page, "const songId='" + safeId(song.id) + "';", "const songId='" + safeId(song.id) + "';\nconst PRE=" + pre + ';');
 }
 // ---- Artists: server-built list page + richer artist pages (so Google sees every artist and song) ----
@@ -311,6 +311,7 @@ async function sitemap() {
   for (const p of doc.posts || []) if (p.slug && seoState(doc, p).index) rows.push([SITE + '/posts/' + p.slug + '.html', day(p.createdAt)]);
   for (const c of categoryList(doc)) if ((typeof seoState !== 'function' ? c.all.length : c.good.length) >= CAT_MIN_INDEX) rows.push([SITE + '/category/' + c.slug, day(c.latest)]);
   for (const s of doc.songs || []) if (s.slug) rows.push([SITE + '/songs/' + s.slug + '.html', day(s.createdAt)]);
+  { const W = require('./public/wz-home.js'); for (const r of W.releases(doc.songs || [])) if (r.kind === 'album') rows.push([SITE + '/albums/' + W.albumSlug(r.name, r.id) + '.html', day(r.t)]); }
   for (const a of doc.artists || []) if (a.slug) rows.push([SITE + '/artists/' + a.slug + '.html', day(a.createdAt)]);
   return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     rows.map(([u, d]) => '  <url><loc>' + esc(u) + '</loc>' + (d ? '<lastmod>' + d + '</lastmod>' : '') + '</url>').join('\n') + '\n</urlset>\n';
@@ -387,6 +388,11 @@ function renderCategory(doc, slug, pageNo) {
   const cards = shown.slice((pageNo - 1) * CAT_PER_PAGE, pageNo * CAT_PER_PAGE).map((p) =>
     '<a class="card" href="/posts/' + safeId(p.slug) + '.html"><img src="' + esc(sizedImg(p.coverImage, 480, 270)) + '" width="480" height="270" loading="lazy" alt="' + esc(p.title) + '">' +
     '<div class="ct"><h2>' + esc(p.title) + '</h2><p>' + esc(String(p.excerpt || plain(p.content)).slice(0, 140)) + '</p><span>' + esc(p.date || '') + '</span></div></a>').join('\n');
+  const musicBlock = (c.slug === 'music' && pageNo === 1 && (doc.songs || []).length) ? (function () {
+    const WZH = require('./public/wz-home.js'), am = {};
+    (doc.artists || []).forEach((a) => { am[a.id] = a; });
+    return '<h2 class="mh">New music &amp; albums</h2>\n<div class="relgrid">' + WZH.releases(doc.songs).slice(0, 24).map((r) => WZH.relCard(r, am, Date.now())).join('') + '</div>\n<h2 class="mh">Music news</h2>\n';
+  })() : '';
   const chips = list.map((x) => '<a class="chip' + (x.slug === c.slug ? ' on' : '') + '" href="/category/' + x.slug + '">' + esc(catName(x.name)) + '</a>').join('');
   const nav = (pageNo > 1 ? '<a class="pg" href="' + urlOf(pageNo - 1) + '">&larr; Newer</a>' : '<span></span>') +
     '<span class="pn">Page ' + pageNo + ' of ' + pages + '</span>' +
@@ -409,9 +415,9 @@ function renderCategory(doc, slug, pageNo) {
     '.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}.card{display:block;background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;color:inherit;text-decoration:none}' +
     '.card img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#ddd}.ct{padding:10px 12px 12px}.ct h2{font-size:15px;margin:0 0 6px;line-height:1.3}.ct p{font-size:13px;color:#555;margin:0 0 6px}.ct span{font-size:11px;color:#888}' +
     '.nav{display:flex;align-items:center;justify-content:space-between;margin:22px 0}.pg{background:#e11;color:#fff;font-weight:700;text-decoration:none;padding:10px 16px;border-radius:8px;font-size:14px}.pn{font-size:13px;color:#555}' +
-    '.links{margin-top:30px;font-size:12px;color:#777}.links a{color:#e11;margin-right:12px}</style>\n</head>\n<body>\n<div class="wrap">\n' +
+    '.links{margin-top:30px;font-size:12px;color:#777}.links a{color:#e11;margin-right:12px}' + (c.slug === 'music' ? REL_CSS : '') + '</style>\n</head>\n<body>\n<div class="wrap">\n' +
     '<div class="top"><a class="brand" href="/">WAV<span>ZO</span></a><a href="/" style="font-size:13px;font-weight:700;color:#e11;text-decoration:none">Home</a></div>\n' +
-    '<h1>' + esc(name) + '</h1>\n<p class="sub">' + esc(desc) + '</p>\n<div class="chips">' + chips + '</div>\n<div class="grid">\n' + cards + '\n</div>\n<div class="nav">' + nav + '</div>\n' +
+    '<h1>' + esc(name) + '</h1>\n<p class="sub">' + esc(desc) + '</p>\n<div class="chips">' + chips + '</div>\n' + musicBlock + '<div class="grid">\n' + cards + '\n</div>\n<div class="nav">' + nav + '</div>\n' +
     '<div class="links"><a href="/">Home</a><a href="/about.html">About</a><a href="/contact.html">Contact</a><a href="/dmca.html">DMCA</a><a href="/privacy-policy.html">Privacy</a><a href="/terms.html">Terms</a></div>\n</div>\n</body>\n</html>\n';
 }
 function categoryRoute() {
@@ -447,6 +453,52 @@ function homeRoute() {
   };
 }
 
+const REL_CSS = ".rail2{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 10px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}.relgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;margin-bottom:22px}.rel{display:block;min-width:0;color:inherit;text-decoration:none;scroll-snap-align:start}.rail2 .rel{flex:0 0 150px}.rc{position:relative;display:block;width:100%;aspect-ratio:1/1;border-radius:14px;overflow:hidden;background:#222}.rc img{width:100%;height:100%;object-fit:cover;display:block}.rc .mph{width:100%;height:100%;flex:none;border-radius:0}.rtag,.rnew{position:absolute;font-style:normal;font-size:10px;font-weight:800;padding:3px 7px;border-radius:999px;color:#fff}.rtag{left:6px;bottom:6px;background:rgba(0,0,0,.72)}.rnew{right:6px;top:6px;background:var(--brand,#e11)}.rel b{display:block;margin-top:7px;font-size:13px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rel small{display:block;font-size:12px;color:var(--muted,#666);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mh{font-size:18px;margin:18px 0 10px}";
+function renderAlbum(doc, id) {
+  const WZH = require('./public/wz-home.js');
+  const rel = WZH.releases(doc.songs || []);
+  const al = rel.find((r) => r.kind === 'album' && String(r.id) === id);
+  if (!al) return null;
+  const artist = (doc.artists || []).find((a) => a.id === al.artistId) || {};
+  const aname = artist.name || 'Various artists', name = WZH.dec(al.name), slug = WZH.albumSlug(al.name, al.id);
+  const url = SITE + '/albums/' + slug + '.html', n = al.tracks.length, year = (al.tracks.find((t) => t.year) || {}).year;
+  const am = {}; (doc.artists || []).forEach((a) => { am[a.id] = a; });
+  const more = rel.filter((r) => r !== al).slice(0, 8);
+  const desc = 'Download ' + name + ' by ' + aname + ' on WAVZO. ' + n + ' track' + (n === 1 ? '' : 's') + ': open any track and choose which song to download.';
+  const ld = { '@context': 'https://schema.org', '@type': 'MusicAlbum', name, url, image: ogImage(al.cover), byArtist: { '@type': 'MusicGroup', name: aname }, numTracks: n, datePublished: year || undefined,
+    track: al.tracks.map((t, i) => ({ '@type': 'MusicRecording', position: i + 1, name: WZH.dec(t.title), url: SITE + '/songs/' + safeId(t.slug) + '.html' })) };
+  const hd = head({ title: esc(name + ' by ' + aname + ' \u2014 Download Album | WAVZO'), desc: attr(desc, 200), url, type: 'music.album', ogTitle: esc(name + ' \u2014 ' + aname), image: esc(ogImage(al.cover)), ld });
+  const rows = al.tracks.map((t, i) => '<li><a href="/songs/' + safeId(t.slug) + '.html"><span class="tn">' + (i + 1) + '</span><span class="tt"><b>' + esc(WZH.dec(t.title)) + '</b><small>' + esc(aname) + '</small></span><span class="dl">Download</span></a></li>').join('');
+  const cov = sqImg(al.cover, 400);
+  const html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' + hd +
+    '\n<link rel="icon" type="image/png" sizes="32x32" href="/images/wavzo-favicon-32.png">\n<style>body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#111;margin:0;line-height:1.5}.wrap{max-width:760px;margin:0 auto;padding:18px 14px 70px}' +
+    '.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.brand{font-weight:800;font-size:22px;letter-spacing:1px;color:#111;text-decoration:none}.brand span{color:#e11}' +
+    '.crumb{font-size:12px;color:#777;margin-bottom:12px}.crumb a{color:#e11;text-decoration:none}.hero{display:flex;gap:16px;align-items:flex-end;margin-bottom:16px}' +
+    '.hero img{width:140px;height:140px;flex:0 0 140px;border-radius:16px;object-fit:cover;background:#222}.hero h1{font-size:24px;line-height:1.2;margin:4px 0}.hero p{margin:0;color:#555;font-size:14px}.hero a{color:#e11;font-weight:700;text-decoration:none}' +
+    '.badge{display:inline-block;background:#e11;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px}.note{font-size:13px;color:#555;margin:0 0 12px}' +
+    '.tl{list-style:none;margin:0 0 26px;padding:0;display:grid;gap:8px}.tl a{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:10px 12px;color:inherit;text-decoration:none;min-width:0}' +
+    '.tn{flex:0 0 26px;text-align:center;font-weight:900;color:#e11}.tt{flex:1;min-width:0}.tt b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tt small{color:#777;font-size:12px}' +
+    '.dl{flex:0 0 auto;background:#e11;color:#fff;font-weight:800;font-size:12px;padding:9px 14px;border-radius:999px;white-space:nowrap}' + REL_CSS + '</style>\n</head>\n<body>\n<div class="wrap">\n' +
+    '<div class="top"><a class="brand" href="/">WAV<span>ZO</span></a><a href="/category/music" style="font-size:13px;font-weight:700;color:#e11;text-decoration:none">All music</a></div>\n' +
+    '<div class="crumb"><a href="/">Home</a> / <a href="/category/music">Music</a> / ' + esc(name) + '</div>\n' +
+    '<div class="hero">' + (cov ? '<img src="' + esc(cov) + '" width="140" height="140" alt="' + esc(name) + '">' : '') + '<div><span class="badge">ALBUM \u00B7 ' + n + ' TRACK' + (n === 1 ? '' : 'S') + '</span><h1>' + esc(name) + '</h1><p>' +
+    (artist.slug ? '<a href="/artists/' + safeId(artist.slug) + '.html">' + esc(aname) + '</a>' : esc(aname)) + (year ? ' \u00B7 ' + esc(year) : '') + '</p></div></div>\n' +
+    '<p class="note">Tap a track to open it, then download the one you want.</p>\n<ol class="tl">' + rows + '</ol>\n' +
+    (more.length ? '<h2 class="mh">More new music</h2>\n<div class="rail2">' + more.map((r) => WZH.relCard(r, am, Date.now())).join('') + '</div>\n' : '') + '</div>\n</body>\n</html>\n';
+  return { html, slug };
+}
+function albumRoute() {
+  return async (req, res, next) => {
+    try {
+      const raw = String(req.params.slug || '').replace(/\.html$/, '');
+      if (!/^[\w.%-]{1,200}$/.test(raw)) return next();
+      const out = renderAlbum(await getDoc(8000), raw.split('-').pop());
+      if (!out) return next();
+      if (out.slug !== raw) return res.redirect(301, '/albums/' + out.slug + '.html');
+      res.set('Cache-Control', 'public, max-age=60').type('html').send(out.html);
+    } catch (e) { next(); }
+  };
+}
 function handler(kind) {
   return async (req, res, next) => {
     try {
@@ -500,4 +552,4 @@ function startIndexNowWatcher() {
   if (watching) return;
   watching = true; refreshDoc().catch(() => {}); setTimeout(checkNew, 15000); setInterval(checkNew, 60000); }
 
-module.exports = { newsSitemapRoute, feedRoute, homeRoute, artistsRoute, categoryRoute, homePayload, dbDoc: () => getDoc(8000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
+module.exports = { newsSitemapRoute, feedRoute, homeRoute, artistsRoute, categoryRoute, albumRoute, homePayload, dbDoc: () => getDoc(8000), startIndexNowWatcher, page, sitemap, dbJson, handler, _cache: () => cache, _reset: () => { cache = { t: 0, doc: null }; } };
