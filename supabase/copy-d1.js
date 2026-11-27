@@ -26,7 +26,7 @@ const JOBS = [
 ];
 
 (async () => {
-  for (const j of JOBS) {
+  for (const j of JOBS.filter((x) => !process.env.ONLY || x.from === process.env.ONLY)) {
     let read = 0;
     process.stdout.write(j.from.padEnd(16) + '-> ' + j.to.padEnd(16));
     for (let off = 0; ; off += j.page) {
