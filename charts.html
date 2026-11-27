@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Charts: Top 10 this week and Trending now | WAVZO</title>
+<meta name="description" content="The 10 most played and downloaded Nigerian songs on WAVZO this week, plus what is climbing fastest right now.">
+<link rel="canonical" href="https://wavzo.com.ng/charts.html">
+<script>try{var t=localStorage.getItem('wz_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<style>
+:root{--bg:#f4f4f8;--card:#fff;--text:#0b0b12;--muted:#6a6a78;--line:#e6e6ee;--brand:#e5202f;--brand2:#ff7a45}
+[data-theme=dark]{--bg:#07070b;--card:#101018;--text:#f3f3f7;--muted:#9696a6;--line:#22222d}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.45;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{font-family:inherit}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.top{display:flex;align-items:center;justify-content:space-between;max-width:760px;margin:0 auto;padding:16px 18px}
+.logo{font-weight:900;font-size:20px;letter-spacing:.5px}.logo span{color:var(--brand)}
+.top nav{display:flex;gap:16px;font-size:14px;color:var(--muted)}.top nav a:hover{color:var(--text)}
+main{max-width:760px;margin:0 auto;padding:6px 18px 40px}
+h1{font-size:clamp(30px,6vw,46px);font-weight:900;line-height:1.05;letter-spacing:-1px;margin:10px 0 6px}
+.sub{color:var(--muted);font-size:14px;max-width:46ch}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 0 10px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px}
+.tabs button{border:0;background:none;color:var(--muted);padding:8px 16px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--brand);color:#fff}
+.all{border:0;background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:800;font-size:14px;cursor:pointer}
+.list{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line)}.row:last-child{border:0}
+.rk{width:30px;text-align:center;font-weight:900;font-size:22px;letter-spacing:-1px;flex:none}
+.row:nth-child(-n+3) .rk{color:var(--brand)}
+.row img{width:54px;height:54px;border-radius:10px;object-fit:cover;background:var(--line);flex:none}
+.mt{min-width:0;flex:1}.mt a{display:block;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mt a:hover{color:var(--brand)}
+.mt small{color:var(--muted);font-size:12.5px}
+.mv{font-size:12px;font-weight:800;min-width:54px;text-align:right;color:var(--muted)}.mv.up{color:#14a44d}.mv.new{color:var(--brand2)}
+.pl{width:44px;height:44px;border-radius:50%;border:0;background:var(--brand);color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
+.pl:hover{background:var(--brand2)}.pl svg{width:20px;height:20px;fill:currentColor}
+.note,.empty{color:var(--muted);font-size:12.5px;margin-top:12px}.empty{padding:30px 16px;text-align:center;font-size:14px}
+@media (max-width:420px){.mv{display:none}.row{gap:10px;padding:10px}}
+</style>
+</head>
+<body>
+<header class="top"><a class="logo" href="/">WAV<span>ZO</span></a><nav><a href="/">Home</a><a href="/artists.html">Artists</a></nav></header>
+<main>
+  <h1>Charts</h1>
+  <p class="sub" id="sub">What Nigeria is playing and downloading on WAVZO right now.</p>
+  <div class="bar">
+    <div class="tabs" role="tablist"><button role="tab" id="tTop" aria-selected="true">Top 10 this week</button><button role="tab" id="tTrend" aria-selected="false">Trending now</button></div>
+    <button class="all" id="playAll">Play all</button>
+  </div>
+  <div class="list" id="list" aria-live="polite"><p class="empty">Loading the chart...</p></div>
+  <p class="note" id="note"></p>
+</main>
+<script>
+(function(){
+  var API='https://wavzo-db.dakudinamoses.workers.dev', BIN='6aa50e3aac6210605ac3c542';
+  var AUDIO=/\.(mp3|m4a|aac|wav|ogg|opus)(\?|#|$)/i, data=null, view='top';
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function thumb(u){ if(!u) return 'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="#1a1a24"/></svg>');
+    var m=String(u).match(/^(https?:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/)(v\d+\/.*)$/); return esc(m?m[1]+'f_auto,q_auto,w_120/'+m[2]:u); }
+  function split(t){var x=String(t||'').replace(/\[[^\]]*\]/g,' ').replace(/[-|\u2013\u2014]?\s*\(?\s*mp3(\s*download)?\s*\)?/ig,' ').replace(/\s+/g,' ').trim();var m=x.match(/^(.+?)\s*\|\s*(.+)$/)||x.match(/^(.+?)\s+by\s+(.+)$/i);return m?{a:m[1].trim(),b:m[2].replace(/[-|\s]+$/,'').trim()}:{a:x,b:''};}
+
+  /* Preferred: the Worker's weekly chart. Fallback: all-time counters from the site data (until the /charts route is added). */
+  function fromWorker(){
+    return fetch(API+'/charts',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(j){
+      if(!j||!j.top)throw 0; return {weekly:true,top:j.top,trending:j.trending||[]};});
+  }
+  function fromCounters(){
+    return fetch(API+'/v3/b/'+BIN+'/latest',{headers:{'X-Master-Key':'public'}}).then(function(r){return r.json();}).then(function(j){
+      var d=j.record||{}, ar={}; (d.artists||[]).forEach(function(a){ar[a.id]=a.name;}); var out=[];
+      (d.songs||[]).forEach(function(s){ if(s.slug&&AUDIO.test(String(s.downloadUrl||''))) out.push({kind:'song',key:s.slug,title:s.title,artist:ar[s.artistId]||'',cover:s.cover,src:s.downloadUrl,url:'/songs/'+s.slug+'.html',score:(s.downloads||0)});});
+      (d.posts||[]).forEach(function(p){ if(p.slug&&p.musicFile&&/^(MUSIC|GOSPEL)$/i.test(p.category||'')){var t=split(p.title);
+        out.push({kind:'post',key:p.slug,title:t.b?t.a:p.title,artist:t.b,cover:p.coverImage,src:p.musicFile,url:'/posts/'+p.slug+'.html',score:(p.audioDownloads||p.downloads||0)*3+(p.views||0)});}});
+      out.sort(function(a,b){return b.score-a.score;}); return {weekly:false,top:out.slice(0,10),trending:[]};});
+  }
+  var PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+  function render(){
+    var items=view==='top'?data.top:data.trending, list=document.getElementById('list');
+    if(!items.length){ list.innerHTML='<p class="empty">'+(view==='trend'?'Nothing is climbing yet. Check back after a few more plays this week.':'No songs to rank yet.')+'</p>'; return; }
+    list.innerHTML=items.map(function(t,i){
+      var track={src:t.src,title:t.title,artist:t.artist,cover:t.cover,key:t.key,kind:t.kind,url:t.url};
+      var mv='';
+      if(view==='trend') mv='<span class="mv up">+'+(t.delta||0)+'</span>';
+      else if(data.weekly&&t.weekly) mv=t.prev?(t.delta>0?'<span class="mv up">&#9650; '+t.delta+'</span>':'<span class="mv">'+(t.delta<0?'&#9660; '+Math.abs(t.delta):'-')+'</span>'):'<span class="mv new">New</span>';
+      return '<div class="row"><div class="rk">'+(i+1)+'</div><img src="'+thumb(t.cover)+'" alt="" loading="lazy">'+
+        '<div class="mt"><a href="'+esc(t.url)+'">'+esc(t.title)+'</a><small>'+esc(t.artist||'WAVZO')+'</small></div>'+mv+
+        '<button class="pl" aria-label="Play '+esc(t.title)+'" data-wz-list="chart" data-wz-play=\''+esc(JSON.stringify(track))+'\'>'+PLAY+'</button></div>';
+    }).join('');
+    document.getElementById('note').textContent=data.weekly?'Ranked by the last 7 days: a play counts 2, a download 3, a share 2, a view 1. Updated every few minutes.':'Showing all-time downloads for now. Weekly ranking switches on automatically once the site connects the weekly chart.';
+  }
+  function tab(v){view=v;document.getElementById('tTop').setAttribute('aria-selected',v==='top');document.getElementById('tTrend').setAttribute('aria-selected',v==='trend');render();}
+  document.getElementById('tTop').onclick=function(){tab('top');}; document.getElementById('tTrend').onclick=function(){tab('trend');};
+  document.getElementById('playAll').onclick=function(){var b=document.querySelector('#list [data-wz-play]'); if(b)b.click();};
+  fromWorker().catch(fromCounters).then(function(d){data=d;render();}).catch(function(){document.getElementById('list').innerHTML='<p class="empty">Could not load the chart. Please try again.</p>';});
+})();
+</script>
+<script src="/wz-player.js" defer></script>
+</body>
+</html>

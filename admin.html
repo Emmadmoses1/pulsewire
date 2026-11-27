@@ -562,6 +562,10 @@ body{-webkit-tap-highlight-color:transparent}
   <div class="section" id="sec-songs">
     <div class="card">
       <div class="card-title">Add / Edit Song</div>
+      <div id="pkBox" style="border:1px dashed var(--border);border-radius:10px;padding:12px;margin-bottom:14px">
+        <button type="button" class="btn btn-sm btn-dark" id="pkOpen" onclick="pkToggle()" style="width:auto;padding:9px 14px">&#128229; Add from posts (Music &amp; Gospel with audio)</button>
+        <div id="pkPanel" style="display:none;margin-top:12px"></div>
+      </div>
       <input type="hidden" id="songEditId">
       <div class="field">
         <label>Title</label>
@@ -5264,6 +5268,64 @@ if(typeof oldSec==='function'){window.showSec=function(n,el){var r=oldSec.apply(
 var oldDash=window.loadDash;
 if(typeof oldDash==='function'){window.loadDash=async function(){var r=await oldDash.apply(this,arguments);try{if(!loaded){loaded=true;ensureOwnerUI();}}catch(e){}return r;};}
 ensureOwnerUI();
+})();
+</script>
+
+<script>
+/* PK-PICKER: turn Music / Gospel posts that carry an audio file into songs */
+(function(){
+  var open=false, busy=false;
+  function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function split(t){
+    var x=String(t||'').replace(/\[[^\]]*\]/g,' ').replace(/[-|\u2013\u2014]?\s*\(?\s*mp3(\s*download)?\s*\)?/ig,' ').replace(/\s+/g,' ').trim();
+    var m=x.match(/^(.+?)\s*\|\s*(.+)$/)||x.match(/^(.+?)\s+by\s+(.+)$/i);
+    return m?{title:m[1].trim(),artist:m[2].replace(/[-|\s]+$/,'').trim()}:{title:x,artist:''};
+  }
+  function slugify(t){return (String(t||'song').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')||'song');}
+  function candidates(db){
+    var have={};(db.songs||[]).forEach(function(s){if(s.downloadUrl)have[s.downloadUrl]=1;if(s.sourcePost)have[s.sourcePost]=1;});
+    var byName={};(db.artists||[]).forEach(function(a){byName[String(a.name||'').trim().toLowerCase()]=a.id;});
+    return (db.posts||[]).filter(function(p){return /^(MUSIC|GOSPEL)$/i.test(p.category||'')&&p.musicFile&&!have[p.musicFile]&&!have[p.slug];})
+      .map(function(p){var t=split(p.title);return{p:p,title:t.title,artistId:byName[t.artist.toLowerCase()]||'',artistName:t.artist};});
+  }
+  async function draw(){
+    var panel=document.getElementById('pkPanel');panel.innerHTML='<p style="font-size:12px;color:var(--muted)">Loading posts...</p>';
+    var db=await loadDB();var list=candidates(db);var arts=db.artists||[];
+    if(!list.length){panel.innerHTML='<p style="font-size:13px;color:var(--muted)">Nothing to add. Every Music or Gospel post that has an audio file is already a song.</p>';return;}
+    var opts='<option value="">Choose artist</option>'+arts.map(function(a){return '<option value="'+esc(a.id)+'">'+esc(a.name)+'</option>';}).join('');
+    panel.innerHTML='<p style="font-size:12px;color:var(--muted);margin-bottom:8px">'+list.length+' post'+(list.length===1?'':'s')+' with audio. The artist is matched from the title (Song | Artist); pick one where it is blank.</p>'+
+      list.map(function(c,i){return '<div class="post-row" style="gap:8px;flex-wrap:wrap"><div class="post-row-info" style="min-width:160px;flex:1"><h4>'+esc(c.title)+'</h4><small>'+esc(c.p.category)+(c.artistName&&!c.artistId?' - "'+esc(c.artistName)+'" is not in your artists yet':'')+'</small></div>'+
+        '<select id="pkA'+i+'" style="max-width:170px">'+opts.replace('value="'+esc(c.artistId)+'"','value="'+esc(c.artistId)+'" selected')+(c.artistName&&!c.artistId?'<option value="__new__:'+esc(c.artistName)+'">+ Create "'+esc(c.artistName)+'"</option>':'')+'</select>'+
+        '<button type="button" class="del-btn" style="background:#16a34a" onclick="pkAdd('+i+')">ADD</button></div>';}).join('')+
+      '<button type="button" class="btn btn-sm" style="width:auto;padding:9px 14px;margin-top:10px" onclick="pkAddAll()">ADD ALL MATCHED</button>';
+    window._pkList=list;
+  }
+  window.pkToggle=function(){open=!open;document.getElementById('pkPanel').style.display=open?'block':'none';if(open)draw();};
+  async function addMany(idxs){
+    if(busy)return;busy=true;
+    try{
+      var db=await loadDB();db.songs=db.songs||[];var fresh=candidates(db);var n=0,now=Date.now(),skipped=0;
+      idxs.forEach(function(i){
+        var c=window._pkList[i];if(!c)return;
+        var f=fresh.find(function(x){return x.p.slug===c.p.slug;});if(!f)return; // already added meanwhile
+        var sel=document.getElementById('pkA'+i);var artistId=(sel&&sel.value)||c.artistId;
+        if(!artistId){skipped++;return;}
+        var t=Date.now()+n;n++;
+        if(artistId.indexOf('__new__:')===0){
+          var nm=artistId.slice(8).trim(),sl=slugify(nm);db.artists=db.artists||[];
+          var ex=db.artists.find(function(a){return a.slug===sl;});
+          if(ex)artistId=ex.id;else{artistId='art-'+t;db.artists.push({id:artistId,name:nm,genre:/^GOSPEL$/i.test(c.p.category)?'Gospel':'',bio:'',slug:sl,photo:null});}
+        }
+        db.songs.push({id:'song-'+t,title:c.title,artistId:artistId,type:'Single',excerpt:c.p.excerpt||'',lyrics:null,downloadUrl:c.p.musicFile,youtubeUrl:null,cover:c.p.coverImage||null,
+          genre:/^GOSPEL$/i.test(c.p.category)?'Gospel':undefined,sourcePost:c.p.slug,slug:slugify(c.title)+'-'+t,createdAt:t});
+      });
+      if(n){await saveDB(db);try{triggerPreviewGeneration();}catch(e){}try{loadSongsAdmin();}catch(e){}}
+      showToast(n?('Added '+n+' song'+(n===1?'':'s')+(skipped?' ('+skipped+' need an artist)':'')):(skipped?'Pick an artist first':'Nothing new to add'));
+    }catch(e){alert('Could not add: '+e.message);}
+    finally{busy=false;draw();}
+  }
+  window.pkAdd=function(i){addMany([i]);};
+  window.pkAddAll=function(){var ids=[];(window._pkList||[]).forEach(function(c,i){var sel=document.getElementById('pkA'+i);if((sel&&sel.value)||c.artistId)ids.push(i);});addMany(ids);};
 })();
 </script>
 </body>

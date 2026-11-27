@@ -142,7 +142,7 @@ app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.ht
 app.get('/livescores.html', (req, res) => res.sendFile(path.join(__dirname, 'livescores.html')));
 app.get('/privacy-policy.html', (req, res) => res.sendFile(path.join(__dirname, 'privacy-policy.html')));
 app.get('/terms.html', (req, res) => res.sendFile(path.join(__dirname, 'terms.html')));
-['about', 'contact', 'dmca'].forEach((n) => {
+['about', 'contact', 'dmca', 'charts'].forEach((n) => {
   const send = (req, res) => res.sendFile(path.join(__dirname, n + '.html'));
   app.get('/' + n + '.html', send);
   app.get('/' + n, send);

@@ -476,6 +476,7 @@ function renderPost(post,posts){
         <div class="media-label">🎵 Audio</div>
         <audio controls class="post-audio" preload="metadata"><source src="${post.musicFile}"></audio>
         <div style="text-align:center;margin-top:12px">
+          <button class="dw-btn" style="background:#111!important;margin-right:8px" data-wz-play='${(function(){var x=String(post.title||'').replace(/\[[^\]]*\]/g,' ').replace(/[-|\u2013\u2014]?\s*\(?\s*mp3(\s*download)?\s*\)?/ig,' ').replace(/\s+/g,' ').trim();var m=x.match(/^(.+?)\s*\|\s*(.+)$/)||x.match(/^(.+?)\s+by\s+(.+)$/i);return JSON.stringify({src:post.musicFile,title:m?m[1].trim():x,artist:m?m[2].replace(/[-|\s]+$/,'').trim():'',cover:post.coverImage||'',key:post.slug,kind:'post',url:'/posts/'+post.slug+'.html'}).replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');})()}'>&#9654; Play in player</button>
           <button class="dw-btn" onclick="startDownload('${post.musicFile}','audio','${post.slug}')">⬇ Download Audio</button>
         </div>
       </div>`:''}
@@ -696,5 +697,6 @@ document.getElementById('subForm').addEventListener('submit',e=>{e.preventDefaul
 })();
 </script>
 <script src="/wz-push.js" defer></script>
+<script src="/wz-player.js" defer></script>
 </body>
 </html>
