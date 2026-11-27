@@ -417,7 +417,7 @@ app.post('/admin/post-to-facebook/:slug', requireAdmin, async (req, res) => {
     const post = db.data.posts.find(p => p.slug === req.params.slug);
     if (!post) return res.status(404).json({ error: 'Post not found' });
 
-    const conn = facebookAuthRouter.getFacebookConnection();
+    const conn = await facebookAuthRouter.getFacebookConnection();
     if (!conn) return res.status(400).json({ error: 'No Facebook Page connected. Go to Settings and click Connect with Facebook.' });
 
     const postUrl = `https://wavzo.com.ng/posts/${post.slug}.html`;

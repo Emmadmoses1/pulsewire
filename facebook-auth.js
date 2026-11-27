@@ -12,21 +12,38 @@ const SCOPES = ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts'
 const STORAGE_DIR = process.env.STORAGE_DIR || path.join(__dirname, 'storage');
 const FB_CONFIG_PATH = path.join(STORAGE_DIR, 'data', 'facebook.json');
 
-function saveFacebookConnection(page) {
-  fs.mkdirSync(path.dirname(FB_CONFIG_PATH), { recursive: true });
+// Connection is kept in Supabase (site_secrets, key FB_KEY) so it survives Render redeploys.
+// The local file is only a fallback when Supabase is unreachable.
+const FB_KEY = 'fb_page_connection';
+const sb = require('./supabase/lib');
+let fbCache = null, fbAt = 0;
+
+async function saveFacebookConnection(page) {
   const data = {
     pageId: page.id,
     pageName: page.name,
     pageAccessToken: page.access_token,
     connectedAt: new Date().toISOString()
   };
-  fs.writeFileSync(FB_CONFIG_PATH, JSON.stringify(data, null, 2));
+  try { fs.mkdirSync(path.dirname(FB_CONFIG_PATH), { recursive: true }); fs.writeFileSync(FB_CONFIG_PATH, JSON.stringify(data, null, 2)); } catch (e) { /* ignore */ }
+  await sb.upsert('site_secrets', [{ key: FB_KEY, value: data }], 'key');
+  fbCache = data; fbAt = Date.now();
   return data;
 }
 
-function getFacebookConnection() {
-  if (!fs.existsSync(FB_CONFIG_PATH)) return null;
-  return JSON.parse(fs.readFileSync(FB_CONFIG_PATH, 'utf8'));
+async function getFacebookConnection() {
+  if (fbCache && Date.now() - fbAt < 60000) return fbCache;
+  try {
+    const rows = await sb.rest('GET', 'site_secrets', { query: 'select=value&key=eq.' + FB_KEY + '&limit=1' });
+    if (rows && rows[0] && rows[0].value && rows[0].value.pageAccessToken) { fbCache = rows[0].value; fbAt = Date.now(); return fbCache; }
+  } catch (e) { console.error('facebook connection read (supabase):', e.message); }
+  try {
+    if (fs.existsSync(FB_CONFIG_PATH)) {
+      const d = JSON.parse(fs.readFileSync(FB_CONFIG_PATH, 'utf8'));
+      if (d && d.pageAccessToken) { sb.upsert('site_secrets', [{ key: FB_KEY, value: d }], 'key').catch(() => {}); fbCache = d; fbAt = Date.now(); return d; }
+    }
+  } catch (e) { /* ignore */ }
+  return null;
 }
 
 function requireAdminSession(req, res, next) {
@@ -70,7 +87,7 @@ router.get('/auth/facebook/callback', requireAdminSession, async (req, res) => {
     }
 
     if (pages.length === 1) {
-      saveFacebookConnection(pages[0]);
+      await saveFacebookConnection(pages[0]);
       return res.redirect('/admin/dashboard?fb_connected=1');
     }
 
@@ -91,22 +108,24 @@ router.get('/auth/facebook/callback', requireAdminSession, async (req, res) => {
   }
 });
 
-router.get('/auth/facebook/select', requireAdminSession, (req, res) => {
+router.get('/auth/facebook/select', requireAdminSession, async (req, res) => {
   const i = parseInt(req.query.i, 10);
   const pages = req.session.fbPagesTemp;
   if (!pages || !pages[i]) return res.status(400).send('Selection expired — please reconnect Facebook.');
-  saveFacebookConnection(pages[i]);
+  try { await saveFacebookConnection(pages[i]); } catch (e) { return res.status(500).send('Could not save the Facebook connection: ' + e.message); }
   delete req.session.fbPagesTemp;
   res.redirect('/admin/dashboard?fb_connected=1');
 });
 
-router.get('/admin/facebook-status', requireAdminSession, (req, res) => {
-  const conn = getFacebookConnection();
+router.get('/admin/facebook-status', requireAdminSession, async (req, res) => {
+  const conn = await getFacebookConnection();
   if (!conn) return res.json({ connected: false });
   res.json({ connected: true, pageName: conn.pageName, pageId: conn.pageId, connectedAt: conn.connectedAt });
 });
 
-router.post('/admin/facebook-disconnect', requireAdminSession, (req, res) => {
+router.post('/admin/facebook-disconnect', requireAdminSession, async (req, res) => {
+  fbCache = null; fbAt = 0;
+  try { await sb.rest('DELETE', 'site_secrets', { query: 'key=eq.' + FB_KEY, prefer: 'return=minimal' }); } catch (e) { console.error('facebook disconnect:', e.message); }
   if (fs.existsSync(FB_CONFIG_PATH)) fs.unlinkSync(FB_CONFIG_PATH);
   res.json({ ok: true });
 });
